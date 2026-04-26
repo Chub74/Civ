@@ -28,16 +28,7 @@ public class CitadelListener implements Listener {
         long gameTimeThreshold = plugin.getConfigManager().getCitadelConfig().gameTimeThreshold();
         long joinTimeThreshold = plugin.getConfigManager().getCitadelConfig().firstJoinThreshold();
 
-        long playerGameTime = player.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L;
-        long playerJoinTime = System.currentTimeMillis() - player.getFirstPlayed();
-
-        float gameTimeProgress = Math.min(1.0f, (float) playerGameTime / gameTimeThreshold);
-        float joinTimeProgress = Math.min(1.0f, (float) playerJoinTime / joinTimeThreshold);
-
-        double totalWeight = gameTimeWeighting + joinTimeWeighting;
-        double weightedProgress = ((gameTimeProgress * gameTimeWeighting) + (joinTimeProgress * joinTimeWeighting))/totalWeight;
-
-        return (float) (initialScalar - (initialScalar - 1.0f) * weightedProgress);
+        return RepelShitters.calculateScalar(player, initialScalar, gameTimeWeighting, joinTimeWeighting, gameTimeThreshold, joinTimeThreshold);
     }
 
 }

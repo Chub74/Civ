@@ -90,4 +90,23 @@ public class PlayerListener implements Listener {
 
         this.plugin.getAutoPotManager().handleAutoPot(event);
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerHitPlayer(EntityDamageByEntityEvent event){
+        if(event.getDamager().getType() != EntityType.PLAYER && event.getEntity().getType() != EntityType.PLAYER) return;
+
+        Player damager = (Player) event.getDamager();
+        event.setDamage(event.getDamage() / this.calculateScalar(damager));
+    }
+
+    private float calculateScalar(Player player){
+        double initialScalar = plugin.getConfigManager().getDamageConfig().startingScalar();
+        double gameTimeWeighting = plugin.getConfigManager().getDamageConfig().gameTimeWeight();
+        double joinTimeWeighting = plugin.getConfigManager().getDamageConfig().firstTimeWeight();
+
+        long gameTimeThreshold = plugin.getConfigManager().getDamageConfig().gameTimeThreshold();
+        long joinTimeThreshold = plugin.getConfigManager().getDamageConfig().firstJoinThreshold();
+
+        return RepelShitters.calculateScalar(player, initialScalar, gameTimeWeighting, joinTimeWeighting, gameTimeThreshold, joinTimeThreshold);
+    }
 }
