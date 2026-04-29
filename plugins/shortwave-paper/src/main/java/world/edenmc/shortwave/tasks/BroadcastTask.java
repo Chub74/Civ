@@ -19,10 +19,12 @@ import java.util.List;
 import java.util.Random;
 
 public class BroadcastTask extends BukkitRunnable {
-    
+
     private final ShortwavePlugin plugin;
     private final Random random;
     private final NamespacedKey frequencyKey;
+    // Tracks the live hologram per speaker (keyed by "world,x,y,z" of the pot block)
+    private final java.util.Map<String, TextDisplay> activeSpeakerDisplays = new java.util.HashMap<>();
     
     public BroadcastTask(ShortwavePlugin plugin) {
         this.plugin = plugin;
@@ -64,15 +66,18 @@ public class BroadcastTask extends BukkitRunnable {
 
         int maxLines = tower.getBroadcastLinesSelected();
 
-        // Advance through the book as a sliding window over the flat line list
+        // Advance through the book as a fixed-size window over the flat line list.
+        // currentPage is the index of the first line for this broadcast.
         int start = tower.getCurrentPage();
         if (start >= flatLines.size()) {
+            // Cursor is stale (book shrank or was replaced) — snap back to 0
             start = 0;
+            tower.setCurrentPage(0);
         }
         int end = Math.min(start + maxLines, flatLines.size());
         String rawMessage = String.join("\n", flatLines.subList(start, end));
 
-        // Wrap to 0 when we reach the end of the book
+        // Advance cursor; wrap to 0 after the last window so next cycle starts at line 1
         tower.setCurrentPage(end >= flatLines.size() ? 0 : end);
 
         // Apply oxidation garbling
@@ -133,6 +138,13 @@ public class BroadcastTask extends BukkitRunnable {
     }
     
     private void handleSpeaker(Location potLocation, String frequency, String message) {
+        String key = potLocation.getWorld().getName() + ","
+                + potLocation.getBlockX() + "," + potLocation.getBlockY() + "," + potLocation.getBlockZ();
+
+        // Kill any existing hologram for this speaker before spawning a fresh one
+        TextDisplay old = activeSpeakerDisplays.remove(key);
+        if (old != null && old.isValid()) old.remove();
+
         Location displayLoc = potLocation.clone().add(0.5, 1.5, 0.5);
         TextDisplay display = potLocation.getWorld().spawn(displayLoc, TextDisplay.class, entity -> {
             entity.text(Component.text("[" + frequency + "] " + message));
@@ -141,8 +153,14 @@ public class BroadcastTask extends BukkitRunnable {
             entity.getPersistentDataContainer().set(
                     plugin.getBroadcastKey(), PersistentDataType.BYTE, (byte) 1);
         });
+
+        activeSpeakerDisplays.put(key, display);
+
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (display.isValid()) display.remove();
+            // Only evict from map if this display is still the current one (a newer broadcast
+            // may have already replaced it)
+            activeSpeakerDisplays.remove(key, display);
         }, 100L);
     }
     
