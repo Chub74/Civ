@@ -16,6 +16,7 @@ public class RepelShittersConfig extends ConfigParser {
     private long inactivityTimeMillis;
 
     private CitadelConfig citadelConfig;
+    private DamageConfig damageConfig;
 
     private double ghastBlocksPerSecond;
     private double ghastMaxHealth;
@@ -45,6 +46,10 @@ public class RepelShittersConfig extends ConfigParser {
         return citadelConfig;
     }
 
+    public DamageConfig getDamageConfig() {
+        return damageConfig;
+    }
+
     @Override
     protected boolean parseInternal(ConfigurationSection config) {
         String timeString = config.getString("inactivityTime", "5m");
@@ -58,6 +63,12 @@ public class RepelShittersConfig extends ConfigParser {
             citadelConfigSection = new MemoryConfiguration();
         }
         this.citadelConfig = CitadelConfig.parse(citadelConfigSection);
+
+        var damageConfigSection = config.getConfigurationSection("damage");
+        if(damageConfigSection == null){
+            damageConfigSection = new MemoryConfiguration();
+        }
+        this.damageConfig = DamageConfig.parse(damageConfigSection);
         return true;
     }
 }

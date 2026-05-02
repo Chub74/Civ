@@ -6,6 +6,8 @@ import com.github.longboyy.repelshitters.listeners.ExilePearlListener;
 import com.github.longboyy.repelshitters.listeners.MobListener;
 import com.github.longboyy.repelshitters.listeners.PlayerListener;
 import com.github.longboyy.repelshitters.listeners.GhastListener;
+import org.bukkit.Statistic;
+import org.bukkit.entity.Player;
 import org.bukkit.event.HandlerList;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.commands.CommandManager;
@@ -78,5 +80,18 @@ public class RepelShitters extends ACivMod{
 
     public HappyGhastManager getHappyGhastManager(){
         return this.happyGhastManager;
+    }
+
+    public static float calculateScalar(Player player, double initialScalar, double gameTimeWeighting, double joinTimeWeighting, long gameTimeThreshold, long joinTimeThreshold) {
+        long playerGameTime = player.getStatistic(Statistic.PLAY_ONE_MINUTE) * 50L;
+        long playerJoinTime = System.currentTimeMillis() - player.getFirstPlayed();
+
+        float gameTimeProgress = Math.min(1.0f, (float) playerGameTime / gameTimeThreshold);
+        float joinTimeProgress = Math.min(1.0f, (float) playerJoinTime / joinTimeThreshold);
+
+        double totalWeight = gameTimeWeighting + joinTimeWeighting;
+        double weightedProgress = ((gameTimeProgress * gameTimeWeighting) + (joinTimeProgress * joinTimeWeighting))/totalWeight;
+
+        return (float) (initialScalar - (initialScalar - 1.0f) * weightedProgress);
     }
 }
