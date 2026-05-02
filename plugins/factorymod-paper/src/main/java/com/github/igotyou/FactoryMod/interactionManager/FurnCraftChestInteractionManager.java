@@ -298,6 +298,9 @@ public class FurnCraftChestInteractionManager implements IInteractionManager {
                     } else {
                         fccf.setRecipe(recipe);
                         p.sendMessage(ChatColor.GREEN + "Switched recipe to " + recipe.getName());
+                        ComponableInventory compInv = buildRecipeInventory(p);
+                        compInv.update();
+                        compInv.updatePlayerView();
                     }
                 }
             };

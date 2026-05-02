@@ -8,6 +8,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,12 +50,15 @@ public class PrintingPlateJsonRecipe extends PrintingPlateRecipe {
     public boolean enoughMaterialAvailable(Inventory inputInv) {
         ItemStack book = getBook(inputInv);
         if (book == null) return false;
-        String[] pages = String.join("", ((BookMeta) book.getItemMeta()).getPages()).split("<<PAGE>>");
+        String joined = ChatColor.stripColor(String.join("", ((BookMeta) book.getItemMeta()).getPages()));
+        String[] pages = joined.split("<<PAGE>>");
 
         for (String page : pages) {
             try {
                 Gson gson = new Gson();
-                JsonElement element = gson.fromJson(page, JsonElement.class);
+                JsonReader reader = new JsonReader(new StringReader(page));
+                reader.setStrictness(com.google.gson.Strictness.LENIENT);
+                JsonElement element = gson.fromJson(reader, JsonElement.class);
 
                 String result = checkForIllegalSections(element);
                 if (result != null) {
