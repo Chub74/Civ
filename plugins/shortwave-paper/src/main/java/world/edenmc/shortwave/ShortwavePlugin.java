@@ -1,5 +1,6 @@
 package world.edenmc.shortwave;
 
+import world.edenmc.shortwave.listeners.ChunkUnloadCleanupListener;
 import world.edenmc.shortwave.listeners.InteractionListener;
 import world.edenmc.shortwave.listeners.OxidationListener;
 import world.edenmc.shortwave.managers.ConfigManager;
@@ -68,7 +69,7 @@ public class ShortwavePlugin extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(new InteractionListener(this), this);
         getServer().getPluginManager().registerEvents(new OxidationListener(this), this);
-        getServer().getPluginManager().registerEvents(new ClickableInventoryListener(), this);
+        getServer().getPluginManager().registerEvents(new ChunkUnloadCleanupListener(this), this);
 
         int autoSaveTicks = configManager.getAutoSaveInterval();
         Bukkit.getScheduler().runTaskTimer(this, () -> {
