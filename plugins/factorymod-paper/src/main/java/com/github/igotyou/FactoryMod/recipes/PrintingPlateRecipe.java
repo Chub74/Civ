@@ -170,6 +170,15 @@ public class PrintingPlateRecipe extends PrintingPressRecipe {
     }
 
     @Override
+    public List<String> getTextualInputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
+        List<String> result = super.getTextualInputRepresentation(i, fccf);
+        
+        result.add("1 Written Book");
+
+        return result;
+    }
+
+    @Override
     public String getTypeIdentifier() {
         return "PRINTINGPLATE";
     }

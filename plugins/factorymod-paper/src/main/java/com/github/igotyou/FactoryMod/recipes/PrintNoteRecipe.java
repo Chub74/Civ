@@ -152,12 +152,32 @@ public class PrintNoteRecipe extends PrintBookRecipe {
     }
 
     @Override
-    public ItemStack getRecipeRepresentation() {
-        ItemStack res = new ItemStack(Material.PAPER);
+    public Material getRecipeRepresentationMaterial() {
+        return Material.PAPER;
+    }
 
-        ItemUtils.setDisplayName(res, getName());
+        @Override
+    public List<String> getTextualInputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
+        List<String> result = super.getTextualInputRepresentation(i, fccf);
+        
+        result.add("1 Printing Plate");
 
-        return res;
+        return result;
+    }
+
+    @Override
+    public List<String> getTextualOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
+        List<String> result = new ArrayList<String>();
+        
+        if(this.isSecurityNote()) {
+            result.add("3 Secure Notes");
+        } else {
+            result.add("3 Notes");
+        }
+
+        result.add("1 Printing Plate");
+
+        return result;
     }
 
     @Override
