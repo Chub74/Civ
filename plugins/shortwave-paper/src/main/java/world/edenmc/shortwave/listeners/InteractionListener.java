@@ -14,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -351,14 +352,46 @@ public class InteractionListener implements Listener {
             }
         }
 
-        // Deregister speaker if the copper base or its pot is broken
-        if (block.getType() == Material.DECORATED_POT) {
-            plugin.getSpeakerManager().removeSpeaker(loc.clone().subtract(0, 1, 0));
-        } else {
+        // Only the copper anchor block destroys the speaker registration.
+        // A broken pot leaves the speaker registered — the broadcast task already skips
+        // speakers whose pot is absent, so it stops broadcasting automatically and
+        // resumes the moment the pot is placed back. No action needed on pot break.
+        if (block.getType() != Material.DECORATED_POT) {
             plugin.getSpeakerManager().removeSpeaker(loc);
         }
     }
     
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Block placed = event.getBlockPlaced();
+        Location loc = placed.getLocation();
+
+        // Check whether this block repairs a damaged tower structure.
+        // The placed block may be at offset +1 (lectern), +2 (top copper), or +3 (rod)
+        // above the registered base copper.
+        for (int offset = 1; offset <= 3; offset++) {
+            RadioTower tower = plugin.getTowerManager().getTower(loc.clone().subtract(0, offset, 0));
+            if (tower != null && !tower.isStructureValid()) {
+                tower.validateStructureFromBlocks();
+                if (tower.isStructureValid()) {
+                    event.getPlayer().sendMessage(Component.text(
+                            "Radio tower structure restored!", NamedTextColor.GREEN));
+                }
+                break;
+            }
+        }
+
+        // If a decorated pot is placed on a registered speaker copper block, the speaker
+        // resumes broadcasting automatically on the next cycle — just confirm to the player.
+        if (placed.getType() == Material.DECORATED_POT) {
+            Location copperLoc = loc.clone().subtract(0, 1, 0);
+            if (plugin.getSpeakerManager().isSpeakerRegistered(copperLoc)) {
+                event.getPlayer().sendMessage(Component.text(
+                        "Speaker restored!", NamedTextColor.GREEN));
+            }
+        }
+    }
+
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();

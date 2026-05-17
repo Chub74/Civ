@@ -68,7 +68,6 @@ public class ShortwavePlugin extends JavaPlugin {
         // Register listeners
         getServer().getPluginManager().registerEvents(new InteractionListener(this), this);
         getServer().getPluginManager().registerEvents(new OxidationListener(this), this);
-        getServer().getPluginManager().registerEvents(new ClickableInventoryListener(), this);
 
         int autoSaveTicks = configManager.getAutoSaveInterval();
         Bukkit.getScheduler().runTaskTimer(this, () -> {

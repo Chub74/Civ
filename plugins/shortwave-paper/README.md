@@ -1,6 +1,6 @@
 # Shortwave
 
-A physical radio tower broadcasting system for Paper 1.21. Players build structures that read from a Book & Quill and broadcast messages on a frequency. Other players can receive those messages using a tuned Recovery Compass or a speaker block placed anywhere in the world.
+A physical radio broadcasting system for Paper 1.21+. Players build tower structures that read from a Book & Quill and broadcast messages on a configurable frequency. Other players receive those messages with a tuned Recovery Compass or a speaker block placed anywhere in the world. Towers cost resources to activate and fuel to run. Range, broadcast speed, and lines-per-broadcast are each upgraded independently.
 
 ---
 
@@ -8,151 +8,237 @@ A physical radio tower broadcasting system for Paper 1.21. Players build structu
 
 ### Building a Tower
 
-Towers are a 4-block vertical structure. Stack them in this order from the ground up:
+Towers are a 4-block vertical structure. Stack from the ground up:
 
 ```
-Lightning Rod       <- top
+Lightning Rod        ← top
 Chiseled Copper
 Lectern
-Chiseled Copper     <- base (this is what you interact with)
+Chiseled Copper      ← base (this is what you interact with)
 ```
 
-Once built, shift + right-click the base chiseled copper with an empty hand to set a frequency and register the tower. Frequencies are in the format `104.5` and must be between 88.0 and 108.0 MHz.
+Any oxidation state of chiseled copper works for both copper positions. The structure must be exact — no gaps, no substitutions.
 
-After that, shift + right-clicking the base copper opens the tower management GUI where you handle everything else.
+Once built, right-click the base chiseled copper to open the activation screen. You will be asked to pay a one-time activation cost (**16 Ender Eyes** by default). After paying, you configure the tower through the management GUI.
+
+> Axes and honeycombs still work normally on tower copper — scraping and waxing pass through to vanilla.
 
 ### Writing Your Broadcast
 
-Write a Book & Quill and place it in the Lectern. Each page becomes one broadcast message. The tower cycles through pages sequentially and loops back to the start. How many lines of each page get broadcast depends on your tower's upgrade tier — lower tiers only send the first line or two, higher tiers send more.
+Write a Book & Quill and place it in the Lectern. The tower treats the entire book as one continuous stream — all pages are flattened together and blank lines are ignored. Each broadcast cycle reads the next N lines (where N depends on your broadcast line tier) and advances the cursor. When it reaches the end it wraps back to the beginning.
 
-Keep pages short. Broadcasts show up in players' chat, so walls of text aren't ideal.
+If you change the number of broadcast lines or swap in a new book, the cursor resets to line 1 on the next cycle.
+
+**Tips:**
+- Write in multiples of your lines-per-broadcast setting for clean, gap-free cycles. A tower broadcasting 3 lines reads 1–3, then 4–6, then 7–9, then loops.
+- Long lines show as-is in chat. Keep lines short for readability.
+- Broadcasts are always delivered in book order, one window at a time — no randomness.
 
 ### Fuel
 
-Towers need fuel to broadcast. You add it through the GUI. Different fuels last different amounts of time:
+Towers need fuel to broadcast. Add it through the tower GUI. Fuel counts down by real time, not server uptime — a tower running out of fuel while the server is offline picks up from the correct timestamp when the server restarts.
 
 | Fuel | Duration |
 |------|----------|
-| Coal | 10 minutes |
-| Charcoal | 10 minutes |
-| Blaze Rod | 30 minutes |
-| Lava Bucket | 2 hours |
+| Coal | 1 minute |
+| Charcoal | 1 minute 20 seconds |
+| Magma Block | 1 minute 30 seconds |
+| Blaze Rod | 20 minutes |
 
-A tower with no fuel stops broadcasting but keeps all its settings.
+You can add multiple items at once. Shift-clicking in the fuel GUI adds your entire stack.
 
-### Range and Upgrades
+A tower with no fuel stops broadcasting but keeps all settings, book content, and upgrades intact.
 
-All towers start with a 500-block range. You upgrade through the GUI by spending materials. Upgrades are sequential — you can't skip tiers.
+### Range Upgrades
 
-| Tier | Cost | Range | Broadcast Lines |
-|------|------|-------|-----------------|
-| Basic | free | 500 blocks | 1 |
-| Iron | 3x Iron Block | 1,000 blocks | 2 |
-| Gold | 5x Gold Block | 2,500 blocks | 3 |
-| Diamond | 7x Diamond Block | 5,000 blocks | 4 |
-| Netherite | 9x Netherite Block | 10,000 blocks | 5 |
-| Emerald | 12x Emerald Block | 20,000 blocks | 6 |
+All towers start with a 500-block range. Upgrades are purchased through the tower GUI and must be purchased sequentially — you cannot skip tiers.
+
+| Tier | Material | Cost | Range |
+|------|----------|------|-------|
+| 1 | — | Free | 500 blocks |
+| 2 | Ender Eye | 20 | 1,000 blocks |
+| 3 | Iron Block | 96 | 2,500 blocks |
+| 4 | Iron Block | 192 | 5,000 blocks |
+| 5 | Diamond Block | 16 | 10,000 blocks |
+| 6 | Emerald Block | 24 | 20,000 blocks |
+
+### Broadcast Line Upgrades
+
+How many book lines are sent per broadcast cycle is upgraded separately from range.
+
+| Level | Material | Cost | Lines per Broadcast |
+|-------|----------|------|---------------------|
+| 1 | — | Free | 1 |
+| 2 | Lapis Block | 64 | 2 |
+| 3 | Lapis Block | 128 | 3 |
+| 4 | Lapis Block | 192 | 4 |
+| 5 | Lapis Block | 256 | 5 |
+| 6 | Emerald Block | 12 | 6 |
+
+Within your unlocked maximum you can also choose to send fewer lines per cycle using the +/− controls in the GUI. Useful for shorter announcements that you want to loop faster.
+
+### Broadcast Interval Upgrades
+
+How frequently your tower broadcasts is also upgradeable. The interval is in seconds and can be set anywhere from your unlocked minimum up to 300 seconds.
+
+| Tier | Material | Cost | Fastest Interval |
+|------|----------|------|------------------|
+| 1 | — | Free | 60 seconds |
+| 2 | Gold Block | 64 | 45 seconds |
+| 3 | Gold Block | 96 | 30 seconds |
+| 4 | Ender Eye | 32 | 20 seconds |
+| 5 | Ender Eye | 48 | 15 seconds |
+| 6 | Ender Eye | 64 | 10 seconds |
+| 7 | Emerald Block | 12 | 5 seconds |
 
 ### Jingles
 
-You can pick a jingle that plays before each broadcast for players holding a tuned receiver. Set it in the tower GUI. It's optional.
+A jingle is a short sound that plays for nearby players with a tuned receiver at the start of each broadcast. Select one in the tower GUI. The current options are:
 
-### Oxidation and Garbling
+| Name | Sound |
+|------|-------|
+| The Alert | Bell |
+| The Tech | Beacon activate |
+| The Magic | Amethyst chime |
+| The Classic | Note block pling |
+| The Retro | XP orb pickup |
+| The Heavy | Anvil land |
+| The Victory | Level up |
 
-Tower copper oxidizes very slowly over time (much slower than vanilla — about 2% of the normal rate by default). As it oxidizes, the signal gets garbled. Scrape it with an axe to reset it.
+### Oxidation and Signal Quality
 
-| State | Garble Amount |
-|-------|--------------|
-| Unaffected | 0% |
-| Exposed | 10% |
-| Weathered | 30% |
-| Oxidized | 100% (`### #### ####`) |
+Tower copper oxidizes very slowly over time (roughly 2% of vanilla speed by default). As it oxidizes, the broadcast signal gets garbled.
+
+| Copper State | Signal Garble |
+|--------------|--------------|
+| Unaffected (fresh) | None |
+| Exposed | 10% of characters garbled |
+| Weathered | 30% garbled |
+| Oxidized | 100% — entire message becomes `#### ## ####` |
+
+Scrape the base copper with an axe to reset oxidation. Waxing it with a honeycomb locks it at the current state permanently.
+
+Multiple towers on the same frequency within range of a receiver also add garble on top of oxidation. Each competing tower stacks an additional 10% (configurable), capped at 90%.
+
+### Voice Broadcasting (SimpleVoiceChat)
+
+If the server has SimpleVoiceChat installed, each tower has a **Voice Mode** toggle in the GUI. When enabled, players within the tower's range can transmit voice audio on that tower's frequency — heard by any player with a receiver tuned to the matching frequency, also within range.
+
+Voice mode is independent of fuel and book content. A tower can broadcast text, voice, both, or neither.
 
 ### Receiving Broadcasts
 
 **Handheld receiver (Recovery Compass)**
 
-Right-click a Recovery Compass to tune it. You'll type a frequency in chat. Once tuned, hold it in your main hand or off-hand and broadcasts from towers on that frequency will appear in your chat, as long as you're within range of the tower.
+Right-click a Recovery Compass to tune it. You will be prompted to type a frequency in chat (format: `104.50`, range: `88.00`–`108.00`). Once tuned, hold it in your hand or hotbar — broadcasts from any tower on that frequency within range will appear in your chat, preceded by the tower's jingle sound.
+
+After tuning, the compass also tells you which active towers on that frequency are currently within range and their coordinates, so you know what you can receive.
 
 **Speaker blocks**
 
-Place any copper block on the ground and a Decorated Pot on top. Right-click the pot and type a frequency to tune it. When a tower on that frequency broadcasts and you're nearby, a hologram text display appears above the speaker for 5 seconds.
+Build a speaker by placing any copper block on the ground with a Decorated Pot on top. Right-click the pot. The first time you activate a speaker it costs **8 Iron Blocks**. After paying, type a frequency in chat to tune it.
 
-Speakers only work when their chunk is loaded. 
+When a tower on the matching frequency broadcasts and the speaker is within range, a floating text display appears above the pot showing the message for 5 seconds. Only one hologram is shown at a time — if a new broadcast arrives before the previous one expires, it replaces it immediately.
+
+Re-tuning an existing speaker to a different frequency is always free — just right-click the pot again.
+
+Speakers only produce holograms when their chunk is loaded.
+
+### Structure Resilience
+
+Towers and speakers are designed to survive partial damage.
+
+**Towers** — the base chiseled copper is the anchor:
+- Breaking the base copper **destroys** the tower registration and all its data.
+- Breaking the lectern, top copper, or lightning rod **damages** the tower (broadcasting stops). The registration and all upgrades/settings are kept.
+- Placing the missing blocks back **restores** the tower automatically — no interaction needed, no cost. Broadcasting resumes on the next cycle.
+
+**Speakers** — the copper block is the anchor:
+- Breaking the copper block **destroys** the speaker registration.
+- Breaking the pot **disables** the speaker (no holograms appear) but the registration is kept.
+- Placing the pot back **restores** it automatically. No re-activation cost.
 
 ### Reinforcement and Access
 
-If a tower is reinforced to a NameLayer group via Citadel, only members of that group (with the `USE_RADIO` permission) can open the GUI or tune speakers near it. Unreinforced towers are open to anyone.
+If a tower or speaker copper block is reinforced to a NameLayer group via Citadel, only members of that group with the `USE_RADIO` permission can open the tower GUI or activate speakers near it. Members and above have this permission by default. Unreinforced towers and speakers are accessible to anyone.
 
 ---
 
-## Admin and Dev Reference
+## Admin Reference
 
-### Commands and Permissions
+### Commands
 
 | Command | Permission | Description |
 |---------|------------|-------------|
-| `/shortwave clearholograms` | `shortwave.admin` (op default) | Removes all stuck speaker holograms across all loaded worlds |
+| `/shortwave clearholograms` | `shortwave.admin` | Removes all stuck speaker holograms across all loaded worlds |
 
-The hologram cleanup also runs automatically 1 tick after the plugin enables to clear any leftover displays from a previous session.
+Hologram cleanup also runs automatically 1 tick after the plugin enables to clear any leftover displays from a previous session.
 
 ### Configuration
 
-`config.yml` covers everything: broadcast interval, frequency range and decimal format, fuel items and durations, receiver item type, range upgrade tiers, jingle sounds, oxidation cancel chance, GUI titles, and the auto-save interval. Everything is commented in the file.
+All values are in `config.yml`. Every field is commented. Key non-obvious settings:
 
-A few non-obvious ones:
-
-- `tower-oxidation-cancel-chance` — probability (0.0–1.0) that a natural oxidation tick on tower copper is suppressed. Default `0.98` means towers oxidize at roughly 2% of vanilla speed.
-- `broadcast-lines` on each tier — how many lines of a book page get included in the broadcast. Hard-capped at 6 regardless of config.
-- `auto-save-interval-ticks` — how often the tower and speaker data is auto-saved to disk. Default 6000 ticks (5 minutes). Saves also happen immediately on any state change.
+- **`default-tower-range`** — range for new towers before any upgrades are purchased.
+- **`interference-garble-per-tower`** — additional garble percentage each competing tower on the same frequency adds, stacked and capped at 90%.
+- **`frequency.decimal-places`** — `1` gives format `104.5`, `2` gives `104.53`. Changing this after towers are registered will break existing tuned receivers (frequency strings won't match).
+- **`tower-oxidation-cancel-chance`** — probability (0.0–1.0) that a natural oxidation tick on tower copper is suppressed. Default `0.98` = ~2% of vanilla oxidation speed.
+- **`fuel.duration-seconds`** — real-time seconds, not ticks. Fuel runs down by wall clock whether the server is on or not.
+- **`auto-save-interval-ticks`** — periodic save cadence. Data is also saved immediately on any state change (fuel added, upgrade purchased, frequency changed, etc.).
 
 ### Data Persistence
 
-Tower data is saved to `plugins/Shortwave/towers.json` and speaker tuning is saved to `plugins/Shortwave/speakers.json`. Both use Gson and follow the same structure. Towers save: location, frequency, fuel end timestamp, current page index, jingle, range, cached book pages, and cached oxidation level. Speakers save: location and tuned frequency.
+| File | Contents |
+|------|----------|
+| `plugins/Shortwave/towers.json` | All tower data |
+| `plugins/Shortwave/speakers.json` | Speaker locations and tuned frequencies |
 
-Fuel uses a Unix timestamp (`fuelEndTime = System.currentTimeMillis() + duration`), so it ticks down correctly whether the server is running or not.
+**Tower data saved:** location, frequency, fuel end timestamp (Unix ms), current book cursor position, jingle, range, broadcast line tier and selected value, broadcast interval tier and selected value, cached book pages, cached oxidation level, voice mode state.
 
-### Code Structure
+**Speaker data saved:** location, tuned frequency.
 
-```
-net.edenciv.shortwave/
-├── ShortwavePlugin.java          main plugin class, command handler, hologram cleanup
-├── models/
-│   └── RadioTower.java           tower data model, holds all cached state
-├── managers/
-│   ├── TowerManager.java         tower registry and JSON persistence
-│   ├── SpeakerManager.java       speaker registry and JSON persistence
-│   ├── ConfigManager.java        typed config access with result caching
-│   └── GUIManager.java           all tower GUI screens (CivModCore ClickableInventory)
-├── listeners/
-│   ├── InteractionListener.java  right-click handling, chat input, block breaks
-│   └── OxidationListener.java    BlockFadeEvent — updates cached oxidation on tower copper
-├── tasks/
-│   └── BroadcastTask.java        BukkitRunnable that fires every broadcast interval
-└── utils/
-    └── MessageUtils.java         MiniMessage parse helper
-```
+Fuel uses a Unix millisecond timestamp (`System.currentTimeMillis() + duration`) so it drains correctly while the server is offline.
+
+The broadcast cursor (`currentPage`) is saved to disk. If the server restarts mid-cycle, the next cycle picks up at the saved line rather than restarting from line 1 — unless the book or line count changed, in which case it resets to 1.
 
 ### Caching Architecture
 
 `RadioTower` holds three cached values that the broadcast task reads without touching any blocks:
 
-- `cachedPages` — the book pages, updated when a book is placed in the lectern and on GUI open. Saved to disk so it survives restarts.
-- `cachedOxidation` — the copper's oxidation level, updated by `OxidationListener` when a fade event goes through, and refreshed on GUI open. Saved to disk.
-- `structureIntact` — boolean, defaults to `true` on load. Set to `false` when any of the four structure blocks are broken via `BlockBreakEvent`. Refreshed to the real block state when a player opens the tower GUI.
+- **`cachedPages`** — book pages, updated when a player places a book in the lectern (via `InteractionListener`) and refreshed on GUI open. Saved to disk so it survives restarts without block access.
+- **`cachedOxidation`** — copper oxidation level, updated by `OxidationListener` on `BlockFadeEvent` and refreshed on GUI open. Saved to disk.
+- **`structureIntact`** — defaults to `true` on load. Set to `false` when any non-anchor structure block breaks. Re-validated against actual block state when a player places blocks back (via `BlockPlaceEvent`) or opens the GUI.
 
-This means `BroadcastTask` does zero block reads. Towers broadcast correctly even when their chunk isn't loaded, since all the data it needs is in the model. Fuel also works for unloaded towers since it's timestamp-based.
+`BroadcastTask` does zero block reads. Towers broadcast correctly even when their chunk is unloaded since all required data is in the model. Speakers intentionally skip unloaded chunks — `SpeakerManager.getLoadedSpeakersOnFrequency()` checks `world.isChunkLoaded()` before including a speaker.
 
-Speakers work the opposite way — they intentionally only fire when their chunk is loaded. `SpeakerManager.getLoadedSpeakersOnFrequency()` checks `world.isChunkLoaded()` and skips anything unloaded.
+### Code Structure
 
-### GUI
-
-Uses CivModCore's `ClickableInventory` / `LClickable` / `DecorationStack` framework. Tower closures capture the `RadioTower` reference directly so no metadata lookup is needed between screens. The only player metadata used is `shortwave_pending_frequency` for the chat-based frequency change flow (since the GUI has to close before the player types).
+```
+world.edenmc.shortwave/
+├── ShortwavePlugin.java              plugin entry point, command handler, hologram cleanup
+├── models/
+│   └── RadioTower.java               tower data model and all cached state
+├── managers/
+│   ├── TowerManager.java             tower registry and JSON persistence
+│   ├── SpeakerManager.java           speaker registry and JSON persistence
+│   ├── ConfigManager.java            typed config access
+│   └── GUIManager.java               all GUI screens (CivModCore ClickableInventory)
+├── listeners/
+│   ├── InteractionListener.java      right-click, chat input, block break/place
+│   └── OxidationListener.java        BlockFadeEvent — updates cached oxidation on tower copper
+├── tasks/
+│   ├── BroadcastTask.java            BukkitRunnable firing every second (per-tower intervals apply)
+│   └── ParticleTask.java             visual indicators for towers and speakers (SVC only)
+└── voice/
+    └── VoiceManager.java             SimpleVoiceChat integration (soft dependency)
+```
 
 ### Dependencies
 
-- **CivModCore** — GUI framework, required
-- **Citadel** — reinforcement access checks, required
-- **NameLayer** — group permission type registration (`USE_RADIO`), required
+| Dependency | Required | Purpose |
+|------------|----------|---------|
+| CivModCore | Yes | GUI framework (`ClickableInventory`) |
+| Citadel | Yes | Reinforcement access checks |
+| NameLayer | Yes | `USE_RADIO` permission type registration |
+| SimpleVoiceChat | No | Voice relay between tower transmitters and receivers |
 
-Built with Gradle (`build.gradle.kts`). Follows the same structure as other Eden plugins — `compileOnly(project(":plugins:civmodcore-paper"))` etc.
+Built with Gradle (`build.gradle.kts`) following the standard EdenMC plugin structure.

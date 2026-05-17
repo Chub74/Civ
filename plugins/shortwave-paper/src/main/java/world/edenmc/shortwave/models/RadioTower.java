@@ -171,7 +171,11 @@ public class RadioTower {
     }
 
     public void setBroadcastLinesSelected(int lines) {
-        this.broadcastLinesSelected = Math.max(1, Math.min(lines, broadcastLinesUnlocked));
+        int clamped = Math.max(1, Math.min(lines, broadcastLinesUnlocked));
+        if (clamped != this.broadcastLinesSelected) {
+            this.broadcastLinesSelected = clamped;
+            this.currentPage = 0;
+        }
     }
 
     public int getBroadcastIntervalUnlocked() {
@@ -291,10 +295,15 @@ public class RadioTower {
      */
     public List<String> refreshBookPages() {
         ItemStack book = getBook();
+        List<String> fresh;
         if (book == null || !book.hasItemMeta() || !(book.getItemMeta() instanceof BookMeta meta)) {
-            cachedPages = new ArrayList<>();
+            fresh = new ArrayList<>();
         } else {
-            cachedPages = new ArrayList<>(meta.getPages());
+            fresh = new ArrayList<>(meta.getPages());
+        }
+        if (!fresh.equals(cachedPages)) {
+            cachedPages = fresh;
+            currentPage = 0;
         }
         return cachedPages;
     }
