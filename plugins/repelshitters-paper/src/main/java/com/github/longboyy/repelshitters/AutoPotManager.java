@@ -56,7 +56,7 @@ public class AutoPotManager {
     public void handleAutoPot(EntityDamageByEntityEvent event){
         if(!(event.getEntity() instanceof  Player player)) return;
         //Player player = (Player) event.getEntity();
-        double newHealth = player.getHealth() - event.getDamage();
+        double newHealth = player.getHealth() - event.getFinalDamage();
         if(!isAutopotEnabled(player) || newHealth > getAutopotThreshold(player)) return;
 
         ItemMap playerInvMap = new ItemMap(player.getInventory());
