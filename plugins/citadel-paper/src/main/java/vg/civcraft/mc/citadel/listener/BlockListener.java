@@ -1,10 +1,8 @@
 package vg.civcraft.mc.citadel.listener;
 
 import com.destroystokyo.paper.MaterialTags;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,7 +17,6 @@ import org.bukkit.block.data.Brushable;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Comparator;
-import org.bukkit.block.data.type.Dispenser;
 import org.bukkit.block.data.type.Lectern;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -31,7 +28,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
-import org.bukkit.event.block.BlockDispenseEvent;
 import org.bukkit.event.block.BlockFertilizeEvent;
 import org.bukkit.event.block.BlockFormEvent;
 import org.bukkit.event.block.BlockFromToEvent;
@@ -55,13 +51,10 @@ import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.MaterialUtils;
 import vg.civcraft.mc.civmodcore.utilities.DoubleInteractFixer;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
-import vg.civcraft.mc.namelayer.group.Group;
 
 public class BlockListener implements Listener {
 
     private static final Material matfire = Material.FIRE;
-    private final Map<Block, Block> mossSpreadingDispensers = new HashMap<>();
-
     private DoubleInteractFixer interactFixer;
 
     public BlockListener(Citadel plugin) {
@@ -683,48 +676,16 @@ public class BlockListener implements Listener {
         CitadelUtility.sendAndLog(clicker, ChatColor.RED, "You cannot modify that lectern.", lecternLocation);
     }
 
-    @EventHandler(ignoreCancelled = true)
+    // prevent moss spreading to reinforced blocks
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onMossSpread(BlockFertilizeEvent event) {
-        Player player = event.getPlayer();
         Iterator<BlockState> iterator = event.getBlocks().iterator();
-        Block dispenser = mossSpreadingDispensers.remove(event.getBlock());
-        Reinforcement dispenserRein = dispenser == null ? null
-            : Citadel.getInstance()
-            .getReinforcementManager()
-            .getReinforcement(dispenser);
-        Group dispenserGroup = dispenserRein == null ? null :
-            dispenserRein.getGroup();
         while (iterator.hasNext()) {
             BlockState block = iterator.next();
-            Reinforcement reinforcement = Citadel.getInstance()
-                .getReinforcementManager()
-                .getReinforcement(block.getBlock());
-            if (reinforcement == null) {
-                continue;
+            if (ReinforcementLogic.getReinforcementProtecting(block.getBlock()) != null) {
+                iterator.remove();
             }
-            if (player != null && reinforcement.hasPermission(player, CitadelPermissionHandler.getCrops())) {
-                continue;
-            }
-            if (dispenserGroup != null && dispenserGroup == reinforcement.getGroup()) {
-                continue;
-            }
-            iterator.remove();
         }
-    }
-
-    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
-    public void onDispenserGrowMoss(BlockDispenseEvent event) {
-        Block dispenserBlock = event.getBlock();
-        ItemStack bonemeal = event.getItem();
-        Dispenser dispenser = (Dispenser) event.getBlock().getBlockData();
-        if (bonemeal.getType() != Material.BONE_MEAL) {
-            return;
-        }
-        Block moss = dispenserBlock.getRelative(dispenser.getFacing());
-        if (moss.getType() != Material.MOSS_BLOCK) {
-            return;
-        }
-        mossSpreadingDispensers.put(moss, dispenserBlock);
     }
 
     @EventHandler(ignoreCancelled = true)

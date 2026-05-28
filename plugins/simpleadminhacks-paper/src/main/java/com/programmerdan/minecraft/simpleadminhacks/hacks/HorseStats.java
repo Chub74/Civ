@@ -46,7 +46,7 @@ public class HorseStats extends SimpleHack<HorseStatsConfig> implements Listener
                 ChatColor.YELLOW,
                 attrHealth.getBaseValue(),
                 attrSpeed.getBaseValue() * INTERNAL_TO_METRES_PER_SECOND,
-                jumpHeightInBlocks(horse.getJumpStrength())));
+                jumpHeightInBlocks(horse.getAttribute(Attribute.JUMP_STRENGTH).getValue())));
             event.setCancelled(true);
         } else if (entity instanceof Strider) {
             Strider strider = (Strider) entity;

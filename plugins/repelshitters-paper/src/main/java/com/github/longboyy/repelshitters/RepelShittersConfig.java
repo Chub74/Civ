@@ -2,12 +2,9 @@ package com.github.longboyy.repelshitters;
 
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.MemoryConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.plugin.Plugin;
 import vg.civcraft.mc.civmodcore.config.ConfigHelper;
 import vg.civcraft.mc.civmodcore.config.ConfigParser;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -21,6 +18,14 @@ public class RepelShittersConfig extends ConfigParser {
     private double ghastBlocksPerSecond;
     private double ghastMaxHealth;
     private int ghastConfigHash;
+
+    // Bastion interaction config
+    private String cityBastionName;
+    private String claimsBastionName;
+    private int cityAltitudeCap;
+    private double citySpeedMultiplier;
+    private double repelStrength;
+    private boolean requireMaturity;
 
     public RepelShittersConfig(Plugin plugin) {
         super(plugin);
@@ -50,6 +55,30 @@ public class RepelShittersConfig extends ConfigParser {
         return damageConfig;
     }
 
+    public String getCityBastionName() {
+        return cityBastionName;
+    }
+
+    public String getClaimsBastionName() {
+        return claimsBastionName;
+    }
+
+    public int getCityAltitudeCap() {
+        return cityAltitudeCap;
+    }
+
+    public double getCitySpeedMultiplier() {
+        return citySpeedMultiplier;
+    }
+
+    public double getRepelStrength() {
+        return repelStrength;
+    }
+
+    public boolean isRequireMaturity() {
+        return requireMaturity;
+    }
+
     @Override
     protected boolean parseInternal(ConfigurationSection config) {
         String timeString = config.getString("inactivityTime", "5m");
@@ -69,6 +98,19 @@ public class RepelShittersConfig extends ConfigParser {
             damageConfigSection = new MemoryConfiguration();
         }
         this.damageConfig = DamageConfig.parse(damageConfigSection);
+
+        // Ghast bastion interaction settings — all read live so /rsreload takes immediate effect
+        var ghastSection = config.getConfigurationSection("ghast");
+        if (ghastSection == null) {
+            ghastSection = new MemoryConfiguration();
+        }
+        this.cityBastionName = ghastSection.getString("cityBastionName", "citybastion");
+        this.claimsBastionName = ghastSection.getString("claimsBastionName", "claimbastion");
+        this.cityAltitudeCap = ghastSection.getInt("cityAltitudeCap", 3);
+        this.citySpeedMultiplier = ghastSection.getDouble("citySpeedMultiplier", 0.3);
+        this.repelStrength = ghastSection.getDouble("repelStrength", 0.45);
+        this.requireMaturity = ghastSection.getBoolean("requireMaturity", false);
+
         return true;
     }
 }

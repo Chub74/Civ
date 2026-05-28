@@ -21,6 +21,7 @@ public class ReloadCommand extends BaseCommand {
     @Description("Reloads the RS plugin")
     @CommandPermission("repelshitters.op")
     public void onReload(Player player) {
+        plugin.reloadConfig(); // force re-read of config.yml from disk before parsing
         if(!plugin.getConfigManager().parse()){
             player.sendMessage(Component.text("Something went wrong whilst reloading the config.").color(TextColor.color(255,0,0)));
         }
