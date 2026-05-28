@@ -1,5 +1,6 @@
 package com.github.igotyou.FactoryMod.recipes;
 
+import com.github.igotyou.FactoryMod.FactoryMod;
 import com.github.igotyou.FactoryMod.factories.Factory;
 import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import com.github.igotyou.FactoryMod.utility.LoggingUtils;
@@ -7,6 +8,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
@@ -249,6 +251,118 @@ public abstract class InputRecipe implements IRecipe {
             }
         }
         return result;
+    }
+
+    protected boolean canFitInOutput(ItemMap outputMap, Inventory outputInv) {
+        ItemStack[] currentContent = outputInv.getStorageContents();
+        ItemStack[] simulatedOutput = new ItemStack[currentContent.length];
+        for (int i = 0; i < currentContent.length; i++) {
+            ItemStack slot = currentContent[i];
+            simulatedOutput[i] = slot == null ? null : slot.clone();
+        }
+
+        for (Entry<ItemStack, Integer> outputEntry : outputMap.getAllItems().entrySet()) {
+            ItemStack outputTemplate = outputEntry.getKey();
+            int remainingAmount = outputEntry.getValue();
+            if (outputTemplate == null || outputTemplate.isEmpty() || remainingAmount <= 0) {
+                continue;
+            }
+
+            int maxStackSize = Math.max(1, outputTemplate.getMaxStackSize());
+            for (int i = 0; i < simulatedOutput.length && remainingAmount > 0; i++) {
+                ItemStack existingStack = simulatedOutput[i];
+                if (existingStack == null || existingStack.isEmpty() || !existingStack.isSimilar(outputTemplate)) {
+                    continue;
+                }
+                int existingMaxStackSize = Math.max(1, existingStack.getMaxStackSize());
+                int freeSpace = Math.max(0, existingMaxStackSize - existingStack.getAmount());
+                if (freeSpace <= 0) {
+                    continue;
+                }
+                int movedAmount = Math.min(remainingAmount, freeSpace);
+                existingStack.setAmount(existingStack.getAmount() + movedAmount);
+                remainingAmount -= movedAmount;
+            }
+
+            for (int i = 0; i < simulatedOutput.length && remainingAmount > 0; i++) {
+                ItemStack existingStack = simulatedOutput[i];
+                if (existingStack != null && !existingStack.isEmpty()) {
+                    continue;
+                }
+                int movedAmount = Math.min(remainingAmount, maxStackSize);
+                ItemStack toInsert = outputTemplate.clone();
+                toInsert.setAmount(movedAmount);
+                simulatedOutput[i] = toInsert;
+                remainingAmount -= movedAmount;
+            }
+
+            if (remainingAmount > 0) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected boolean addOutputToInventorySafely(ItemMap outputMap, Inventory outputInv, List<ItemStack> insertedOutput) {
+        for (Entry<ItemStack, Integer> outputEntry : outputMap.getAllItems().entrySet()) {
+            ItemStack outputTemplate = outputEntry.getKey();
+            int remainingAmount = outputEntry.getValue();
+            if (outputTemplate == null || outputTemplate.isEmpty() || remainingAmount <= 0) {
+                continue;
+            }
+
+            int maxStackSize = Math.max(1, outputTemplate.getMaxStackSize());
+            while (remainingAmount > 0) {
+                int movedAmount = Math.min(remainingAmount, maxStackSize);
+                ItemStack toInsert = outputTemplate.clone();
+                toInsert.setAmount(movedAmount);
+                Map<Integer, ItemStack> overflow = outputInv.addItem(toInsert);
+                int overflowAmount = 0;
+                for (ItemStack overflowStack : overflow.values()) {
+                    overflowAmount += overflowStack.getAmount();
+                }
+                int insertedAmount = movedAmount - overflowAmount;
+                if (insertedAmount > 0) {
+                    ItemStack insertedStack = outputTemplate.clone();
+                    insertedStack.setAmount(insertedAmount);
+                    insertedOutput.add(insertedStack);
+                }
+                if (!overflow.isEmpty()) {
+                    return false;
+                }
+                remainingAmount -= movedAmount;
+            }
+        }
+        return true;
+    }
+
+    protected void rollbackOutput(Inventory outputInv, List<ItemStack> insertedOutput) {
+        for (ItemStack outputStack : insertedOutput) {
+            outputInv.removeItem(outputStack);
+        }
+    }
+
+    protected void restoreInput(ItemMap removedInput, Inventory inputInv, FurnCraftChestFactory fccf) {
+        for (Entry<ItemStack, Integer> removedEntry : removedInput.getAllItems().entrySet()) {
+            ItemStack removedTemplate = removedEntry.getKey();
+            int remainingAmount = removedEntry.getValue();
+            if (removedTemplate == null || removedTemplate.isEmpty() || remainingAmount <= 0) {
+                continue;
+            }
+
+            int maxStackSize = Math.max(1, removedTemplate.getMaxStackSize());
+            while (remainingAmount > 0) {
+                int movedAmount = Math.min(remainingAmount, maxStackSize);
+                ItemStack removedStack = removedTemplate.clone();
+                removedStack.setAmount(movedAmount);
+                Map<Integer, ItemStack> overflow = inputInv.addItem(removedStack);
+                if (!overflow.isEmpty()) {
+                    FactoryMod.getInstance().warning("Failed to fully restore input after recipe rollback :(," + fccf.getLogData());
+                    return;
+                }
+                remainingAmount -= movedAmount;
+            }
+        }
     }
 
 }
