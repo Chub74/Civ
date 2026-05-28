@@ -2,7 +2,6 @@ package com.github.longboyy.repelshitters;
 
 import com.github.longboyy.repelshitters.commands.ReloadCommand;
 import com.github.longboyy.repelshitters.listeners.CitadelListener;
-import com.github.longboyy.repelshitters.listeners.ExilePearlListener;
 import com.github.longboyy.repelshitters.listeners.MobListener;
 import com.github.longboyy.repelshitters.listeners.PlayerListener;
 import com.github.longboyy.repelshitters.listeners.GhastListener;
@@ -13,7 +12,7 @@ import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.commands.CommandManager;
 import java.util.Random;
 
-public class RepelShitters extends ACivMod{
+public class RepelShitters extends ACivMod {
 
     public static final Random RANDOM = new Random();
     private final RepelShittersConfig config;
@@ -24,7 +23,6 @@ public class RepelShitters extends ACivMod{
     private final CitadelListener citadelListener;
     private final GhastListener ghastListener;
     private final MobListener mobListener;
-    //private final ExilePearlListener exilePearlListener;
     private CommandManager commandManager;
 
     public RepelShitters() {
@@ -36,49 +34,47 @@ public class RepelShitters extends ACivMod{
         this.citadelListener = new CitadelListener(this);
         this.ghastListener = new GhastListener(this);
         this.mobListener = new MobListener();
-        //this.exilePearlListener = new ExilePearlListener(this);
     }
 
     @Override
     public void onEnable() {
         super.onEnable();
-        if(!this.config.parse()){
+        if (!this.config.parse()) {
             this.disable();
+            return;
         }
         this.autoPotManager.registerSettings();
-        //this.happyGhastManager.startDamageTask();
+        this.happyGhastManager.startSuppressionTask();
         this.registerListener(this.playerListener);
         this.registerListener(this.citadelListener);
         this.registerListener(this.ghastListener);
         this.registerListener(this.mobListener);
-        //this.registerListener(this.exilePearlListener);
         this.commandManager = new CommandManager(this);
         this.commandManager.init();
         this.commandManager.registerCommand(new ReloadCommand(this));
-        //this.registerListener(this);
     }
 
     @Override
     public void onDisable() {
         super.onDisable();
+        this.happyGhastManager.stopSuppressionTask();
         this.commandManager.unregisterCommands();
         HandlerList.unregisterAll(this);
-        //this.happyGhastManager.stopDamageTask();
     }
 
-    public RepelShittersConfig getConfigManager(){
+    public RepelShittersConfig getConfigManager() {
         return this.config;
     }
 
-    public ActivityManager getActivityManager(){
+    public ActivityManager getActivityManager() {
         return this.activityManager;
     }
 
-    public AutoPotManager getAutoPotManager(){
+    public AutoPotManager getAutoPotManager() {
         return this.autoPotManager;
     }
 
-    public HappyGhastManager getHappyGhastManager(){
+    public HappyGhastManager getHappyGhastManager() {
         return this.happyGhastManager;
     }
 
@@ -90,7 +86,7 @@ public class RepelShitters extends ACivMod{
         float joinTimeProgress = Math.min(1.0f, (float) playerJoinTime / joinTimeThreshold);
 
         double totalWeight = gameTimeWeighting + joinTimeWeighting;
-        double weightedProgress = ((gameTimeProgress * gameTimeWeighting) + (joinTimeProgress * joinTimeWeighting))/totalWeight;
+        double weightedProgress = ((gameTimeProgress * gameTimeWeighting) + (joinTimeProgress * joinTimeWeighting)) / totalWeight;
 
         return (float) (initialScalar - (initialScalar - 1.0f) * weightedProgress);
     }

@@ -7,8 +7,21 @@ citadel:
   # How old does a player have to be to not be affected by repel shitters
   gameTimeThreshold: 12h
   # How much weight should we give the game time
-  gameTimeWeighting: 0.5..
+  gameTimeWeighting: 0.5
   # How long ago did the player first join the server to not be affected by repel shitters
   firstJoinThreshold: 48h
   # How much weight should we give the first join time
   firstJoinWeighting: 0.5
+ghast:
+  # The bastion type name (from bastionconfig.yml) that suppresses ghasts (altitude cap + speed nerf)
+  cityBastionName: "citybastion"
+  # The bastion type name (from bastionconfig.yml) that hard-repels ghasts (force field)
+  claimsBastionName: "claimbastion"
+  # How many blocks above the highest solid block below the ghast it can hover in a city bastion
+  cityAltitudeCap: 3
+  # Fraction of normal flying speed inside a city bastion (0.3 = 30% of normal speed)
+  citySpeedMultiplier: 0.3
+  # Velocity magnitude applied when bouncing off a claims bastion (tune to reduce rubberbanding)
+  repelStrength: 0.45
+  # If true, only mature bastions trigger ghast interactions (respects each bastion's warmupTime)
+  requireMaturity: false
