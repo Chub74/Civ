@@ -105,6 +105,7 @@ public class GroupManager {
             NameLayerPlugin.log(Level.INFO, "Group create was cancelled for group: " + group.getName());
             postCreate.setGroup(new Group(group.getName(), group.getOwner(), true, group.getPassword(), -1, System.currentTimeMillis(), group.getGroupColor().toString()));
             Bukkit.getScheduler().runTask(NameLayerPlugin.getInstance(), postCreate);
+            return;
         }
         final String name = event.getGroupName();
         final UUID owner = event.getOwner();
@@ -525,25 +526,10 @@ public class GroupManager {
         Group g = groupsByName.get(group.toLowerCase());
         if (g != null) {
             g.setValid(false);
-            List<Integer> k = g.getGroupIds();
             groupsByName.remove(group.toLowerCase());
             NameLayerPlugin.getBlackList().removeFromCache(g.getName());
-
-            boolean fail = true;
-            // You have a freaking hashmap, use it.
-            for (int j : k) {
-                if (groupsById.remove(j) != null) {
-                    fail = false;
-                }
-            }
-
-            // FALLBACK is hardloop
-            if (fail) { // can't find ID or cache is wrong.
-                for (Group x : groupsById.values()) {
-                    if (x.getName().equals(g.getName())) {
-                        groupsById.remove(x.getGroupId());
-                    }
-                }
+            for (int j : g.getGroupIds()) {
+                groupsById.remove(j);
             }
         } else {
             NameLayerPlugin.getInstance().getLogger().log(Level.INFO, "Invalidate cache by name failed, unable to find the group " + group);
