@@ -463,7 +463,6 @@ public class BastionBlock implements QTBox, Comparable<BastionBlock> {
         return formatter.format(rein.getHealth()) + "/" + formatter.format(rein.getType().getHealth());
     }
 
-    // TODO: Test world-aware comparison
     @Override
     public int compareTo(BastionBlock other) {
         UUID thisWorld = location.getWorld().getUID();
@@ -471,7 +470,7 @@ public class BastionBlock implements QTBox, Comparable<BastionBlock> {
         int thisY = location.getBlockY();
         int thisZ = location.getBlockZ();
 
-        UUID otherWorld = location.getWorld().getUID();
+        UUID otherWorld = other.location.getWorld().getUID();
         int otherX = other.location.getBlockX();
         int otherY = other.location.getBlockY();
         int otherZ = other.location.getBlockZ();
