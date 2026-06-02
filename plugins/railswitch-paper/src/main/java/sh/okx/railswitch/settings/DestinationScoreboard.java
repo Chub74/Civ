@@ -12,6 +12,11 @@ public final class DestinationScoreboard {
 
     private static final String BOARD_KEY = "railSwitchDest";
 
+    // CivScoreBoard truncates the displayed line at 40 chars but caches the full string,
+    // so an over-long line leaves a stale entry that never clears. The "/dest: " label plus
+    // colour codes is 11 chars, leaving 29 for the value.
+    private static final int MAX_DESTINATION_LENGTH = 29;
+
     private final CivScoreBoard board;
 
     public DestinationScoreboard() {
@@ -41,6 +46,9 @@ public final class DestinationScoreboard {
         if (destination == null || destination.isBlank()) {
             return null;
         }
-        return ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + destination;
+        String value = destination.length() > MAX_DESTINATION_LENGTH
+            ? destination.substring(0, MAX_DESTINATION_LENGTH)
+            : destination;
+        return ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + value;
     }
 }

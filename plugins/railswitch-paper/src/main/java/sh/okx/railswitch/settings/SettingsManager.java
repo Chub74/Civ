@@ -38,8 +38,11 @@ public final class SettingsManager {
         // Mirror the destination onto the sidebar scoreboard whenever it changes.
         // setValue() fires listeners BEFORE storing the new value, so use newValue here, not getDestination().
         scoreboard = new DestinationScoreboard();
-        destSetting.registerListener((uuid, setting, oldValue, newValue) ->
-            scoreboard.update(Bukkit.getPlayer(uuid), newValue));
+        destSetting.registerListener((uuid, setting, oldValue, newValue) -> {
+            if (scoreboard != null) {
+                scoreboard.update(Bukkit.getPlayer(uuid), newValue);
+            }
+        });
     }
 
     /**

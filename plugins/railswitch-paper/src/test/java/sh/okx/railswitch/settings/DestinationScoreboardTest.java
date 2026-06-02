@@ -30,9 +30,8 @@ class DestinationScoreboardTest {
     }
 
     @Test
-    void render_longValue_isNotTruncatedHere() {
-        String dest = "A".repeat(60);
-        String line = DestinationScoreboard.render(dest);
-        assertEquals(ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + dest, line);
+    void render_longValue_isCappedToFitScoreboardLine() {
+        String line = DestinationScoreboard.render("A".repeat(60));
+        assertEquals(ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + "A".repeat(29), line);
     }
 }
