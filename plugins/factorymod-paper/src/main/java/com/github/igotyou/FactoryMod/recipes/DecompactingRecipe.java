@@ -1,6 +1,7 @@
 package com.github.igotyou.FactoryMod.recipes;
 
 import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -10,6 +11,7 @@ import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BundleMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
@@ -77,6 +79,12 @@ public class DecompactingRecipe extends InputRecipe {
                         ItemMap toRemove = new ItemMap(removeClone);
                         ItemMap toAdd = new ItemMap();
                         removeCompactLore(removeClone);
+                        // Prevent dupe exploit: wipe items stuffed into a bundle after compaction
+                        if (removeClone.getItemMeta() instanceof BundleMeta) {
+                            BundleMeta bundleMeta = (BundleMeta) removeClone.getItemMeta();
+                            bundleMeta.setItems(new ArrayList<>());
+                            removeClone.setItemMeta(bundleMeta);
+                        }
                         toAdd.addItemAmount(removeClone, CompactingRecipe.getCompactStackSize(removeClone.getType()));
                         if (toAdd.fitsIn(outputInv)) { //fits in chest
                             if (input.removeSafelyFrom(inputInv)) { //remove extra input
