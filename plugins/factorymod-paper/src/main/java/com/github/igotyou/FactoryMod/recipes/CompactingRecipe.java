@@ -181,6 +181,9 @@ public class CompactingRecipe extends InputRecipe {
             is.getItemMeta().getLore().contains(compactedLore))) {
             return false;
         }
+        if (is.getItemMeta() instanceof org.bukkit.inventory.meta.BundleMeta) {
+            return false;
+        }
         return im.getAmount(is) >= getCompactStackSize(is.getType());
     }
 
