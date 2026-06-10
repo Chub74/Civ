@@ -1,0 +1,15 @@
+{
+  "parent": "civadvancements:{{parent}}",
+  "display": {
+    "icon": {"id": "minecraft:oak_sign"},
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "dest_sign": {"trigger": "minecraft:impossible"}
+  }
+}

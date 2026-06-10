@@ -1,0 +1,15 @@
+{
+  "parent": "civadvancements:{{parent}}",
+  "display": {
+    "icon": {"id": "minecraft:leather_boots"},
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "sprint_marathon": {"trigger": "minecraft:impossible"}
+  }
+}

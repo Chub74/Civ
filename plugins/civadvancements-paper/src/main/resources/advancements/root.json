@@ -1,0 +1,18 @@
+{
+  "display": {
+    "icon": {
+      "id": "minecraft:grass_block"
+    },
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "background": "minecraft:gui/advancements/backgrounds/stone",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "root": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "parent": "civadvancements:{{parent}}",
+  "display": {
+    "icon": {"id": "minecraft:bone"},
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "die_10": {"trigger": "minecraft:impossible"}
+  }
+}

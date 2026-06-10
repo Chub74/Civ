@@ -1,0 +1,554 @@
+# CivAdvancements configuration
+# All text fields support MiniMessage color tags: <gold>, <yellow>, <red>, <aqua>, <bold>, etc.
+# Run /civadv reload to apply changes without restarting the server.
+# Changing a 'parent' value and reloading reshapes the advancement tree in-game.
+
+# Welcome message shown to first-time players (~2 seconds after joining)
+welcome:
+  enabled: true
+  title: "<gold><bold>Welcome to Eden!</bold></gold>"
+  subtitle: "<yellow>Press L to open your guide</yellow>"
+  # Each entry is a separate chat line sent after the title
+  messages:
+    - "<gray>[<gold>Eden</gold>]</gray> Reinforce your blocks by holding stone, deepslate, iron ingots, or diamond and typing <yellow>/ctf <group></yellow> — gives blocks hit points so others can't break them easily."
+    - "<gray>[<gold>Eden</gold>]</gray> Chat is <yellow>GLOBAL(!)</yellow> by default. Use <yellow>/g</yellow> or <yellow>/local</yellow> to locally (within 1,000 blocks)."
+    - "<gray>[<gold>Eden</gold>]</gray> Follow the <yellow>Guide</yellow> tab in your Advancements (<yellow>L key</yellow>) to learn more about Eden!"
+
+# Advancement display text and tree layout.
+# - parent: key of the advancement this one branches from (must match another key here, or "root")
+# - citadel_type_name: (reinforcement advancements only) matches the 'name:' field in Citadel's config.yml
+# - factory_name: (factory_create only) matches the factory's name in FactoryMod's config
+# Run /civadv reload after changes to update titles, descriptions, and tree layout.
+advancements:
+  root:
+    title: "Eden Guide"
+    description: "Follow this guide to learn how Eden works."
+
+  joined:
+    parent: "root"
+    title: "New Arrival"
+    description: "You've arrived on Eden — a Civ-style survival server. Check the Guide tab (L key) for a walkthrough."
+
+  # --- Server info ---
+  intro_book:
+    parent: "joined"
+    title: "Reading Material"
+    description: "Ran /introbook to re-read the Eden welcome guide. Misplaced your spawn book? Use /introbook anytime to get it back and review all the starting tips."
+
+  server_wiki:
+    parent: "joined"
+    title: "Know The Rules"
+    description: "Opened the server wiki with /wiki. Eden's wiki covers every plugin, rule, and getting-started guide. Bookmark it — you'll reference it often."
+
+  server_vote:
+    parent: "joined"
+    title: "Support Eden"
+    description: "Used /vote to see Eden's voting sites. Voting is free, takes 30 seconds, and rewards you with Player Essence — a special lored Ender Eye used to keep ExilePearls active. Vote daily!"
+
+  # --- Reinforcement chain ---
+  reinforce_stone:
+    parent: "joined"
+    citadel_type_name: "Stone"
+    title: "First Reinforcement"
+    description: "Reinforced a block with Stone. Reinforcements protect blocks by giving them HP. Attackers must deal that much damage to break through. Use /cto to exit reinforcement mode."
+
+  reinforce_deepslate:
+    parent: "reinforce_stone"
+    citadel_type_name: "Deepslate"
+    title: "Deeper Protection"
+    description: "Reinforced with Deepslate which is a stronger tier than stone. Use /ctf <group> while holding a reinforcement material, then place blocks."
+
+  reinforce_iron:
+    parent: "reinforce_deepslate"
+    citadel_type_name: "Iron"
+    title: "Iron Grip"
+    description: "Reinforced with an iron ingot. Serious protection for doors, chests, and valuables."
+
+  reinforce_diamond:
+    parent: "reinforce_iron"
+    citadel_type_name: "Diamond"
+    title: "Diamond Fortress"
+    description: "Reinforced with Diamond. Maximum protection, use this for your most critical structures."
+
+  # --- Chat chain ---
+  chat_local:
+    parent: "joined"
+    title: "Local Voices"
+    description: "Sent a local chat message. Only players within a 1000 block range can read it. Use /local to stay in local mode."
+
+  chat_global:
+    parent: "chat_local"
+    title: "Going Global"
+    description: "Sent a message in the global '!' channel. Use /global or /g ! to make this your default channel."
+
+  # --- Factory chain ---
+  charcoal:
+    parent: "joined"
+    title: "Fire Starter"
+    description: "You have charcoal! Charcoal is the fuel that powers factories. Keep it stocked in the furnace slot of your factory structure."
+
+  factory_create:
+    parent: "charcoal"
+    factory_name: Dirt Factory
+    title: "Industrial Revolution Part 1"
+    description: "Arrange a chest, crafting table, and furnace in a row, put in only a single piece of dirt then hit/punch the structure with a stick! Load your inputs into the chest, add charcoal to the furnace, then hit the crafting table with a stick to choose your first recipe. Use /fm to browse all factory types."
+
+  factory_activate:
+    parent: "factory_create"
+    title: "Industrial Revolution Part 2"
+    description: "Ran a factory recipe! Hit a factories crafting table with a stick to choose a recipe. Put you inputs into the chest and make sure your furnace has charcoal before hitting it with a stick to run the recipe!"
+
+  # --- HiddenOre ---
+  hidden_ore:
+    parent: "joined"
+    title: "What's In The Stone?"
+    description: "Ore appeared in the stone when you were mining around it! Eden uses HiddenOre, valuable ores hide inside common stone. Keep mining to find them."
+
+  ore_iron:
+    parent: "hidden_ore"
+    ore_material: IRON_ORE
+    title: "The Iron Vein"
+    description: "Uncovered iron ore through HiddenOre! Iron is your most useful early-game material — tool it up and get smelting."
+
+  ore_gold:
+    parent: "ore_iron"
+    ore_material: GOLD_ORE
+    title: "Gold Rush"
+    description: "Found gold ore hiding in the stone! Gold has limited tool use but is valuable for trading and certain crafting recipes."
+
+  ore_diamond:
+    parent: "ore_gold"
+    ore_material: DIAMOND_ORE
+    title: "Diamond in the Rough"
+    description: "Discovered diamond ore through HiddenOre! Diamonds are rare and precious — craft them into the best gear or use them for reinforcements."
+
+  ore_emerald:
+    parent: "ore_diamond"
+    ore_material: EMERALD_ORE
+    hidden: true
+    title: "Verdant Fortune"
+    description: "Found volcanic flux! Used for creating bronze in factories."
+
+  ore_ancient_debris:
+    parent: "ore_emerald"
+    ore_material: ANCIENT_DEBRIS
+    hidden: true
+    title: "Echoes of the Nether"
+    description: "Ancient debris emerged! A rare find."
+
+  # --- Farming chain ---
+  clay_collected:
+    parent: "joined"
+    title: "Potter's Clay"
+    description: "You found clay! Clay is used as fertilizer for crops in RealisticBiomes. Stack it under farmland to make crops above it grow faster. Farming here is biome-dependent and time-intensive. Crops only grow where conditions are right."
+
+  rb_fruitful:
+    parent: "clay_collected"
+    title: "Green Thumb"
+    description: "Planted a crop that will grow here! Use /rb to see growth rates for your current biome. Different regions suit different crops."
+
+  rb_barren:
+    parent: "clay_collected"
+    title: "Wrong Season"
+    description: "That crop won't grow in this biome. Use /rb to check which crops thrive here before wasting seeds — or move your farm to a better region."
+
+  # --- Farming milestones ---
+  harvest_100:
+    parent: "rb_fruitful"
+    title: "First Harvest"
+    description: "Harvested 100 mature crops. A growing food supply is the foundation of any civilization."
+
+  harvest_1000:
+    parent: "harvest_100"
+    title: "Commercial Farmer"
+    description: "1,000 crops harvested. You're feeding more than just yourself now."
+
+  harvest_10000:
+    parent: "harvest_1000"
+    title: "Agricultural Revolution"
+    description: "10,000 crops harvested. The breadbasket of Eden."
+
+  harvest_100k:
+    parent: "harvest_10000"
+    hidden: true
+    title: "Industrial Farmer"
+    description: "100,000 crops harvested. You feed entire cities on the sweat of your labor."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 64
+
+  harvest_1m:
+    parent: "harvest_100k"
+    hidden: true
+    title: "The Granary of Eden"
+    description: "1,000,000 crops harvested. Civilizations rise and fall on harvests like yours."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  # --- ExilePearl ---
+  got_pearled:
+    parent: "joined"
+    title: "Rest In Pepperoni"
+    description: "You've been pearled and exiled. Your soul is trapped inside an ender pearl. Use /ep to see your avalable options. You can be freed by your captor, rescued by friends, or through pearl decay over time."
+
+  pearled_thrice:
+    parent: "got_pearled"
+    hidden: true
+    title: "Frequent Offender"
+    description: "Pearled 3 times. At this point it's a lifestyle."
+
+  # --- Death milestones ---
+  die_10:
+    parent: "got_pearled"
+    title: "Learning Experience"
+    description: "Died 10 times. On Eden, items drop on death. Keep your valuables reinforced and stashed safely."
+
+  die_50:
+    parent: "die_10"
+    title: "Glutton for Punishment"
+    description: "Died 50 times. You're basically a veteran at this point."
+
+  # --- JukeAlert ---
+  snitch_logged:
+    parent: "joined"
+    title: "Eyes Everywhere"
+    description: "Placed a snitch! Reinforce it with your NameLayer group using /ctr — once reinforced, it will log everyone who enters its range. Place them around your base to monitor visitors."
+
+  snitch_noteblock:
+    parent: "snitch_logged"
+    snitch_type_name: "Snitch"
+    title: "Simple Alert"
+    description: "Placed a noteblock snitch. These ping you in chat when someone enters range but keep no logs. Great for low-traffic areas where you just want a quick heads-up."
+
+  snitch_jukebox:
+    parent: "snitch_logged"
+    snitch_type_name: "Logsnitch"
+    title: "Full Surveillance"
+    description: "Placed a Logsnitch (jukebox). These record every action in range — logins, block breaks, block places — and can relay alerts to Discord. Use /jalist to review logs."
+
+  snitch_logs:
+    parent: "snitch_jukebox"
+    title: "Reviewing The Footage"
+    description: "Checked a logsnitch's action logs with /jalist . Logsnitches record who entered range, placed or broke blocks, and more — vital for tracking intruders."
+
+  snitch_mute:
+    parent: "snitch_jukebox"
+    title: "Do Not Disturb"
+    description: "Muted a snitch group's notifications with /jamute <group>. You won't be spammed in chat anymore!"
+
+  # --- ItemExchange ---
+  first_trade:
+    parent: "joined"
+    title: "Open Market"
+    description: "Completed a trade at an ItemExchange shop. Punch a shopchest with an empty hand to check its trades. Then punch it with the payment to complete the trade."
+
+  # --- NameLayer ---
+  namelayer_create:
+    parent: "joined"
+    title: "Founder"
+    description: "Created a NameLayer group! Groups let you control who can access your reinforced blocks. Share your group with trusted players using /nlip."
+
+  namelayer_list:
+    parent: "namelayer_create"
+    title: "Who's In?"
+    description: "Listed your NameLayer groups with /nl. Your groups control who has access to your reinforced blocks. You can have multiple groups for different areas or trust levels."
+
+  namelayer_invite:
+    parent: "namelayer_create"
+    title: "Open Arms"
+    description: "Invited a player to your group. They can now interact with your group's reinforced blocks. Manage permissions carefully — kicked members lose access."
+
+  # --- Bastion ---
+  place_bastion:
+    parent: "joined"
+    title: "Babby's First Bastion"
+    description: "Placed a bastion! Bastions create a field that blocks non-members from placing blocks in the area. Reinforce it with your group to activate it."
+
+  bastion_city:
+    parent: "place_bastion"
+    bastion_type_name: "citybastion"
+    title: "City Planning"
+    description: "Placed a City Bastion — stronger and larger than the starter bastion. Reinforce it with your group and give it time to mature before it reaches full strength."
+
+  bastion_denied:
+    parent: "place_bastion"
+    title: "Trespassing"
+    description: "You were blocked by a bastion field! Someone reinforced their bastion and your group doesn't have access. You'll need to be added to their group or erode the bastion to place blocks here."
+
+  # --- Mining challenges ---
+  mine_stone_1k:
+    parent: "hidden_ore"
+    title: "Stone Age"
+    description: "Mined 1,000 stone. Valuable ores are hiding inside — keep digging."
+
+  mine_stone_10k:
+    parent: "mine_stone_1k"
+    title: "The Excavator"
+    description: "Mined 10,000 stone. You're committed."
+
+  mine_stone_100k:
+    parent: "mine_stone_10k"
+    hidden: true
+    title: "Geoengineer"
+    description: "100,000 stone mined. You have reshaped the earth itself."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 64
+
+  mine_stone_1m:
+    parent: "mine_stone_100k"
+    hidden: true
+    title: "The Mountain Golem"
+    description: "1,000,000 stone mined. You ARE the mountain."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 8
+
+  mine_stone_5m:
+    parent: "mine_stone_1m"
+    hidden: true
+    title: "Geological Survey"
+    description: "5,000,000 stone mined. Entire continents have shifted under your picks."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 8
+
+  mine_stone_10m:
+    parent: "mine_stone_5m"
+    hidden: true
+    title: "Earth Eater"
+    description: "10,000,000 stone mined. The server's bedrock knows your name."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 32
+
+  mine_deepslate_1k:
+    parent: "mine_stone_1k"
+    title: "Down Deep"
+    description: "Mined 1,000 cobbled deepslate. Ore density increases below y=0."
+
+  mine_deepslate_10k:
+    parent: "mine_deepslate_1k"
+    hidden: true
+    title: "Bedrock Dreams"
+    description: "10,000 cobbled deepslate mined. The deep dark has few secrets from you."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 32
+
+  mine_deepslate_100k:
+    parent: "mine_deepslate_10k"
+    hidden: true
+    title: "Deep State"
+    description: "100,000 cobbled deepslate mined. You live below the surface now."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  mine_deepslate_1m:
+    parent: "mine_deepslate_100k"
+    hidden: true
+    title: "The Abyss"
+    description: "1,000,000 cobbled deepslate mined. You have hollowed out the earth itself."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 8
+
+  mine_gravel_1k:
+    parent: "hidden_ore"
+    title: "It Was Always Gravel"
+    description: "Mined 1,000 gravel. It was never diamonds. It was always gravel."
+
+  # --- BreweryX ---
+  brew_cauldron:
+    parent: "joined"
+    title: "Witch's Cauldron"
+    description: "Placed a cauldron — the first step in BreweryX brewing. Fill it with water over fire, add ingredients for the recipe, then seal with a lid to begin fermentation."
+
+  brew_first:
+    parent: "brew_cauldron"
+    title: "Bottoms Up"
+    description: "Drank your first brew! BreweryX adds craftable drinks with custom effects. Quality and potency depend on ingredients, distillation runs, and aging time in a barrel."
+
+  brew_quality:
+    parent: "brew_first"
+    quality_threshold: 7
+    title: "Connoisseur"
+    description: "Drank a quality brew (7+/10). Perfect brews require the right ingredients, correct distillation steps, and proper aging time in the right barrel type."
+
+  # --- Fishing ---
+  first_fish:
+    parent: "joined"
+    title: "Gone Fishin'"
+    description: "Caught a fish! Fishing works anywhere on Eden, but EvenMoreFish adds dozens of custom species with unique names, lore, and effects depending on biome and time of day."
+
+  emf_catch:
+    parent: "first_fish"
+    title: "Something Special"
+    description: "Caught an EvenMoreFish custom fish! These have unique names and lore. Different species appear based on biome, weather, time, and more."
+
+  emf_rare:
+    parent: "emf_catch"
+    title: "Rare Find"
+    description: "Caught a rare fish that broadcasted to the server! Keep fishing — the rarest species are worth the bragging rights."
+
+  emf_legendary:
+    parent: "emf_rare"
+    count: 50
+    title: "Master Angler"
+    description: "Caught 50 EvenMoreFish fish. The waters of Eden hold few secrets from you now."
+
+  emf_catch_250:
+    parent: "emf_legendary"
+    hidden: true
+    title: "Seasoned Fisher"
+    description: "Caught 250 EvenMoreFish fish. You've sampled most of what Eden's waters have to offer."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 8
+
+  emf_catch_1000:
+    parent: "emf_catch_250"
+    hidden: true
+    title: "The Fishmonger"
+    description: "1,000 EvenMoreFish catches. The fish fear your name."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  emf_catch_5000:
+    parent: "emf_catch_1000"
+    hidden: true
+    title: "Ocean Domination"
+    description: "5,000 EvenMoreFish catches. You have industrialized fishing on Eden."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 8
+
+  emf_rare_10:
+    parent: "emf_rare"
+    hidden: true
+    title: "Lucky Lines"
+    description: "Caught 10 rare announced fish. The odds were not in your favor, and yet."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 8
+
+  emf_rare_50:
+    parent: "emf_rare_10"
+    hidden: true
+    title: "Rare Mastery"
+    description: "Caught 50 rare announced fish. You are a legend on the water."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  # --- Rail ---
+  first_rail:
+    parent: "joined"
+    title: "All Aboard"
+    description: "Boarded a minecart! Rail networks connect cities across Eden. Use /dest to see available destinations, or right-click [Switch] signs to manually route your cart."
+
+  copper_rail:
+    parent: "first_rail"
+    title: "Speed Rail"
+    description: "Placed copper under a rail segment! Copper boosts cart speed. Note that copper oxidizes under rails with USAGE, NOT over time!"
+
+  dest_command:
+    parent: "first_rail"
+    title: "Next Stop"
+    description: "Used /dest to set a rail destination. Set a /dest to route your cart automatically to that stop."
+
+  dest_sign:
+    parent: "dest_command"
+    title: "Manual Override"
+    description: "Activated a RailSwitch [Switch] sign! These signs let players set a destination to route their minecarts!"
+
+  # --- Silly / marathon ---
+  sprint_marathon:
+    parent: "joined"
+    title: "Marathon Runner"
+    description: "Sprinted a full marathon (42.195km). You have too much energy."
+
+  # --- Factory milestones ---
+  factory_runs_100:
+    parent: "factory_activate"
+    title: "Factory Hand"
+    description: "Run 100 factory recipes. You're building real production capacity."
+
+  factory_runs_1000:
+    parent: "factory_runs_100"
+    title: "Industrial Empire"
+    description: "1,000 factory runs. The server economy runs on players like you."
+
+  factory_runs_10k:
+    parent: "factory_runs_1000"
+    hidden: true
+    title: "Assembly Line"
+    description: "10,000 factory runs. Your operation never sleeps."
+    reward:
+      items:
+        - material: EXPERIENCE_BOTTLE
+          amount: 16
+
+  factory_runs_100k:
+    parent: "factory_runs_10k"
+    hidden: true
+    title: "The Factory Floor"
+    description: "100,000 factory runs. Entire civilizations have been built on your output."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  # --- Reinforcement milestones ---
+  reinforce_100:
+    parent: "reinforce_iron"
+    title: "Fortified"
+    description: "Reinforced 100 blocks. Your base is starting to feel like a real fortress."
+
+  reinforce_1000:
+    parent: "reinforce_100"
+    title: "Citadel Architect"
+    description: "1,000 blocks reinforced. Nothing short of a siege will breach this."
+
+  reinforce_10k:
+    parent: "reinforce_1000"
+    hidden: true
+    title: "Living Fortress"
+    description: "10,000 blocks reinforced. Your base is a legitimate hard target now."
+
+  reinforce_100k:
+    parent: "reinforce_10k"
+    hidden: true
+    title: "Ironclad"
+    description: "100,000 blocks reinforced. Entire districts protected by your hand."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 4
+
+  reinforce_1m:
+    parent: "reinforce_100k"
+    hidden: true
+    title: "The Eternal Vault"
+    description: "1,000,000 blocks reinforced. You have fortified a nation."
+    reward:
+      items:
+        - material: EMERALD
+          amount: 8

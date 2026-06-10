@@ -1,0 +1,15 @@
+{
+  "parent": "civadvancements:{{parent}}",
+  "display": {
+    "icon": {"id": "minecraft:diamond"},
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "reinforce_100k": {"trigger": "minecraft:impossible"}
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "parent": "civadvancements:{{parent}}",
+  "display": {
+    "icon": {"id": "minecraft:pufferfish"},
+    "title": {"text": "{{title}}"},
+    "description": {"text": "{{description}}"},
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": false,
+    "hidden": {{hidden}}
+  },
+  "criteria": {
+    "emf_rare_50": {"trigger": "minecraft:impossible"}
+  }
+}

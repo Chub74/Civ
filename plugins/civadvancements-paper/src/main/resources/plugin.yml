@@ -1,0 +1,7 @@
+name: CivAdvancements
+main: net.civmc.civadvancements.CivAdvancements
+version: ${version}
+author: TTastic
+api-version: 1.21
+softdepend: [ Citadel, CivChat2, FactoryMod, HiddenOre, RealisticBiomes, ItemExchange, ExilePearl, JukeAlert, NameLayer, Bastion, BreweryX, EvenMoreFish ]
+description: Tutorial advancement tree for new Eden players
