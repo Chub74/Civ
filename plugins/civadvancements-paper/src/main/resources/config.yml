@@ -50,13 +50,13 @@ advancements:
     parent: "joined"
     citadel_type_name: "Stone"
     title: "First Reinforcement"
-    description: "Reinforced a block with Stone. Reinforcements protect blocks by giving them HP. Attackers must deal that much damage to break through. Use /cto to exit reinforcement mode."
+    description: "Reinforced a block with Stone. Reinforcements protect blocks by giving them HP. Attackers must deal that much damage to break through. Use /ctf <group> while holding a reinforcement material, then place blocks."
 
   reinforce_deepslate:
     parent: "reinforce_stone"
     citadel_type_name: "Deepslate"
     title: "Deeper Protection"
-    description: "Reinforced with Deepslate which is a stronger tier than stone. Use /ctf <group> while holding a reinforcement material, then place blocks."
+    description: "Reinforced with Deepslate which is a stronger tier than stone. Use /cto to exit reinforcement mode."
 
   reinforce_iron:
     parent: "reinforce_deepslate"
