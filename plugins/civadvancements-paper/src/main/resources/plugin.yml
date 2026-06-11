@@ -1,5 +1,5 @@
 name: CivAdvancements
-main: net.civmc.civadvancements.CivAdvancements
+main: net.civeden.civadvancements.CivAdvancements
 version: ${version}
 author: TTastic
 api-version: 1.21

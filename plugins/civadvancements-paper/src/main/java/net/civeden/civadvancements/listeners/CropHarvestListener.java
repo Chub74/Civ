@@ -1,7 +1,7 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.ChallengeTracker;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.ChallengeTracker;
 import org.bukkit.block.data.Ageable;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

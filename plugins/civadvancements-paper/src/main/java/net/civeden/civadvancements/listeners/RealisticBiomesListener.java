@@ -1,8 +1,8 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.untamedears.realisticbiomes.RealisticBiomes;
 import com.untamedears.realisticbiomes.growthconfig.PlantGrowthConfig;
-import net.civmc.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.AdvancementManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

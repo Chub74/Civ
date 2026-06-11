@@ -1,9 +1,9 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.untamedears.jukealert.JukeAlert;
 import com.untamedears.jukealert.model.SnitchFactoryType;
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.CivAdvancementsConfig;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.CivAdvancementsConfig;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

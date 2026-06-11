@@ -1,8 +1,8 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.devotedmc.ExilePearl.event.PlayerPearledEvent;
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.ChallengeTracker;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.ChallengeTracker;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

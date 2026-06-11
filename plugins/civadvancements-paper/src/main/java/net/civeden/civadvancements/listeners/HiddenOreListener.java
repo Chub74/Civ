@@ -1,8 +1,8 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.github.devotedmc.hiddenore.events.HiddenOreGenerateEvent;
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.CivAdvancementsConfig;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.CivAdvancementsConfig;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

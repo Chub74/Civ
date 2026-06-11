@@ -1,4 +1,4 @@
-package net.civmc.civadvancements.commands;
+package net.civeden.civadvancements.commands;
 
 import org.bukkit.plugin.Plugin;
 import vg.civcraft.mc.civmodcore.commands.CommandManager;

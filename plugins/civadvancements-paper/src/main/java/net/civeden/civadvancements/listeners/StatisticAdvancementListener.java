@@ -1,6 +1,6 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
-import net.civmc.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.AdvancementManager;
 import org.bukkit.Material;
 import org.bukkit.Statistic;
 import org.bukkit.entity.Player;

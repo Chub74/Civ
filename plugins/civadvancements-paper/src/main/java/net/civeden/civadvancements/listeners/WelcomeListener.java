@@ -1,10 +1,10 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import java.util.List;
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.ChallengeTracker;
-import net.civmc.civadvancements.CivAdvancements;
-import net.civmc.civadvancements.CivAdvancementsConfig;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.ChallengeTracker;
+import net.civeden.civadvancements.CivAdvancements;
+import net.civeden.civadvancements.CivAdvancementsConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.title.Title;

@@ -1,9 +1,9 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.github.igotyou.FactoryMod.events.FactoryActivateEvent;
-import net.civmc.civadvancements.AdvancementManager;
-import net.civmc.civadvancements.ChallengeTracker;
-import net.civmc.civadvancements.CivAdvancementsConfig;
+import net.civeden.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.ChallengeTracker;
+import net.civeden.civadvancements.CivAdvancementsConfig;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

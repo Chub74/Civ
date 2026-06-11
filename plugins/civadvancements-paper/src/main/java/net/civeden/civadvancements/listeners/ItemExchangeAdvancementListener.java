@@ -1,7 +1,7 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import com.untamedears.itemexchange.events.SuccessfulPurchaseEvent;
-import net.civmc.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.AdvancementManager;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;

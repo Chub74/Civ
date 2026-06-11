@@ -1,4 +1,4 @@
-package net.civmc.civadvancements;
+package net.civeden.civadvancements;
 
 import java.io.File;
 import java.io.IOException;

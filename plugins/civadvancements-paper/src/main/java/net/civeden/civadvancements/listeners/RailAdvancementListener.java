@@ -1,7 +1,7 @@
-package net.civmc.civadvancements.listeners;
+package net.civeden.civadvancements.listeners;
 
 import java.util.Set;
-import net.civmc.civadvancements.AdvancementManager;
+import net.civeden.civadvancements.AdvancementManager;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.Tag;

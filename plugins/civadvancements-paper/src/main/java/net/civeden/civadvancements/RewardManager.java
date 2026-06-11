@@ -1,4 +1,4 @@
-package net.civmc.civadvancements;
+package net.civeden.civadvancements;
 
 import java.util.List;
 import java.util.Map;
