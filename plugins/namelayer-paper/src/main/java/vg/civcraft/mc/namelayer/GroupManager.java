@@ -446,8 +446,14 @@ public class GroupManager {
         if (p != null && (p.isOp() || p.hasPermission("namelayer.admin"))) {
             return true;
         }
-        if (group == null || perm == null) {
-            NameLayerPlugin.getInstance().getLogger().log(Level.INFO, "hasAccess failed, caller passed in null", new Exception());
+        // A null perm means the caller passed a bad permission constant: a real bug worth a trace.
+        // A null group is a normal "deny" (an unloaded or deleted group, routinely produced by
+        // movement handlers like Bastion's overlay) and must not spam a stack trace every tick.
+        if (perm == null) {
+            NameLayerPlugin.getInstance().getLogger().log(Level.INFO, "hasAccess failed, caller passed in null perm", new Exception());
+            return false;
+        }
+        if (group == null) {
             return false;
         }
         if (!group.isValid()) {
