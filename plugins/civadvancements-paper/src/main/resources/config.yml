@@ -176,7 +176,7 @@ advancements:
     reward:
       items:
         - material: EXPERIENCE_BOTTLE
-          amount: 64
+          amount: 32
 
   harvest_1m:
     parent: "harvest_100k"
@@ -297,7 +297,7 @@ advancements:
     reward:
       items:
         - material: EXPERIENCE_BOTTLE
-          amount: 64
+          amount: 32
 
   mine_stone_1m:
     parent: "mine_stone_100k"
