@@ -52,6 +52,7 @@ include(":plugins:civspy-api")
 include(":plugins:civspy-paper")
 
 // Eden additions
+include(":plugins:civadvancements-paper")
 include(":plugins:netherpearls-paper")
 include(":plugins:evenmorerewards-paper")
 include(":plugins:citadelgeyserfix-paper")
