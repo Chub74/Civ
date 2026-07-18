@@ -89,6 +89,25 @@ public class TreeGrower extends AgeableGrower {
         block.setType(Material.AIR);
     }
 
+    private static void deletePlantAt(Block block) {
+        PlantManager manager = RealisticBiomes.getInstance().getPlantManager();
+        Plant plant = manager.getPlant(block);
+        if (plant != null) {
+            manager.deletePlant(plant);
+        }
+    }
+
+    private static void deleteBigTreePlants(Block northwest) {
+        Block northeast = northwest.getRelative(BlockFace.EAST);
+        Block southwest = northwest.getRelative(BlockFace.SOUTH);
+        Block southeast = northeast.getRelative(BlockFace.SOUTH);
+
+        deletePlantAt(northwest);
+        deletePlantAt(northeast);
+        deletePlantAt(southwest);
+        deletePlantAt(southeast);
+    }
+
     /**
      * Remove a 2x2 saplings grid given its north west block
      *
@@ -100,10 +119,10 @@ public class TreeGrower extends AgeableGrower {
         Block southwest = northwest.getRelative(BlockFace.SOUTH);
         Block southeast = northeast.getRelative(BlockFace.SOUTH);
 
-        removeSapling(northwest);
-        removeSapling(northeast);
-        removeSapling(southeast);
-        removeSapling(southwest);
+        northwest.setType(Material.AIR);
+        northeast.setType(Material.AIR);
+        southwest.setType(Material.AIR);
+        southeast.setType(Material.AIR);
     }
 
     private static TreeType remapSaplingToTree(Material mat, boolean big) {
@@ -175,7 +194,7 @@ public class TreeGrower extends AgeableGrower {
         if (canBeBig && northwest != null) {
             clearBigTreeSaplings(northwest, mat);
             if (!northwest.getLocation().getWorld().generateTree(northwest.getLocation(), type)) {
-                //failed, so restore all 4 saplings
+                // failed, so restore all 4 saplings
                 Block northeast = northwest.getRelative(BlockFace.EAST);
                 Block southwest = northwest.getRelative(BlockFace.SOUTH);
                 Block southeast = northeast.getRelative(BlockFace.SOUTH);
@@ -183,6 +202,9 @@ public class TreeGrower extends AgeableGrower {
                 northeast.setType(mat);
                 southwest.setType(mat);
                 southeast.setType(mat);
+            } else {
+                // succeeded, so delete the plant records
+                deleteBigTreePlants(northwest);
             }
         } else {
             block.setType(Material.AIR);
