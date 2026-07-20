@@ -25,13 +25,13 @@ class DestinationScoreboardTest {
 
     @Test
     void render_value_returnsLabelledColouredLine() {
-        String expected = ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + "Spawn";
+        String expected = ChatColor.GOLD + "Dest: " + ChatColor.LIGHT_PURPLE + "Spawn";
         assertEquals(expected, DestinationScoreboard.render("Spawn"));
     }
 
     @Test
     void render_longValue_isCappedToFitScoreboardLine() {
         String line = DestinationScoreboard.render("A".repeat(60));
-        assertEquals(ChatColor.GOLD + "/dest: " + ChatColor.LIGHT_PURPLE + "A".repeat(29), line);
+        assertEquals(ChatColor.GOLD + "Dest: " + ChatColor.LIGHT_PURPLE + "A".repeat(30), line);
     }
 }
