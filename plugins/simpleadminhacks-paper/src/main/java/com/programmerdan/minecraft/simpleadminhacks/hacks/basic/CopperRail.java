@@ -196,7 +196,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
         if (raw == null || raw.isBlank()) {
             return "";
         }
-        Component parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(raw.replace('ยง', '&'));
+        Component parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(raw.replace('ง', '&'));
         return PlainTextComponentSerializer.plainText().serialize(parsed).toLowerCase(Locale.ROOT).trim();
     }
 
@@ -223,7 +223,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     private ItemStack createNitrousItem(int amount) {
         ItemStack item = new ItemStack(nitrousMaterial, amount);
         ItemMeta meta = item.getItemMeta();
-        Component loreLine = LegacyComponentSerializer.legacyAmpersand().deserialize(nitrousLore.replace('ยง', '&'))
+        Component loreLine = LegacyComponentSerializer.legacyAmpersand().deserialize(nitrousLore.replace('ง', '&'))
             .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(loreLine));
         item.setItemMeta(meta);
@@ -454,7 +454,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     }
 
     private static boolean weatheringTarget(Block block, boolean grinding) {
-        BlockState nms = ((CraftBlock) block).getNMS();
+        BlockState nms = ((CraftBlock) block).getBlockState();
         return grinding
             ? WeatheringCopper.getPrevious(nms).isPresent()
             : WeatheringCopper.getNext(nms.getBlock()).isPresent();
@@ -501,7 +501,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
 
         boolean mounted = cart.addPassenger(player);
         if (!mounted || player.getVehicle() == null) {
-            ((CraftPlayer) player).getHandle().startRiding(((CraftEntity) cart).getHandle(), true);
+            ((CraftPlayer) player).getHandle().startRiding(((CraftEntity) cart).getHandle(), true, false);
         }
         event.setCancelled(true);
     }
@@ -576,7 +576,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
 
         for (Block copperBlock : copperBlocks) {
             CraftBlock craftBlock = (CraftBlock) copperBlock;
-            BlockState state = craftBlock.getNMS();
+            BlockState state = craftBlock.getBlockState();
             ServerLevel level = ((CraftWorld) copperBlock.getWorld()).getHandle();
             // We damage the copper directly instead of using random ticking, as random ticking is easy to cheese
             // by placing waxed copper next to the rail, entirely preventing the rest of the rail from oxidising.
@@ -598,11 +598,11 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     private void grind(Minecart minecart, Location from, Location to, List<Block> copperBlocks) {
         boolean cleaned = false;
         for (Block copperBlock : copperBlocks) {
-            Optional<BlockState> previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+            Optional<BlockState> previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
             while (previous.isPresent()) {
                 copperBlock.setType(previous.get().getBukkitMaterial());
                 cleaned = true;
-                previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+                previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
             }
         }
 
@@ -650,7 +650,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
         }
 
         Block copperBlock = block.getRelative(BlockFace.DOWN);
-        Optional<BlockState> previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+        Optional<BlockState> previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
 
         boolean damaged = false;
         CraftPlayer player = (CraftPlayer) event.getPlayer();
@@ -660,18 +660,18 @@ public class CopperRail extends BasicHack implements CommandExecutor {
             damaged = true;
 
             item.damage(1, player);
-            previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+            previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
         }
 
         copperBlock = copperBlock.getRelative(BlockFace.DOWN);
-        previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+        previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
 
         while (previous.isPresent() && event.getItem().getType() != Material.AIR) {
             copperBlock.setType(previous.get().getBukkitMaterial());
             damaged = true;
 
             item.damage(1, player);
-            previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getNMS());
+            previous = WeatheringCopper.getPrevious(((CraftBlock) copperBlock).getBlockState());
         }
 
         if (!damaged) {
@@ -694,7 +694,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
 
         Block block = event.getBlock();
 
-        Optional<net.minecraft.world.level.block.Block> next = WeatheringCopper.getNext(((CraftBlock) block).getNMS().getBlock());
+        Optional<net.minecraft.world.level.block.Block> next = WeatheringCopper.getNext(((CraftBlock) block).getBlockState().getBlock());
         if (next.isEmpty()) {
             return;
         }

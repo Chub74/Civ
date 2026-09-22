@@ -2,7 +2,7 @@ name: Heliodor
 version: ${version}
 main: net.civmc.heliodor.HeliodorPlugin
 author: Okx
-api-version: 1.21
+api-version: 26.3
 description: Implements various mechanics relating to custom ores, separately from HiddenOre
 depend: [CivModCore]
 softdepend: [CombatTagPlus]

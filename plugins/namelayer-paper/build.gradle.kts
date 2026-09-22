@@ -15,8 +15,8 @@ dependencies {
 
     testImplementation(libs.bundles.junit)
     testImplementation(libs.mockbukkit)
-    testImplementation("io.papermc.paper:paper-api:${libs.versions.paper.get()}")
-    testImplementation("org.mockito:mockito-core:5.14.2")
+    testImplementation(libs.paper.api.test)
+    testImplementation(libs.mockito.core)
     // GroupManagerDao references civmodcore's ManagedDatasource, which Mockito must load to mock it.
     testImplementation(project(":plugins:civmodcore-paper"))
 }
@@ -24,4 +24,15 @@ dependencies {
 // https://docs.mockbukkit.org/docs/en/user_guide/advanced/paperweight
 paperweight {
     addServerDependencyTo = configurations.named(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME).map { setOf(it) }
+}
+// 26.3 requires Java 25
+afterEvaluate {
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+    tasks.withType<JavaCompile> {
+        options.release = 25
+    }
 }

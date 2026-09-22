@@ -91,6 +91,7 @@ public final class EnchantUtils {
         ENCHANT_ABBR.put(Enchantment.BREACH, "Br");
         ENCHANT_ABBR.put(Enchantment.DENSITY, "D");
         ENCHANT_ABBR.put(Enchantment.WIND_BURST, "WB");
+        ENCHANT_ABBR.put(Enchantment.LUNGE, "Lg");
 
         // Determine if there's any enchants missing abbreviations
         final Set<Enchantment> missing = Registry.ENCHANTMENT.stream()

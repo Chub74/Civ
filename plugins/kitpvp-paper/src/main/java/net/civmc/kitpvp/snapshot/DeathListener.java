@@ -41,6 +41,6 @@ public class DeathListener implements Listener {
     private Component createComponent(Player player) {
         return Component.text(player.getName())
             .hoverEvent(Component.text("Click to view inventory"))
-            .clickEvent(ClickEvent.clickEvent(ClickEvent.Action.RUN_COMMAND, "/viewinventorysnapshot " + player.getName()));
+            .clickEvent(ClickEvent.runCommand("/viewinventorysnapshot " + player.getName()));
     }
 }

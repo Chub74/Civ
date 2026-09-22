@@ -1584,6 +1584,10 @@ public class FakePlayer implements Player {
         return false;
     }
 
+    public void unsetFixedPose() {
+
+    }
+
     @Override
     public boolean isSprinting() {
 
@@ -2296,6 +2300,11 @@ public class FakePlayer implements Player {
 
 	@Override
 	public <T> void spawnParticle(@NotNull Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5, double v6, @org.jetbrains.annotations.Nullable T t, boolean b) {
+
+	}
+
+	@Override
+	public <T> void spawnParticle(@NotNull Particle particle, double v, double v1, double v2, int i, double v3, double v4, double v5, double v6, double v7, double v8, @org.jspecify.annotations.Nullable T t, boolean b, Particle.RandomizationType randomizationType) {
 
 	}
 
@@ -4070,5 +4079,75 @@ public class FakePlayer implements Player {
     @Override
     public boolean hasData(DataComponentType type) {
         return false;
+    }
+
+    @Override
+    public void setRotation(io.papermc.paper.math.Angle yaw, io.papermc.paper.math.Angle pitch) {
+
+    }
+
+    @Override
+    public void resetFlyingTicks() {
+
+    }
+
+    @Override
+    public void kill(DamageSource damageSource) {
+
+    }
+
+    @Override
+    public io.papermc.paper.entity.RemovalReason getRemovalReason() {
+        return null;
+    }
+
+    @Override
+    public org.bukkit.event.entity.EntityRemoveEvent.Cause getRemoveEventCause() {
+        return null;
+    }
+
+    @Override
+    public SoundCategory getSoundCategory() {
+        return SoundCategory.PLAYERS;
+    }
+
+    @Override
+    public net.kyori.adventure.sound.Sound.Source soundSource() {
+        return net.kyori.adventure.sound.Sound.Source.PLAYER;
+    }
+
+    @Override
+    public float getSoundPitch() {
+        return 0;
+    }
+
+    @Override
+    public float getSoundVolume() {
+        return 0;
+    }
+
+    @Override
+    public org.bukkit.Color getWaypointColor() {
+        return null;
+    }
+
+    @Override
+    public void setWaypointColor(org.bukkit.Color color) {
+
+    }
+
+    @Override
+    public Key getWaypointStyle() {
+        return null;
+    }
+
+    @Override
+    public void setWaypointStyle(Key key) {
+
+    }
+
+    @Override
+    public org.bukkit.Sound getHurtSound(DamageSource damageSource) {
+        return null;
     }
 }

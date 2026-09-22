@@ -6,6 +6,7 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
+import com.comphenix.protocol.reflect.accessors.FieldAccessor;
 import com.comphenix.protocol.wrappers.PlayerInfoData;
 import com.comphenix.protocol.wrappers.WrappedDataValue;
 import com.comphenix.protocol.wrappers.WrappedDataWatcher;
@@ -15,6 +16,7 @@ import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
 import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.PacketManager;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -58,11 +60,15 @@ public final class AttrHider extends BasicHack {
                     if (player.hasPermission(BYPASS_PERMISSION)) {
                         return;
                     }
-                    final PacketContainer cloned = packet.deepClone();
-                    final StructureModifier<Integer> ints = cloned.getIntegers();
-                    if (player.getEntityId() == ints.read(0)) {
+                    if (player.getEntityId() == packet.getIntegers().read(0)) {
                         return;
                     }
+                    // A deep clone would copy the effect's registry holder too, and holders are
+                    // resolved back to a network id by identity when the packet is encoded, so a
+                    // copy cannot be serialised and the connection gets closed. Only the fields
+                    // overwritten below have to be ours, so a shallow copy is enough.
+                    final PacketContainer cloned = packet.shallowClone();
+                    final StructureModifier<Integer> ints = cloned.getIntegers();
                     // set amplifier to 0
                     cloned.getBytes().write(1, (byte) 0);
                     // set duration to 0
@@ -89,18 +95,37 @@ public final class AttrHider extends BasicHack {
                         || customPackets.remove(packet.getHandle())) {
                         return;
                     }
-                    final PacketContainer cloned = packet.deepClone();
-                    for (final WrappedDataValue object : cloned.getDataValueCollectionModifier().read(0)) {
+                    final List<WrappedDataValue> values = packet.getDataValueCollectionModifier().read(0);
+                    if (values == null) {
+                        return;
+                    }
+                    // Replace only the entries we actually change and leave the rest of the list
+                    // alone. Deep cloning the packet would also copy registry backed values such
+                    // as entity variants, and those are resolved back to a network id by identity
+                    // when the packet is encoded, so a copy cannot be serialised and the
+                    // connection gets closed.
+                    List<WrappedDataValue> hidden = null;
+                    for (int i = 0; i < values.size(); i++) {
+                        final WrappedDataValue object = values.get(i);
                         // Read the 8th field as a float as that's the living entity's health
                         // https://wiki.vg/Entity_metadata#Living_Entity
-                        if (object.getIndex() == 9) {
-                            if ((float) object.getValue() > 0) {
-                                object.setValue(1f); // Half a heart
-                            }
+                        if (object == null || object.getIndex() != 9
+                            || !(object.getValue() instanceof Float health) || health <= 0f) {
+                            continue;
                         }
+                        if (hidden == null) {
+                            hidden = new ArrayList<>(values);
+                        }
+                        // Half a heart
+                        hidden.set(i, new WrappedDataValue(9, WrappedDataWatcher.Registry.get(Float.class), 1f));
+                    }
+                    if (hidden == null) {
+                        return;
                     }
                     // The packet data is shared between events, but the event
                     // instance is exclusive to THIS sending of the packet
+                    final PacketContainer cloned = packet.shallowClone();
+                    cloned.getDataValueCollectionModifier().write(0, hidden);
                     event.setPacket(cloned);
                 }
             });
@@ -114,9 +139,20 @@ public final class AttrHider extends BasicHack {
                     if (player.hasPermission(BYPASS_PERMISSION)) {
                         return;
                     }
-                    final PacketContainer cloned = packet.deepClone();
+                    final StructureModifier<List<PlayerInfoData>> infoLists = packet.getPlayerInfoDataLists();
+                    final int entriesIndex = findEntriesIndex(infoLists);
+                    if (entriesIndex < 0) {
+                        return;
+                    }
+                    List<PlayerInfoData> oldInfos = infoLists.read(entriesIndex);
+                    if (oldInfos == null) {
+                        return;
+                    }
+                    // Shallow copy: the entries are rebuilt from scratch below, and deep cloning
+                    // profiles and chat session data is both wasteful and unsafe for any value
+                    // the encoder resolves by identity.
+                    final PacketContainer cloned = packet.shallowClone();
                     List<PlayerInfoData> newInfos = new ArrayList<>();
-                    List<PlayerInfoData> oldInfos = cloned.getPlayerInfoDataLists().read(1);
                     for (PlayerInfoData oldInfo : oldInfos) {
                         if (oldInfo == null) continue;
                         int latency = oldInfo.getLatency();
@@ -137,14 +173,34 @@ public final class AttrHider extends BasicHack {
                             oldInfo.getDisplayName(),
                             oldInfo.getRemoteChatSessionData()
                         ));
-					}
-					cloned.getPlayerInfoDataLists().write(1, newInfos);
+                    }
+                    cloned.getPlayerInfoDataLists().write(entriesIndex, newInfos);
                     // The packet data is shared between events, but the event
                     // instance is exclusive to THIS sending of the packet
                     event.setPacket(cloned);
                 }
             });
         }
+    }
+
+    /**
+     * Locates the entry list of a player info update packet. The packet's action set is a
+     * collection as well, so whether it takes up one of the collection field slots ProtocolLib
+     * hands out depends on the ProtocolLib version; the entry list is the only field declared as
+     * a {@link List}, so find it by type instead of assuming a fixed index.
+     *
+     * @param infoLists the packet's player info lists.
+     * @return the field index of the entry list, or -1 if the packet has none.
+     */
+    private static int findEntriesIndex(final StructureModifier<List<PlayerInfoData>> infoLists) {
+        final List<FieldAccessor> fields = infoLists.getFields();
+        for (int i = 0; i < fields.size(); i++) {
+            final Field field = fields.get(i).getField();
+            if (field != null && List.class.isAssignableFrom(field.getType())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @Override

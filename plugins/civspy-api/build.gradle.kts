@@ -5,5 +5,5 @@ dependencies {
     implementation("org.postgresql:postgresql:42.3.5")
 
     testImplementation(libs.bundles.junit)
-    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation(libs.mockito.core)
 }

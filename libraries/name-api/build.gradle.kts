@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.slf4j.api)
 
     testImplementation(libs.bundles.junit)
-    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation(libs.mockito.core)
 }
 
 tasks.withType<Test> {

@@ -20,3 +20,14 @@ dependencies {
 
     compileOnly(libs.bundles.nuvotifier)
 }
+// 26.3 requires Java 25
+afterEvaluate {
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+    tasks.withType<JavaCompile> {
+        options.release = 25
+    }
+}

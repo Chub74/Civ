@@ -2,7 +2,7 @@ name: AuraMagnet
 main: net.civeden.auramagnet.AuraMagnet
 version: ${version}
 author: TTastic
-api-version: 1.21
+api-version: 26.3
 depend: [ CivModCore ]
 description: Offhand hoe that magnetically pulls nearby crops, seeds, bamboo and sea pickles to the player.
 

@@ -3,7 +3,7 @@ version: ${version}
 main: com.github.longboyy.repelshitters.RepelShitters
 author: Longboyy
 description: Makes shitting on people harder
-api-version: 1.21
+api-version: 26.3
 depend: [CivModCore, Citadel, NameLayer, Bastion, ExilePearl]
 commands:
   rsreload: {}

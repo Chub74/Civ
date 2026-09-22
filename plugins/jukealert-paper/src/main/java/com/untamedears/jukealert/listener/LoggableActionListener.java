@@ -42,10 +42,8 @@ import org.bukkit.entity.Boat;
 import org.bukkit.entity.ChestBoat;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.HappyGhast;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.SpawnCategory;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.entity.minecart.StorageMinecart;
@@ -87,20 +85,26 @@ public class LoggableActionListener implements Listener {
         this.insideFields = new TreeMap<>();
     }
 
+    /**
+     * Mob mounts never fire {@link VehicleMoveEvent}, that is only done by boats and minecarts. A rider only gets a
+     * {@link PlayerMoveEvent} while they are the one steering their mount, so anyone being carried around instead -
+     * a passenger on someone else's happy ghast, a rider on an unsaddled nautilus, anything riding a mob under its
+     * own AI - would otherwise cross snitch fields unseen. Polling every mounted player covers all of those.
+     */
     public void setupScheduler(Plugin plugin) {
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             try {
                 for (World world : Bukkit.getWorlds()) {
                     for (Player player : world.getPlayers()) {
-                        Entity entity = player.getVehicle();
-                        if (!(entity instanceof HappyGhast)) {
+                        Entity mount = player.getVehicle();
+                        if (!(mount instanceof LivingEntity)) {
                             continue;
                         }
-                        handleSnitchEntry(player, entity.getLocation());
+                        handleSnitchEntry(player, mount.getLocation());
                     }
                 }
             } catch (RuntimeException ex) {
-                plugin.getLogger().log(Level.WARNING, "Ticking ghast positions", ex);
+                plugin.getLogger().log(Level.WARNING, "Ticking mount positions", ex);
             }
         }, 0, 1);
     }
@@ -181,11 +185,9 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEnterVehicle(VehicleEnterEvent event) {
-        if (event.getEntered().getType() != EntityType.PLAYER || event.getVehicle().getSpawnCategory() != SpawnCategory.MISC) {
+        if (!(event.getEntered() instanceof Player player) || !isVehicleRatherThanMount(event.getVehicle())) {
             return;
         }
-
-        Player player = (Player) event.getEntered();
 
         handlePlayerAction(player, s -> new EnterVehicleAction(System.currentTimeMillis(), s,
             player.getUniqueId(), event.getVehicle().getLocation(), getVehicleName(event.getVehicle())));
@@ -193,11 +195,9 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onExitVehicle(VehicleExitEvent event) {
-        if (event.getExited().getType() != EntityType.PLAYER || event.getVehicle().getSpawnCategory() != SpawnCategory.MISC) {
+        if (!(event.getExited() instanceof Player player) || !isVehicleRatherThanMount(event.getVehicle())) {
             return;
         }
-
-        Player player = (Player) event.getExited();
 
         handlePlayerAction(player, s -> new ExitVehicleAction(System.currentTimeMillis(), s,
             player.getUniqueId(), event.getVehicle().getLocation(), getVehicleName(event.getVehicle())));
@@ -217,10 +217,9 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMountEntity(EntityMountEvent event) {
-        if (event.getEntityType() != EntityType.PLAYER || event.getMount().getSpawnCategory() != SpawnCategory.ANIMAL) {
+        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getMount())) {
             return;
         }
-        Player player = (Player) event.getEntity();
         String mountName = getEntityName(event.getMount());
         handlePlayerAction(player, s -> new MountEntityAction(System.currentTimeMillis(), s, player.getUniqueId(),
             event.getMount().getLocation(), mountName));
@@ -228,10 +227,9 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDismountEntity(EntityDismountEvent event) {
-        if (event.getEntityType() != EntityType.PLAYER || event.getDismounted().getSpawnCategory() != SpawnCategory.ANIMAL) {
+        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getDismounted())) {
             return;
         }
-        Player player = (Player) event.getEntity();
         String mountName = getEntityName(event.getDismounted());
         handlePlayerAction(player, s -> new DismountEntityAction(System.currentTimeMillis(), s, player.getUniqueId(),
             event.getDismounted().getLocation(), mountName));
@@ -343,6 +341,16 @@ public class LoggableActionListener implements Listener {
 
     private boolean isPlayerSnitchImmune(Player player) {
         return player.hasPermission("jukealert.vanish");
+    }
+
+    /**
+     * Boats and minecarts fire both {@link VehicleEnterEvent} and {@link EntityMountEvent}, so the two pairs of
+     * handlers have to agree on which of them owns an entity or every ride gets logged twice. Everything that isn't a
+     * non living vehicle counts as a mount, which covers mobs that are ridden (horses, camels, striders, happy ghasts,
+     * nautiluses, ...) as well as anything else a player can sit on, such as cushions.
+     */
+    private static boolean isVehicleRatherThanMount(Entity entity) {
+        return entity instanceof Vehicle && !(entity instanceof LivingEntity);
     }
 
     private String getEntityName(Entity entity) {

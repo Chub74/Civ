@@ -47,7 +47,7 @@ public class RealisticBiomesGUI {
             currentBiome = biome;
         }
         if (inventory == null) {
-            String biomeText = (currentBiome.toString().toLowerCase()).replace("_", " ");
+            String biomeText = currentBiome.getKey().value().replace("_", " ");
             biomeText = StringUtils.capitalize(biomeText);
             biomeText = StringUtils.abbreviate(biomeText, 30);
             inventory = new ComponableInventory(ChatColor.DARK_GRAY + biomeText, 6, player);

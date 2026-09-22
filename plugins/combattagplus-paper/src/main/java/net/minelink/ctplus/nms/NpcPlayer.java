@@ -1,9 +1,7 @@
 package net.minelink.ctplus.nms;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 
-import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.server.MinecraftServer;
@@ -31,12 +29,11 @@ public class NpcPlayer extends ServerPlayer {
     public static NpcPlayer valueOf(Player player) {
         MinecraftServer minecraftServer = MinecraftServer.getServer();
         ServerLevel worldServer = ((CraftWorld) player.getWorld()).getHandle();
-        GameProfile gameProfile = new GameProfile(UUID.randomUUID(), NpcNameGeneratorFactory.getNameGenerator().generate(player));
+        GameProfile gameProfile = new GameProfile(
+            UUID.randomUUID(),
+            NpcNameGeneratorFactory.getNameGenerator().generate(player),
+            ((CraftPlayer) player).getProfile().properties());
         ClientInformation clientInformation = ((CraftPlayer) player).getHandle().clientInformation();
-
-        for (Map.Entry<String, Property> entry : ((CraftPlayer) player).getProfile().getProperties().entries()) {
-            gameProfile.getProperties().put(entry.getKey(), entry.getValue());
-        }
 
         NpcPlayer npcPlayer = new NpcPlayer(minecraftServer, worldServer, gameProfile, clientInformation);
         npcPlayer.identity = new NpcIdentity(player);

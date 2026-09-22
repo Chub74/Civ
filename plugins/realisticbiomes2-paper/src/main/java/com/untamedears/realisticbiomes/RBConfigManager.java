@@ -100,12 +100,18 @@ public class RBConfigManager extends ConfigParser {
             List<Biome> biomes = new ArrayList<>();
             Registry<Biome> registry = RegistryAccess.registryAccess().getRegistry(RegistryKey.BIOME);
             for (String biomeString : biomeStrings) {
+                Biome biome = null;
                 try {
-                    biomes.add(registry.get(NamespacedKey.minecraft(biomeString.toLowerCase().trim())));
-                } catch (IllegalArgumentException e) {
+                    biome = registry.get(NamespacedKey.minecraft(biomeString.toLowerCase().trim()));
+                } catch (IllegalArgumentException ignored) {
+                    // malformed key, handled by the null check below
+                }
+                if (biome == null) {
                     logger.warning(biomeString + " at " + config.getCurrentPath() + "." + key
                         + " is not a valid biome, it was ignored");
+                    continue;
                 }
+                biomes.add(biome);
             }
             result.put(key, biomes);
         }

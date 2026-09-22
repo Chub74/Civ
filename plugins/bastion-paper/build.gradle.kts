@@ -14,8 +14,19 @@ dependencies {
     compileOnly(project(":plugins:citadel-paper"))
 
     testImplementation(libs.bundles.junit)
-    testImplementation("org.mockito:mockito-core:5.11.0")
+    testImplementation(libs.mockito.core)
     testImplementation(project(":plugins:civmodcore-paper"))
     testImplementation(project(":plugins:namelayer-paper"))
     testImplementation(project(":plugins:citadel-paper"))
+}
+// 26.3 requires Java 25
+afterEvaluate {
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+    tasks.withType<JavaCompile> {
+        options.release = 25
+    }
 }

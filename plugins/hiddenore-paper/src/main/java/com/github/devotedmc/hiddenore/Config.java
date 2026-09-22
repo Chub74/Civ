@@ -197,11 +197,11 @@ public final class Config {
                 try {
                     worlduid = UUID.fromString(world);
                     if (HiddenOre.getPlugin().getServer().getWorld(worlduid) == null) {
-                        System.err.println("Although it seems to be a UUID, " + world + " no match found yet.");
+                        HiddenOre.getPlugin().getLogger().warning("Although it seems to be a UUID, " + world + " no match found yet.");
                         worlduid = null;
                     }
                 } catch (Exception e) {
-                    System.out.println("World not defined by UUID");
+                    HiddenOre.getPlugin().getLogger().info("World not defined by UUID");
                     worlduid = null;
                 }
 
@@ -209,14 +209,14 @@ public final class Config {
                     try {
                         worlduid = HiddenOre.getPlugin().getServer().getWorld(world).getUID();
                     } catch (Exception f) {
-                        System.out.println("World not defined by Name; unable to match " + world + " with loaded world.");
+                        HiddenOre.getPlugin().getLogger().info("World not defined by Name; unable to match " + world + " with loaded world.");
                     }
                 }
 
                 Map<NamespacedKey, List<BlockConfig>> worldBlockConfigs = null;
 
                 if (worlduid == null) {
-                    System.err.println("Unable to match world " + world + " with loaded world, registering for post-load.");
+                    HiddenOre.getPlugin().getLogger().warning("Unable to match world " + world + " with loaded world, registering for post-load.");
                     worldBlockConfigs = i.preloadBlockConfigs.get(world);
                 } else {
                     worldBlockConfigs = i.blockConfigs.get(worlduid);

@@ -18,6 +18,7 @@ import net.minecraft.network.protocol.game.ClientboundSetEquipmentPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.ItemStackWithSlot;
 import net.minecraft.world.entity.EntityEquipment;
@@ -46,10 +47,10 @@ public class NpcPlayerHelperImpl implements NpcPlayerHelper {
         ServerLevel worldServer = ((CraftWorld) player.getWorld()).getHandle();
         Location l = player.getLocation();
 
-        npcPlayer.spawnIn(worldServer);
-        npcPlayer.forceSetPositionRotation(l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch());
+        npcPlayer.setPos(l.getX(), l.getY(), l.getZ());
+        npcPlayer.setRot(l.getYaw(), l.getPitch());
         npcPlayer.gameMode.setLevel(worldServer);
-        npcPlayer.invulnerableTime = 0;
+        npcPlayer.setInvulnerableTime(0);
 
         for (ServerPlayer serverPlayer : MinecraftServer.getServer().getPlayerList().getPlayers()) {
             if (serverPlayer instanceof NpcPlayer) continue;
@@ -78,7 +79,7 @@ public class NpcPlayerHelperImpl implements NpcPlayerHelper {
         }
 
         ServerLevel worldServer = entity.level();
-        worldServer.chunkSource.removeEntity(entity);
+        worldServer.getChunkSource().removeEntity(entity);
         worldServer.getPlayers(serverPlayer -> serverPlayer instanceof NpcPlayer).remove(entity);
         removePlayerList(player);
     }
@@ -124,7 +125,10 @@ public class NpcPlayerHelperImpl implements NpcPlayerHelper {
             List<Pair<EquipmentSlot, ItemStack>> list = Lists.newArrayList();
             list.add(Pair.of(slot, item));
             Packet<ClientGamePacketListener> packet = new ClientboundSetEquipmentPacket(entity.getId(), list);
-            entity.level().chunkSource.broadcast(entity, packet);
+            for (ServerPlayer serverPlayer : MinecraftServer.getServer().getPlayerList().getPlayers()) {
+                if (serverPlayer instanceof NpcPlayer) continue;
+                serverPlayer.connection.send(packet);
+            }
         }
     }
 
@@ -140,8 +144,8 @@ public class NpcPlayerHelperImpl implements NpcPlayerHelper {
         Player p = Bukkit.getPlayer(identity.getId());
         if (p != null && p.isOnline()) return;
 
-        PlayerDataStorage worldStorage = ((CraftWorld) Bukkit.getWorlds().getFirst()).getHandle().getServer().playerDataStorage;
-        CompoundTag playerNbt = worldStorage.load(identity.getName(), identity.getId().toString(), ProblemReporter.DISCARDING).orElse(null);
+        PlayerDataStorage worldStorage = MinecraftServer.getServer().getPlayerList().playerIo;
+        CompoundTag playerNbt = worldStorage.load(new NameAndId(identity.getId(), identity.getName())).orElse(null);
 
         playerNbt.putShort("Air", (short) entity.getAirSupply());
         // Health is now just a float; fractional is not stored separately. (1.12)

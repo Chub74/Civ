@@ -210,6 +210,12 @@ public abstract class SimpleHack<T extends SimpleHackConfig> {
                 } else if (char.class.isAssignableFrom(clazz) || Character.class.isAssignableFrom(clazz)) {
                     final String temp = config.getString(identifier);
                     value = Strings.isNullOrEmpty(temp) ? 0 : temp.toCharArray()[0];
+                } else if (boolean.class.isAssignableFrom(clazz) || Boolean.class.isAssignableFrom(clazz)) {
+                    value = config.isSet(identifier) ? config.getBoolean(identifier) : null;
+                } else if (int.class.isAssignableFrom(clazz) || Integer.class.isAssignableFrom(clazz)) {
+                    value = config.isSet(identifier) ? config.getInt(identifier) : null;
+                } else if (double.class.isAssignableFrom(clazz) || Double.class.isAssignableFrom(clazz)) {
+                    value = config.isSet(identifier) ? config.getDouble(identifier) : null;
                 } else {
                     value = config.getObject(identifier, clazz, null);
                     if (value == null)

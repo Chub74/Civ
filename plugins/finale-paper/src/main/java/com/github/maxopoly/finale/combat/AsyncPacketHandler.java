@@ -22,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.bukkit.Bukkit;
@@ -143,7 +144,9 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
                     return;
                 }
 
-                float strength = ((CraftWorld) block.getWorld()).getHandle().getBlockState((new BlockPos(position.getX(), position.getY(), position.getZ()))).destroySpeed;
+                BlockPos blockPos = new BlockPos(position.getX(), position.getY(), position.getZ());
+                ServerLevel nmsWorld = ((CraftWorld) block.getWorld()).getHandle();
+                float strength = nmsWorld.getBlockState(blockPos).getDestroySpeed(nmsWorld, blockPos);
 
                 long lastStartBreak = lastStartBreaks.getOrDefault(attacker.getUniqueId(), 0L);
                 long timeSinceBreak = (System.currentTimeMillis() - lastStartBreak);

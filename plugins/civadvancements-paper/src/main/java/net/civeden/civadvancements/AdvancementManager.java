@@ -191,6 +191,13 @@ public class AdvancementManager {
 
     @SuppressWarnings("deprecation")
     public void reloadAll() {
+        removeAll();
+        Bukkit.reloadData();
+        loadAll();
+    }
+
+    @SuppressWarnings("deprecation")
+    public void removeAll() {
         for (String key : ALL_KEYS) {
             NamespacedKey nsKey = new NamespacedKey(plugin, key);
             try {
@@ -199,12 +206,17 @@ public class AdvancementManager {
                 plugin.warning("Failed to remove advancement '" + key + "': " + e.getMessage());
             }
         }
-        Bukkit.reloadData();
-        loadAll();
     }
 
     @SuppressWarnings("deprecation")
     private void loadAdvancement(String key) throws IOException {
+        NamespacedKey nsKey = new NamespacedKey(plugin, key);
+        if (Bukkit.getAdvancement(nsKey) != null) {
+            // Paper persists plugin-loaded advancements into the "bukkit" datapack across
+            // restarts, so this is already registered from a previous boot — nothing to do.
+            return;
+        }
+
         String resource = "advancements/" + key + ".json";
         InputStream stream = plugin.getResource(resource);
         if (stream == null) {
@@ -221,7 +233,6 @@ public class AdvancementManager {
             json = json.replace("{{parent}}", escapeJson(parent));
         }
 
-        NamespacedKey nsKey = new NamespacedKey(plugin, key);
         Bukkit.getUnsafe().loadAdvancement(nsKey, json);
     }
 

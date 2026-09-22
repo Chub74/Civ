@@ -136,71 +136,39 @@ public final class JAUtility {
         return String.format("[%d %d %d]", location.getBlockX(), location.getBlockY(), location.getBlockZ());
     }
 
+    /**
+     * Resolves the recorded name of a vehicle or mount into an item to represent it in the snitch log GUI.
+     *
+     * <p>Nearly every entity type lines up with either a spawn egg ({@code HORSE} -> {@code HORSE_SPAWN_EGG}) or an
+     * item of the same name ({@code CHEST_MINECART}, {@code OAK_BOAT}), so those are resolved by name rather than
+     * listed one by one. New mounts and boat types therefore work without a code change here; only names that follow
+     * neither pattern need an explicit mapping.
+     *
+     * @param vehicle Recorded name of the vehicle or mount, which may also be a custom entity name
+     * @return Material to show for it, or {@link Material#SADDLE} if the name can't be resolved
+     */
     public static Material getVehicle(String vehicle) {
         switch (vehicle) {
-            case "DONKEY":
-                return Material.DONKEY_SPAWN_EGG;
-            case "LLAMA":
-                return Material.LLAMA_SPAWN_EGG;
-            case "PIG":
-                return Material.PIG_SPAWN_EGG;
-            case "HORSE":
-                return Material.HORSE_SPAWN_EGG;
-            case "STRIDER":
-                return Material.STRIDER_SPAWN_EGG;
-            case "CAMEL":
-                return Material.CAMEL_SPAWN_EGG;
-            case "MINECART":
-                return Material.MINECART;
-            case "CHEST_MINECART":
-                return Material.CHEST_MINECART;
-            case "FURNACE_MINECART":
-                return Material.FURNACE_MINECART;
-            case "TNT_MINECART":
-                return Material.TNT_MINECART;
-            case "HOPPER_MINECART":
-                return Material.HOPPER_MINECART;
+            // Logs written before the wood specific boat types existed stored every boat under these names
             case "BOAT":
-            case "OAK_BOAT":
                 return Material.OAK_BOAT;
-            case "BIRCH_BOAT":
-                return Material.BIRCH_BOAT;
-            case "SPRUCE_BOAT":
-                return Material.SPRUCE_BOAT;
-            case "JUNGLE_BOAT":
-                return Material.JUNGLE_BOAT;
-            case "ACACIA_BOAT":
-                return Material.ACACIA_BOAT;
-            case "DARK_OAK_BOAT":
-                return Material.DARK_OAK_BOAT;
-            case "MANGROVE_BOAT":
-                return Material.MANGROVE_BOAT;
-            case "CHERRY_BOAT":
-                return Material.CHERRY_BOAT;
-            case "BAMBOO_RAFT":
-                return Material.BAMBOO_RAFT;
             case "CHEST_BOAT":
-            case "OAK_CHEST_BOAT":
                 return Material.OAK_CHEST_BOAT;
-            case "BIRCH_CHEST_BOAT":
-                return Material.BIRCH_CHEST_BOAT;
-            case "SPRUCE_CHEST_BOAT":
-                return Material.SPRUCE_CHEST_BOAT;
-            case "JUNGLE_CHEST_BOAT":
-                return Material.JUNGLE_CHEST_BOAT;
-            case "ACACIA_CHEST_BOAT":
-                return Material.ACACIA_CHEST_BOAT;
-            case "DARK_OAK_CHEST_BOAT":
-                return Material.DARK_OAK_CHEST_BOAT;
-            case "MANGROVE_CHEST_BOAT":
-                return Material.MANGROVE_CHEST_BOAT;
-            case "CHERRY_CHEST_BOAT":
-                return Material.CHERRY_CHEST_BOAT;
-            case "BAMBOO_CHEST_RAFT":
-                return Material.BAMBOO_CHEST_RAFT;
+            // Cushions only exist as dyed items, so one of them stands in for all of them
+            case "CUSHION":
+                return Material.WHITE_CUSHION;
             default:
-                JukeAlert.getInstance().getLogger().info("Failed to parse vehicle into material: " + vehicle);
-                return Material.SADDLE;
+                break;
         }
+        Material spawnEgg = Material.getMaterial(vehicle + "_SPAWN_EGG");
+        if (spawnEgg != null) {
+            return spawnEgg;
+        }
+        Material item = Material.getMaterial(vehicle);
+        if (item != null) {
+            return item;
+        }
+        JukeAlert.getInstance().getLogger().info("Failed to parse vehicle into material: " + vehicle);
+        return Material.SADDLE;
     }
 }

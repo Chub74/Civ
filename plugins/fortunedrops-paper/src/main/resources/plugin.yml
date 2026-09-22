@@ -1,4 +1,4 @@
 name: FortuneDrops
 version: '1.0-SNAPSHOT'
 main: com.github.longboyy.fortunedrops.FortuneDrops
-api-version: '1.21'
+api-version: 26.3

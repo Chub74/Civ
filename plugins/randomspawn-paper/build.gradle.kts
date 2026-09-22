@@ -13,3 +13,14 @@ dependencies {
     compileOnly(project(":plugins:bastion-paper"))
     compileOnly(project(":plugins:banstick-paper"))
 }
+// 26.3 requires Java 25
+afterEvaluate {
+    configure<JavaPluginExtension> {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(25))
+        }
+    }
+    tasks.withType<JavaCompile> {
+        options.release = 25
+    }
+}

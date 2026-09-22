@@ -132,7 +132,10 @@ public class HologramManager {
                 return;
             }
 
-            this.hologramId = Bukkit.getUnsafe().nextEntityId();
+            this.hologramId = Bukkit.getUnsafe().nextEntityId(reinforcement.getLocation().getWorld());
+            // cache before sending any packets, so a packet failure cannot leave this holo
+            // half initialized while the update task is already iterating over it
+            this.cachedPlayerLocation = player.getLocation();
 
             ProtocolManager protocolLib = ProtocolLibrary.getProtocolManager();
             PacketContainer fakeEntity = protocolLib.createPacket(PacketType.Play.Server.SPAWN_ENTITY);
@@ -161,7 +164,6 @@ public class HologramManager {
 
             protocolLib.sendServerPacket(player, fakeEntity);
             sendUpdatePacket();
-            cachedPlayerLocation = player.getLocation();
         }
 
         private void sendUpdatePacket() {
@@ -221,6 +223,7 @@ public class HologramManager {
                 && current.getBlockZ() == cachedPlayerLocation.getBlockZ()) {
                 return;
             }
+            cachedPlayerLocation = current;
             Location updated = getHoloLocation(reinforcement, player);
             ProtocolManager protocolLib = ProtocolLibrary.getProtocolManager();
 

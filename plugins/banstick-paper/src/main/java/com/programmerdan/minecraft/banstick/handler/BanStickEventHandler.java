@@ -455,8 +455,10 @@ public class BanStickEventHandler implements Listener {
                 }
                 // etc.
                 if (loveTapNewJoins && !joinEvent.getPlayer().hasPlayedBefore()) {
-                    Bukkit.dispatchCommand(Bukkit.getServer().getConsoleSender(),
-                        "lovetap " + joinEvent.getPlayer().getName());
+                    // Commands must be dispatched on the main thread; this block runs async.
+                    Bukkit.getScheduler().runTask(BanStick.getPlugin(), () ->
+                        Bukkit.dispatchCommand(Bukkit.getServer().getConsoleSender(),
+                            "lovetap " + joinEvent.getPlayer().getName()));
                 }
             }
 
