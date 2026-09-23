@@ -8,6 +8,9 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public class EasyMode extends BaseCommand {
 
@@ -17,10 +20,13 @@ public class EasyMode extends BaseCommand {
         BooleanSetting setting = Citadel.getInstance().getSettingManager().getEasyMode();
         boolean enabled = setting.getValue(player);
         if (enabled) {
-            CitadelUtility.sendAndLog(player, ChatColor.GREEN, "Easy reinforcing mode has been disabled.");
+            CitadelUtility.sendAndLog(player, ChatColor.GREEN, "Easy reinforcing off");
         } else {
-            CitadelUtility.sendAndLog(player, ChatColor.GREEN,
-                "Easy reinforcing mode has been enabled. You will be able to reinforce to your default group by placing blocks while having a reinforcement material in your off hand.");
+            CivUI.notice(Kind.SUCCESS, "Easy reinforcing on")
+                .to(player)
+                .hover(CivText.info("Place blocks with a reinforcement material in your off hand"
+                    + " and they reinforce to your default group"))
+                .send();
         }
         setting.toggleValue(player.getUniqueId());
     }

@@ -42,18 +42,18 @@ public class Acid extends BaseCommand {
             }
             if (!acidMan.isPossibleAcidBlock(block)) {
                 if (!foundAny) {
-                    CitadelUtility.sendAndLog(p, ChatColor.RED, "That block is not a valid acid block");
+                    CitadelUtility.sendAndLog(p, ChatColor.RED, "That block isn't an acid block");
                 }
                 return;
             }
             Reinforcement reinforcement = ReinforcementLogic.getReinforcementAt(block.getLocation());
             if (reinforcement == null) {
-                CitadelUtility.sendAndLog(p, ChatColor.RED, "That block is not reinforced.");
+                CitadelUtility.sendAndLog(p, ChatColor.RED, "That block isn't reinforced");
                 return;
             }
             if (!reinforcement.hasPermission(p, CitadelPermissionHandler.getAcidblock())) {
                 CitadelUtility.sendAndLog(p, ChatColor.RED,
-                    "You do not have sufficient permission to use acid blocks on this group.");
+                    "You can't use acid blocks on that group");
                 return;
             }
 
@@ -69,7 +69,7 @@ public class Acid extends BaseCommand {
                     if (relativeReinforcement != null && !acidMan.canAcidBlock(reinforcement.getType(), relativeReinforcement.getType())) {
                         CitadelUtility.sendAndLog(p, ChatColor.RED, String.format("The acid facing %s will fail!", blockFace));
                     }
-                    CitadelUtility.sendAndLog(p, ChatColor.RED, String.format("This acid block is not ready yet."));
+                    CitadelUtility.sendAndLog(p, ChatColor.RED, String.format("That acid isn't ready yet"));
                     return;
                 }
             }

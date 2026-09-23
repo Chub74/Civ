@@ -2,15 +2,18 @@ package vg.civcraft.mc.citadel.playerstate;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.namelayer.group.Group;
 
 public class AdvancedFortificationState extends AbstractPlayerState {
@@ -22,9 +25,14 @@ public class AdvancedFortificationState extends AbstractPlayerState {
         setups = new HashMap<>();
     }
 
+    /** Appended to a failure message, so the drop out of this mode is part of the same sentence. */
+    private static final Component DROPPED_TO_NORMAL = Component.text()
+        .append(Component.text(", switched to ")).append(CivText.mode("Normal mode"))
+        .build();
+
     @Override
-    public String getName() {
-        return "Advanced fortification mode";
+    public Component getName() {
+        return CivText.mode("Advanced fortification mode");
     }
 
     @Override
@@ -41,10 +49,10 @@ public class AdvancedFortificationState extends AbstractPlayerState {
                 "No setup configured for this block type, no reinforcement was applied");
             return;
         }
-        boolean hadError = CitadelUtility.attemptReinforcementCreation(e.getBlock(), setup.type, setup.group, e.getPlayer());
+        boolean hadError = CitadelUtility.attemptReinforcementCreation(e.getBlock(), setup.type, setup.group, e.getPlayer(), DROPPED_TO_NORMAL);
         if (hadError) {
             e.setCancelled(true);
-            Citadel.getInstance().getStateManager().setState(e.getPlayer(), null);
+            Citadel.getInstance().getStateManager().setState(e.getPlayer(), null, false);
         }
     }
 
@@ -56,14 +64,13 @@ public class AdvancedFortificationState extends AbstractPlayerState {
         Player player = Bukkit.getPlayer(uuid);
         if (player != null) {
             if (existing != null) {
-                CitadelUtility.sendAndLog(player, ChatColor.GOLD,
-                    "Replaced existing setup with " + ChatColor.AQUA + existing.type.getName() + ChatColor.GOLD
-                        + " on " + ChatColor.LIGHT_PURPLE + existing.group.getName() + ChatColor.GOLD + "for "
-                        + copy.getType() + " with " + ChatColor.AQUA + type.getName() + ChatColor.GOLD + " on "
-                        + ChatColor.LIGHT_PURPLE + group.getName());
+                CivUI.success(player, "Replaced ", CitadelUtility.item(existing.type), " on ",
+                    CitadelUtility.group(existing.group), " for ",
+                    CivText.value(copy.getType().name()), " with ", CitadelUtility.item(type), " on ",
+                    CitadelUtility.group(group));
             } else {
-                CitadelUtility.sendAndLog(player, ChatColor.GOLD, copy.getType() + " will be reinforced with " + ChatColor.AQUA
-                    + type.getName() + ChatColor.GOLD + " on " + ChatColor.LIGHT_PURPLE + group.getName());
+                CivUI.success(player, CivText.value(copy.getType().name()), " will be reinforced with ",
+                    CitadelUtility.item(type), " on ", CitadelUtility.group(group));
             }
         }
     }

@@ -1,11 +1,8 @@
 package vg.civcraft.mc.citadel.listener;
 
 import com.destroystokyo.paper.MaterialTags;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -42,6 +39,7 @@ import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.CitadelUtility;
@@ -49,6 +47,7 @@ import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.MaterialUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.utilities.DoubleInteractFixer;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
 
@@ -84,7 +83,8 @@ public class BlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(Component.text("You cannot place this without the permission " + CitadelPermissionHandler.getCrops().getName() + " on it's group!", NamedTextColor.RED));
+        CivUI.error(event.getPlayer(), "You can't place this without ",
+            CivText.value(CitadelPermissionHandler.getCrops().getName()), " on its group");
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -160,9 +160,8 @@ public class BlockListener implements Listener {
         // Check if the comparator is placed against something with an inventory
         if (ReinforcementLogic.isPreventingBlockAccess(event.getPlayer(), block)) {
             event.setCancelled(true);
-            CitadelUtility.sendAndLog(event.getPlayer(), ChatColor.RED,
-                "You can not place this because it'd allow bypassing a nearby reinforcement",
-                block.getLocation());
+            CitadelUtility.errorAt(event.getPlayer(), block.getLocation(),
+                "You can't place that - it would bypass a nearby reinforcement");
             return;
         }
         // Comparators can also read through a single opaque block
@@ -289,7 +288,7 @@ public class BlockListener implements Listener {
         if (!(eventEntity instanceof Player player)) return;
 
         if (!reinforcement.hasPermission(player, CitadelPermissionHandler.getModifyBlocks())) {
-            player.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(player, "You can't modify that block");
             event.setCancelled(true);
         }
     }
@@ -410,10 +409,7 @@ public class BlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        player.sendMessage(Component.text(
-            "You do not have permission to modify this block",
-            NamedTextColor.RED
-        ));
+        CivUI.error(player, "You can't modify that block");
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -424,7 +420,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!reinforcement.hasPermission(event.getPlayer(), CitadelPermissionHandler.getCrops())) {
-            event.getPlayer().sendMessage(Component.text("You do not have permission to harvest this crop").color(NamedTextColor.RED));
+            CivUI.error(event.getPlayer(), "You can't harvest that crop");
             event.setCancelled(true);
         }
     }
@@ -445,7 +441,7 @@ public class BlockListener implements Listener {
         }
         Player player = event.getPlayer();
         if (!reinforcement.hasPermission(player, CitadelPermissionHandler.getModifyBlocks())) {
-            player.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(player, "You can't modify that block");
             event.setCancelled(true);
         }
     }
@@ -481,7 +477,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(p, "You can't modify that block");
             pie.setCancelled(true);
         }
     }
@@ -519,7 +515,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(p, "You can't modify that block");
             pie.setCancelled(true);
         }
     }
@@ -556,7 +552,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to harvest this block");
+            CivUI.error(p, "You can't harvest that block");
             pie.setCancelled(true);
         }
     }
@@ -582,7 +578,7 @@ public class BlockListener implements Listener {
                     return;
                 }
                 if (!rein.hasPermission(pie.getPlayer(), CitadelPermissionHandler.getModifyBlocks())) {
-                    pie.getPlayer().sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+                    CivUI.error(pie.getPlayer(), "You can't modify that block");
                     pie.setCancelled(true);
                     return;
                 }
@@ -607,7 +603,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(p, "You can't modify that block");
             pie.setCancelled(true);
         }
     }
@@ -673,7 +669,7 @@ public class BlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        CitadelUtility.sendAndLog(clicker, ChatColor.RED, "You cannot modify that lectern.", lecternLocation);
+        CitadelUtility.sendAndLog(clicker, ChatColor.RED, "You can't modify that lectern", lecternLocation);
     }
 
     // prevent moss spreading to reinforced blocks
@@ -709,7 +705,7 @@ public class BlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        CitadelUtility.sendAndLog(clicker, ChatColor.RED, "You cannot use that anvil.", clickedBlock.getLocation());
+        CitadelUtility.sendAndLog(clicker, ChatColor.RED, "You can't use that anvil", clickedBlock.getLocation());
     }
 
 
@@ -745,8 +741,8 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to " +
-                (Tag.ITEMS_BOOKSHELF_BOOKS.isTagged(relevant.getType()) ? "place books in this shelf" : "take books from this shelf"));
+            CivUI.error(p, "You can't "
+                + (Tag.ITEMS_BOOKSHELF_BOOKS.isTagged(relevant.getType()) ? "place books in this shelf" : "take books from this shelf"));
             pie.setCancelled(true);
         }
     }
@@ -783,7 +779,7 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to dust this block");
+            CivUI.error(p, "You can't dust that block");
             pie.setCancelled(true);
         }
     }
@@ -807,6 +803,6 @@ public class BlockListener implements Listener {
             return;
         }
         event.setCancelled(true);
-        player.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+        CivUI.error(player, "You can't modify that block");
     }
 }

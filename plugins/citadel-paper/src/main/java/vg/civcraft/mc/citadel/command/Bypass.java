@@ -8,6 +8,9 @@ import org.bukkit.entity.Player;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public class Bypass extends BaseCommand {
 
@@ -17,10 +20,13 @@ public class Bypass extends BaseCommand {
         BooleanSetting setting = Citadel.getInstance().getSettingManager().getBypass();
         boolean enabled = setting.getValue(player);
         if (enabled) {
-            CitadelUtility.sendAndLog(player, ChatColor.GREEN, "Bypass mode has been disabled.");
+            CitadelUtility.sendAndLog(player, ChatColor.GREEN, "Bypass off");
         } else {
-            CitadelUtility.sendAndLog(player, ChatColor.GREEN,
-                "Bypass mode has been enabled. You will be able to break reinforced blocks if you are on the group.");
+            CivUI.notice(Kind.SUCCESS, "Bypass on")
+                .to(player)
+                .hover(CivText.info("You break reinforced blocks in one hit"
+                    + " on groups you have access to"))
+                .send();
         }
         setting.toggleValue(player.getUniqueId());
     }

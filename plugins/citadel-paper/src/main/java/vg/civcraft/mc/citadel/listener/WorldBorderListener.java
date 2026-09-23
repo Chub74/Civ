@@ -4,8 +4,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.event.EventHandler;
@@ -13,6 +11,7 @@ import org.bukkit.event.Listener;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.events.ReinforcementCreationEvent;
 import vg.civcraft.mc.citadel.model.WorldBorderBuffers;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class WorldBorderListener implements Listener {
 
@@ -37,10 +36,11 @@ public class WorldBorderListener implements Listener {
 
         if (buffer.decay()) {
             if (warned.add(event.getPlayer().getUniqueId())) {
-                event.getPlayer().sendMessage(Component.text("Reinforcing this close to the border will cause your reinforcements to instantly start decaying").color(NamedTextColor.RED));
+                CivUI.warn(event.getPlayer(),
+                    "Reinforcements here start decaying immediately");
             }
         } else {
-            event.getPlayer().sendMessage(Component.text("You cannot reinforce this close to the border!").color(NamedTextColor.RED));
+            CivUI.error(event.getPlayer(), "You can't reinforce this close to the border");
             event.setCancelled(true);
         }
     }

@@ -3,6 +3,7 @@ package vg.civcraft.mc.citadel.playerstate;
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -35,7 +36,7 @@ public abstract class AbstractPlayerState {
         this.uuid = p.getUniqueId();
     }
 
-    public abstract String getName();
+    public abstract Component getName();
 
     public abstract void handleBlockPlace(BlockPlaceEvent e);
 

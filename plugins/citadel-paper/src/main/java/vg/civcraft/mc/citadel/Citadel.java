@@ -3,6 +3,7 @@ package vg.civcraft.mc.citadel;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.event.HandlerList;
+import org.bukkit.plugin.Plugin;
 import vg.civcraft.mc.citadel.listener.ActivityListener;
 import vg.civcraft.mc.citadel.activity.ActivityMap;
 import vg.civcraft.mc.citadel.command.CitadelCommandManager;
@@ -28,6 +29,8 @@ import vg.civcraft.mc.civmodcore.world.locations.chunkmeta.block.table.TableStor
 
 
 public class Citadel extends ACivMod {
+
+    private static final String MIN_CIVMODCORE_VERSION = "3.1.0";
 
     private static Citadel instance;
 
@@ -117,6 +120,14 @@ public class Citadel extends ACivMod {
             Bukkit.shutdown();
             return;
         }
+        if (!isCivModCoreCompatible()) {
+            Plugin civModCore = Bukkit.getPluginManager().getPlugin("CivModCore");
+            String found = civModCore == null ? "not installed" : civModCore.getDescription().getVersion();
+            logger.severe("Citadel " + getDescription().getVersion() + " requires CivModCore "
+                + MIN_CIVMODCORE_VERSION + "+ but found " + found + ". Update CivModCore, then restart.");
+            Bukkit.shutdown();
+            return;
+        }
         config = new CitadelConfigManager(this);
         if (!config.parse()) {
             logger.severe("Errors in config file, shutting down");
@@ -158,6 +169,37 @@ public class Citadel extends ACivMod {
         commandManager = new CitadelCommandManager(this);
         CitadelPermissionHandler.setup();
         registerListeners();
+    }
+
+    private boolean isCivModCoreCompatible() {
+        Plugin civModCore = Bukkit.getPluginManager().getPlugin("CivModCore");
+        if (civModCore == null) {
+            return false;
+        }
+        return compareVersions(civModCore.getDescription().getVersion(), MIN_CIVMODCORE_VERSION) >= 0;
+    }
+
+    private static int compareVersions(String actual, String required) {
+        String[] actualParts = actual.split("\\.");
+        String[] requiredParts = required.split("\\.");
+        int length = Math.max(actualParts.length, requiredParts.length);
+        for (int i = 0; i < length; i++) {
+            int actualPart = i < actualParts.length ? parseIntSafe(actualParts[i]) : 0;
+            int requiredPart = i < requiredParts.length ? parseIntSafe(requiredParts[i]) : 0;
+            int cmp = Integer.compare(actualPart, requiredPart);
+            if (cmp != 0) {
+                return cmp;
+            }
+        }
+        return 0;
+    }
+
+    private static int parseIntSafe(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     /**

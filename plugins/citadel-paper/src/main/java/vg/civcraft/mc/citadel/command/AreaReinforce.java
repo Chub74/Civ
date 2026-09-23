@@ -27,14 +27,14 @@ public class AreaReinforce extends BaseCommand {
         ReinforcementType reinType = Citadel.getInstance().getReinforcementTypeManager()
             .getByItemStack(p.getInventory().getItemInMainHand(), p.getWorld().getName());
         if (reinType == null) {
-            CitadelUtility.sendAndLog(p, ChatColor.RED, "The item you are holding is not a possible reinforcement");
+            CitadelUtility.sendAndLog(p, ChatColor.RED, "You can't reinforce with that item");
             return;
         }
         String groupName = null;
         if (targetGroup == null) {
             groupName = NameLayerAPI.getGroupManager().getDefaultGroup(uuid);
             if (groupName == null) {
-                CitadelUtility.sendAndLog(p, ChatColor.RED, "You need to set a default group \n Use /nlsdg to do so");
+                CitadelUtility.sendAndLog(p, ChatColor.RED, "You need a default group - try /nlsdg");
                 return;
             }
         } else {
@@ -42,7 +42,7 @@ public class AreaReinforce extends BaseCommand {
         }
         Group group = GroupManager.getGroup(groupName);
         if (group == null) {
-            CitadelUtility.sendAndLog(p, ChatColor.RED, "That group does not exist.");
+            CitadelUtility.sendAndLog(p, ChatColor.RED, "That group doesn't exist");
             return;
         }
         // no additional group permission check here because the player is

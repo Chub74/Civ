@@ -19,6 +19,7 @@ import org.bukkit.Material;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.acidtypes.AcidType;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
@@ -94,7 +95,7 @@ public class ReinforcementsGUI extends BaseCommand {
                 Component.text(ChatColor.GREEN + " - " + e)).collect(Collectors.toList());
 
             if (allowedDimensionComponents.isEmpty()) {
-                ItemUtils.addComponentLore(is, Component.text(ChatColor.DARK_GREEN + " * Everywhere"));
+                ItemUtils.addComponentLore(is, Component.text(" * Everywhere", CivText.VALUE));
             } else {
                 ItemUtils.addComponentLore(is, allowedDimensionComponents);
             }

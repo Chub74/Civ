@@ -1,11 +1,13 @@
 package vg.civcraft.mc.citadel.playerstate;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.CitadelUtility;
@@ -15,6 +17,7 @@ import vg.civcraft.mc.citadel.events.ReinforcementGroupChangeEvent;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
 
@@ -32,8 +35,11 @@ public class ReinforcingState extends AbstractPlayerState {
     }
 
     @Override
-    public String getName() {
-        return "Reinforcing mode on " + ChatColor.LIGHT_PURPLE + group.getName();
+    public Component getName() {
+        return Component.text()
+            .append(CivText.mode("Reinforcing")).append(Component.text(" on "))
+            .append(CitadelUtility.group(group))
+            .build();
     }
 
     @Override
@@ -46,45 +52,42 @@ public class ReinforcingState extends AbstractPlayerState {
         e.setCancelled(true);
         // does group still exist?
         if (!group.isValid()) {
-            CitadelUtility.sendAndLog(e.getPlayer(), ChatColor.RED,
-                "The group " + group.getName() + " seems to have been deleted in the mean time");
+            CivUI.error(e.getPlayer(), "The group ", CitadelUtility.group(group), " was deleted");
             Citadel.getInstance().getStateManager().setState(e.getPlayer(), null);
             return;
         }
         Player player = e.getPlayer();
         // does the player have an item?
         if (e.getItem() == null) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED, "You have nothing in your hand to reinforce with",
+            CitadelUtility.sendAndLog(player, ChatColor.RED, "Nothing in your hand to reinforce with",
                 e.getClickedBlock().getLocation());
             return;
         }
         ReinforcementType type = Citadel.getInstance().getReinforcementTypeManager().getByItemStack(e.getItem(), player.getWorld().getName());
         // is it a valid item to reinforce with
         if (type == null) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED, "You can not reinforce with this item",
+            CitadelUtility.sendAndLog(player, ChatColor.RED, "You can't reinforce with that item",
                 e.getClickedBlock().getLocation());
             return;
         }
         Block block = ReinforcementLogic.getResponsibleBlock(e.getClickedBlock());
         // can the item reinforce the clicked block
         if (!type.canBeReinforced(block.getType())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                type.getName() + " can not reinforce " + block.getType(),
-                block.getLocation());
+            CitadelUtility.errorAt(player, block.getLocation(),
+                CitadelUtility.item(type), " can't reinforce ", CivText.value(block.getType().name()));
             return;
         }
         // is the reinforcement item allowed in the current world
         if (!type.isAllowedInWorld(block.getWorld().getName())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                type.getName() + " cannot reinforce in this dimension", block.getLocation());
+            CitadelUtility.errorAt(player, block.getLocation(),
+                CitadelUtility.item(type), " can't reinforce in this world");
             return;
         }
         // does the player have permission to reinforce on that group
         if (!NameLayerAPI.getGroupManager().hasAccess(group, e.getPlayer().getUniqueId(),
             CitadelPermissionHandler.getReinforce())) {
-            CitadelUtility.sendAndLog(e.getPlayer(), ChatColor.RED,
-                "You seem to have lost permission to reinforce on " + group.getName(),
-                e.getClickedBlock().getLocation());
+            CitadelUtility.errorAt(e.getPlayer(), e.getClickedBlock().getLocation(),
+                "You lost reinforce permission on ", CitadelUtility.group(group));
             Citadel.getInstance().getStateManager().setState(e.getPlayer(), null);
             return;
         }
@@ -93,7 +96,7 @@ public class ReinforcingState extends AbstractPlayerState {
         if (rein != null) {
             if (!rein.hasPermission(e.getPlayer(), CitadelPermissionHandler.getBypass())) {
                 CitadelUtility.sendAndLog(e.getPlayer(), ChatColor.RED,
-                    "You do not have permission to bypass this reinforcement",
+                    "You can't bypass this reinforcement",
                     e.getClickedBlock().getLocation());
                 return;
             }
@@ -116,9 +119,8 @@ public class ReinforcingState extends AbstractPlayerState {
             }
             // consume item from inventory
             if (!toConsume.removeSafelyFrom(player.getInventory())) {
-                CitadelUtility.sendAndLog(e.getPlayer(), ChatColor.RED,
-                    "Failed to remove reinforcement item from your inventory",
-                    e.getClickedBlock().getLocation());
+                CitadelUtility.errorAt(e.getPlayer(), e.getClickedBlock().getLocation(),
+                    "Could not take ", CitadelUtility.item(type), " from your inventory");
                 return;
             }
         }
@@ -156,18 +158,16 @@ public class ReinforcingState extends AbstractPlayerState {
                     rein.setType(type);
                     rein.setHealth(type.getHealth());
                     rein.resetCreationTime();
-                    CitadelUtility.sendAndLog(player, ChatColor.GREEN,
-                        "Updated reinforcement to " + rein.getType().getName() + " on " + group.getName(),
-                        e.getClickedBlock().getLocation());
+                    CitadelUtility.successAt(player, e.getClickedBlock().getLocation(),
+                        "Updated reinforcement to ", CitadelUtility.item(rein.getType()),
+                        " on ", CitadelUtility.group(group));
                 } else if (changedGroup) {
-                    CitadelUtility.sendAndLog(player, ChatColor.GREEN,
-                        "Updated group to " + ChatColor.LIGHT_PURPLE + group.getName(),
-                        e.getClickedBlock().getLocation());
+                    CitadelUtility.successAt(player, e.getClickedBlock().getLocation(),
+                        "Updated group to ", CitadelUtility.group(group));
                 }
             } else if (changedGroup) {
-                CitadelUtility.sendAndLog(player, ChatColor.GREEN,
-                    "Updated group to " + ChatColor.LIGHT_PURPLE + group.getName(),
-                    e.getClickedBlock().getLocation());
+                CitadelUtility.successAt(player, e.getClickedBlock().getLocation(),
+                    "Updated group to ", CitadelUtility.group(group));
             }
         }
     }

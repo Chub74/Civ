@@ -10,6 +10,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.CitadelUtility;
@@ -46,17 +48,17 @@ public class AdvancedFortification extends BaseCommand {
         }
         ItemStack offHand = player.getInventory().getItemInOffHand();
         if (offHand.getType() == Material.AIR) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED, "You need to hold a reinforcement item in your off hand");
+            CitadelUtility.sendAndLog(player, ChatColor.RED, "Hold a reinforcement item in your off hand");
             return;
         }
         ReinforcementType type = Citadel.getInstance().getReinforcementTypeManager().getByItemStack(offHand, player.getWorld().getName());
         if (type == null) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED, "You can not reinforce with the item in your off hand");
+            CitadelUtility.sendAndLog(player, ChatColor.RED, "You can't reinforce with your off-hand item");
             return;
         }
         if (!type.canBeReinforced(mainHand.getType())) {
-            CitadelUtility.sendAndLog(player, ChatColor.AQUA,
-                type.getName() + ChatColor.RED + " can not reinforce " + mainHand.getType().name());
+            CivUI.error(player, CitadelUtility.item(type), " can't reinforce ",
+                CivText.value(mainHand.getType().name()));
             return;
         }
         String groupName = null;
@@ -73,14 +75,13 @@ public class AdvancedFortification extends BaseCommand {
 
         Group group = GroupManager.getGroup(groupName);
         if (group == null) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED, "The group " + groupName + " does not exist.");
+            CitadelUtility.sendAndLog(player, ChatColor.RED, "The group " + groupName + " doesn't exist");
             return;
         }
         boolean hasAccess = NameLayerAPI.getGroupManager().hasAccess(group.getName(), player.getUniqueId(),
             CitadelPermissionHandler.getReinforce());
         if (!hasAccess) {
-            CitadelUtility
-                .sendAndLog(player, ChatColor.RED, "You do not have permission to reinforce on " + group.getName());
+            CivUI.error(player, "You can't reinforce on ", CitadelUtility.group(group));
             return;
         }
         if (advFortState == null) {

@@ -1,11 +1,12 @@
 package vg.civcraft.mc.citadel.playerstate;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
@@ -20,8 +21,8 @@ public class NormalState extends AbstractPlayerState {
     }
 
     @Override
-    public String getName() {
-        return ChatColor.GREEN + "Normal mode";
+    public Component getName() {
+        return CivText.mode("Normal mode");
     }
 
     @Override

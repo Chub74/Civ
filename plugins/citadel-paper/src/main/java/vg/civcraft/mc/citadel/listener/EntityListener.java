@@ -1,14 +1,10 @@
 package vg.civcraft.mc.citadel.listener;
 
+import io.papermc.paper.event.player.PlayerOpenSignEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
-
-
-import io.papermc.paper.event.player.PlayerOpenSignEvent;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -47,6 +43,7 @@ import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSettingAPI;
 import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 
@@ -131,7 +128,7 @@ public class EntityListener implements Listener {
                 block.getLocation());
             event.setCancelled(true);
         } else if (!hasAccess && !hasBypass) {
-            player.sendMessage(Component.text("You do not have permission to bypass this block!").color(NamedTextColor.RED));
+            CivUI.error(player, "You can't bypass that block");
             event.setCancelled(true);
         }
     }
@@ -204,7 +201,7 @@ public class EntityListener implements Listener {
         }
         Player player = event.getPlayer();
         if (!reinforcement.hasPermission(player, CitadelPermissionHandler.getBypass())) {
-            player.sendMessage(Component.text("You do not have permission to bypass this block!").color(NamedTextColor.RED));
+            CivUI.error(player, "You can't bypass that block");
             event.setCancelled(true);
             return;
         }
@@ -256,7 +253,7 @@ public class EntityListener implements Listener {
         if (reinforcement.hasPermission(player, CitadelPermissionHandler.getHangingPlaceBreak())) {
             return;
         }
-        player.sendMessage(ChatColor.RED + "You cannot place those on blocks you don't have permissions for.");
+        CivUI.error(player, "You can't place those on blocks you don't have access to");
         event.setCancelled(true);
         Bukkit.getScheduler().runTaskLater(Citadel.getInstance(), player::updateInventory, 1L);
     }
@@ -292,7 +289,7 @@ public class EntityListener implements Listener {
                 if (reinforcement.hasPermission(player, CitadelPermissionHandler.getHangingPlaceBreak())) {
                     return;
                 }
-                player.sendMessage(ChatColor.RED + "The host block is protecting this.");
+                CivUI.error(player, "The host block is protecting this");
                 //break;
             }
         }
@@ -346,7 +343,7 @@ public class EntityListener implements Listener {
                 }
             }
         }
-        player.sendMessage(ChatColor.RED + "The host block is protecting this.");
+        CivUI.error(player, "The host block is protecting this");
         event.setCancelled(true);
     }
 
@@ -379,7 +376,7 @@ public class EntityListener implements Listener {
                 return;
             }
         }
-        player.sendMessage(ChatColor.RED + "You do not have permission to alter that.");
+        CivUI.error(player, "You can't alter that");
         event.setCancelled(true);
     }
 
@@ -392,7 +389,7 @@ public class EntityListener implements Listener {
         if (reinforcement == null) return;
 
         if (!reinforcement.hasPermission(player, CitadelPermissionHandler.getModifyBlocks())) {
-            player.sendMessage(ChatColor.RED + "You do not have permission to modify this block");
+            CivUI.error(player, "You can't modify that block");
             event.setCancelled(true);
         }
     }

@@ -1,12 +1,15 @@
 package vg.civcraft.mc.citadel;
 
 import java.util.logging.Level;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import java.util.Map;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
@@ -17,13 +20,12 @@ import vg.civcraft.mc.citadel.model.AcidManager;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
 
-/**
- * Just a useful class with general and misplaced methods that can be called
- * from anywhere.
- */
 public class CitadelUtility {
 
     private CitadelUtility() {
@@ -99,33 +101,101 @@ public class CitadelUtility {
         }
     }
 
-    public static void sendAndLog(CommandSender receiver, ChatColor color, String message) {
-        receiver.sendMessage(color + message);
+    /** Call sites still pass a colour; the mapping decides what that colour means. */
+    private static Kind kindOf(ChatColor color) {
+        return switch (color) {
+            case RED, DARK_RED -> Kind.ERROR;
+            case GREEN, DARK_GREEN -> Kind.SUCCESS;
+            case YELLOW -> Kind.WARN;
+            default -> Kind.INFO;
+        };
+    }
+
+    /** Some messages concatenate colour codes into the string, so it is parsed rather than taken literally. */
+    private static Component body(String message) {
+        return LegacyComponentSerializer.legacySection().deserialize(message);
+    }
+
+    /**
+     * Materials whose texture is not named after them. A block with several faces has no plain
+     * block/<name> sprite, so the face to show is named here rather than guessed.
+     */
+    private static final Map<Material, String> SPRITE_OVERRIDES = Map.of(
+        Material.ENCHANTING_TABLE, "block/enchanting_table_top",
+        Material.GRASS_BLOCK, "block/grass_block_top");
+
+    /** The texture for a material, as atlas and sprite. */
+    private static Component sprite(Material material) {
+        String override = SPRITE_OVERRIDES.get(material);
+        if (override != null) {
+            return CivText.sprite(Key.key(override));
+        }
+        String name = material.getKey().getKey();
+        return material.isBlock()
+            ? CivText.sprite(Key.key("block/" + name))
+            : CivText.sprite(CivText.ITEM_ATLAS, Key.key("item/" + name));
+    }
+
+    /** The type's texture and name, with the real item tooltip on hover. */
+    public static Component item(ReinforcementType type) {
+        ItemStack stack = type.getItem();
+        Component label = Component.text(type.getName(), CivText.VALUE)
+            .hoverEvent(HoverEvent.showItem(stack.getType(), stack.getAmount()));
+        return Component.text()
+            .append(sprite(stack.getType()))
+            .append(Component.space())
+            .append(label)
+            .build();
+    }
+
+    public static Component group(Group group) {
+        return CivText.group(group.getName());
+    }
+
+    private static Component coordsHover(Location location) {
+        return Component.text("Location: ", CivText.INFO)
+            .append(Component.text(
+                location.getBlockX() + " " + location.getBlockY() + " " + location.getBlockZ(),
+                CivText.VALUE));
+    }
+
+    private static void logReply(CommandSender receiver, String message) {
         if (Citadel.getInstance().getConfigManager().logMessages()) {
             Citadel.getInstance().getLogger().log(Level.INFO, "Sent {0} reply {1}",
                 new Object[]{receiver.getName(), message});
         }
+    }
+
+    public static void sendAndLog(CommandSender receiver, ChatColor color, String message) {
+        CivUI.notice(kindOf(color), body(message)).to(receiver).send();
+        logReply(receiver, message);
+    }
+
+    /** A success with the block's coordinates on hover. */
+    public static void successAt(CommandSender receiver, Location location, Object... parts) {
+        CivUI.notice(Kind.SUCCESS, parts).to(receiver).hover(coordsHover(location)).send();
+        logReply(receiver, PlainTextComponentSerializer.plainText()
+            .serialize(CivUI.render(Kind.SUCCESS, false, false, parts)));
+    }
+
+    /** An inspection result with the block's coordinates on hover. */
+    public static void infoAt(CommandSender receiver, Location location, Object... parts) {
+        CivUI.notice(Kind.INFO, parts).to(receiver).hover(coordsHover(location)).send();
+    }
+
+    /** An error with the block's coordinates on hover, taking components rather than a flat string. */
+    public static void errorAt(CommandSender receiver, Location location, Object... parts) {
+        CivUI.notice(Kind.ERROR, parts).to(receiver).hover(coordsHover(location)).send();
+        logReply(receiver, PlainTextComponentSerializer.plainText()
+            .serialize(CivUI.render(Kind.ERROR, false, false, parts)));
     }
 
     public static void sendAndLog(CommandSender receiver, ChatColor color, String message, Location location) {
-        final TextComponent component = new TextComponent(color + message);
-        addCoordsHoverComponent(component, location);
-        receiver.spigot().sendMessage(component);
-        if (Citadel.getInstance().getConfigManager().logMessages()) {
-            Citadel.getInstance().getLogger().log(Level.INFO, "Sent {0} reply {1}",
-                new Object[]{receiver.getName(), message});
-        }
-    }
-
-    private static BaseComponent addCoordsHoverComponent(BaseComponent component, Location location) {
-        String hoverText = String.format("Location: %s %s %s",
-            location.getBlockX(),
-            location.getBlockY(),
-            location.getBlockZ());
-        component.setHoverEvent(new HoverEvent(
-            HoverEvent.Action.SHOW_TEXT,
-            new Text(hoverText)));
-        return component;
+        CivUI.notice(kindOf(color), body(message))
+            .to(receiver)
+            .hover(coordsHover(location))
+            .send();
+        logReply(receiver, message);
     }
 
     public static void debugLog(String msg) {
@@ -140,9 +210,7 @@ public class CitadelUtility {
             toRemove.addItemAmount(type.getItem(), 1);
         }
         if (!toRemove.removeSafelyFrom(player.getInventory())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                "Failed to remove items needed for " + type.getName() + " reinforcement from your inventory");
-            Citadel.getInstance().getStateManager().setState(player, null);
+            CivUI.error(player, "Could not take the ", item(type), " from your inventory");
             return false;
         }
         return true;
@@ -150,57 +218,51 @@ public class CitadelUtility {
 
     public static boolean attemptReinforcementCreation(Block block, ReinforcementType type, Group group,
                                                        Player player) {
-        // check if group still exists
+        return attemptReinforcementCreation(block, type, group, player, null);
+    }
+
+    /**
+     * onFailure is appended to every failure message, for callers whose mode drops as a result. Null appends
+     * nothing - the mode did not change, so there is nothing to report.
+     */
+    public static boolean attemptReinforcementCreation(Block block, ReinforcementType type, Group group,
+                                                       Player player, Component onFailure) {
+        final Object tail = onFailure == null ? "" : onFailure;
         if (!group.isValid()) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                "The group " + group.getName() + " seems to have been deleted in the mean time",
-                block.getLocation());
-            Citadel.getInstance().getStateManager().setState(player, null);
+            errorAt(player, block.getLocation(), "The group ", group(group), " was deleted", tail);
             return true;
         }
-        // check if player still has permission
         if (!NameLayerAPI.getGroupManager().hasAccess(group, player.getUniqueId(),
             CitadelPermissionHandler.getReinforce())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                "You seem to have lost permission to reinforce on " + group.getName(),
-                block.getLocation());
-            Citadel.getInstance().getStateManager().setState(player, null);
+            errorAt(player, block.getLocation(), "You lost reinforce permission on ", group(group), tail);
             return true;
         }
         block = ReinforcementLogic.getResponsibleBlock(block);
-        // check if reinforcement already exists
         Reinforcement existingRein = Citadel.getInstance().getReinforcementManager().getReinforcement(block);
         if (existingRein != null) {
-            // something like a slab, we just ignore this
+            // e.g. a slab whose other half is already reinforced - not an error, just nothing to do
             return false;
         }
-        // check if reinforcement can reinforce that block
         if (!type.canBeReinforced(block.getType())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                type.getName() + " can not reinforce " + block.getType(),
-                block.getLocation());
+            errorAt(player, block.getLocation(), item(type), " can't reinforce ", block.getType(), tail);
             return false;
         }
-        // check if reinforcement is allowed in the current world
         if (!type.isAllowedInWorld(block.getWorld().getName())) {
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                type.getName() + " can not reinforce in this dimension", block.getLocation());
+            errorAt(player, block.getLocation(), item(type), " can't reinforce in this world", tail);
             return true;
         }
         ItemMap playerItems = new ItemMap(player.getInventory());
-        // check inventory
         int available = playerItems.getAmount(type.getItem());
         int required = type.getItem().getAmount();
-        // special handling if the reinforcement material is also the block being placed
-        // consuming the reinforcement material once will count the block being placed as reinforcing itself
-        // so detect that and consume an extra one
         boolean consumeExtra = false;
-        //We do this over a material check to keep lore/name support intact etc
+        // Cloned rather than a material check so lore/name-restricted items still match.
         ItemStack offfhandStack = player.getInventory().getItemInOffHand().clone();
         offfhandStack.setAmount(1);
 
         boolean blockIsAlsoReinforcement = block.getType() == type.getItem().getType();
         if (blockIsAlsoReinforcement) {
+            // The block being placed is itself the reinforcement item, so one more must be consumed
+            // or it would count as reinforcing itself for free.
             boolean placingFromReinforcementStack = (player.getInventory().getHeldItemSlot() == player.getInventory().first(block.getType())) ||
                 (offfhandStack.equals(type.getItem()));
             if (placingFromReinforcementStack) {
@@ -209,26 +271,20 @@ public class CitadelUtility {
             }
         }
         if (available < required) {
-            Citadel.getInstance().getStateManager().setState(player, null);
-            CitadelUtility.sendAndLog(player, ChatColor.RED,
-                "You have no items left to reinforce with " + type.getName(),
-                block.getLocation());
+            errorAt(player, block.getLocation(), "No ", item(type), " left to reinforce with", tail);
             return true;
         }
         Reinforcement newRein = ReinforcementLogic.callReinforcementCreationEvent(player, block, type, group);
         if (newRein == null) {
             return true;
         }
-        // remove from inventory
         if (!CitadelUtility.consumeReinforcementItems(player, type, consumeExtra)) {
             return true;
         }
-        // create reinforcement
         if (Citadel.getInstance().getConfigManager().logCreation()) {
             Citadel.getInstance().getLogger().info(player.getName() + " created reinforcement with " + type.getName()
                 + " for " + block.getType().toString() + " at " + block.getLocation().toString());
         }
-        // warn if acid cannot complete
         if (Citadel.getInstance().getAcidManager().isPossibleAcidBlock(block)) {
             AcidManager acidMan = Citadel.getInstance().getAcidManager();
             AcidType acidType = acidMan.getAcidTypeFromMaterial(block.getType());
@@ -244,7 +300,7 @@ public class CitadelUtility {
                 }
                 if (!acidMan.canAcidBlock(type, relativeReinforcement.getType())) {
                     CitadelUtility.sendAndLog(player, ChatColor.RED,
-                        "The " + blockFace.toString() + " acid will fail as it cannot acid tougher reinforcements!");
+                        "The " + blockFace + " acid will fail - that reinforcement is tougher");
                 }
             }
         }
