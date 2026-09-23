@@ -14,6 +14,7 @@ import vg.civcraft.mc.civmodcore.inventory.items.EnchantUtils;
 import vg.civcraft.mc.civmodcore.players.PlayerNames;
 import vg.civcraft.mc.civmodcore.players.scoreboard.bottom.BottomLineAPI;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardListener;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSettingAPI;
 import vg.civcraft.mc.civmodcore.players.settings.commands.ConfigCommand;
@@ -64,6 +65,9 @@ public class CivModCorePlugin extends ACivMod {
             warning("Cannot get database from config.", error);
             this.database = null;
         }
+        final String brandSprite = this.config.getBrandSprite();
+        CivUI.init(this.config.getBrand(),
+            brandSprite == null ? null : net.kyori.adventure.key.Key.key(brandSprite), getLogger());
         ScoreBoardAPI.setDefaultHeader(this.config.getScoreboardHeader());
         // Register listeners
         registerListener(new ClickableInventoryListener());

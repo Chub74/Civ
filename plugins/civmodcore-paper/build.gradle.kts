@@ -6,7 +6,7 @@ plugins {
     alias(libs.plugins.runpaper)
 }
 
-version = "3.0.6"
+version = "3.1.0"
 
 dependencies {
     paperweight {

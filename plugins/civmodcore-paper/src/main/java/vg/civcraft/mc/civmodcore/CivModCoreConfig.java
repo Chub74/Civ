@@ -13,6 +13,12 @@ public final class CivModCoreConfig extends ConfigParser {
     private DatabaseCredentials databaseCredentials;
     private static final DatabaseCredentials DEFAULT_DATABASE_CREDENTIALS = null;
 
+    private String brand;
+    private static final String DEFAULT_BRAND = "Eden";
+
+    private String brandSprite;
+    private static final String DEFAULT_BRAND_SPRITE = null;
+
     private String scoreboardHeader;
     private static final String DEFAULT_SCOREBOARD_HEADER = "  Info  ";
 
@@ -35,6 +41,8 @@ public final class CivModCoreConfig extends ConfigParser {
     protected boolean parseInternal(@NotNull final ConfigurationSection config) {
         this.databaseCredentials = config.getObject("database",
             DatabaseCredentials.class, DEFAULT_DATABASE_CREDENTIALS);
+        this.brand = config.getString("brand", DEFAULT_BRAND);
+        this.brandSprite = config.getString("brand-sprite", DEFAULT_BRAND_SPRITE);
         this.scoreboardHeader = ChatColor.translateAlternateColorCodes('&',
             config.getString("scoreboardHeader", DEFAULT_SCOREBOARD_HEADER));
         this.skinCacheThreads = config.getInt("skin-download-threads", DEFAULT_SKIN_CACHE_THREADS);
@@ -47,6 +55,8 @@ public final class CivModCoreConfig extends ConfigParser {
     public void reset() {
         super.reset();
         this.databaseCredentials = DEFAULT_DATABASE_CREDENTIALS;
+        this.brand = DEFAULT_BRAND;
+        this.brandSprite = DEFAULT_BRAND_SPRITE;
         this.scoreboardHeader = DEFAULT_SCOREBOARD_HEADER;
         this.skinCacheThreads = DEFAULT_SKIN_CACHE_THREADS;
         this.chunkLoadingStatistics = DEFAULT_CHUNK_LOADING_STATISTICS;
@@ -55,6 +65,14 @@ public final class CivModCoreConfig extends ConfigParser {
 
     public DatabaseCredentials getDatabaseCredentials() {
         return databaseCredentials;
+    }
+
+    public String getBrand() {
+        return brand;
+    }
+
+    public String getBrandSprite() {
+        return brandSprite;
     }
 
     public String getScoreboardHeader() {

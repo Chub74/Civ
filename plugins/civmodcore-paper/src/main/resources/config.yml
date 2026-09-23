@@ -1,3 +1,9 @@
+# Leads every message this server's plugins send.
+brand: Eden
+
+# Optional: render the brand as this item texture instead of the word.
+brand-sprite: item/golden_apple
+
 # Database connection details, should you want to have a database connection.
 # Do NOT change the ==: value.
 database:
