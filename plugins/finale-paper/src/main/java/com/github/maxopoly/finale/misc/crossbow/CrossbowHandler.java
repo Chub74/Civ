@@ -1,5 +1,6 @@
 package com.github.maxopoly.finale.misc.crossbow;
 
+import com.github.maxopoly.finale.misc.HudText;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.misc.CooldownHandler;
 import com.github.maxopoly.finale.misc.ItemUtil;
@@ -18,7 +19,6 @@ import isaac.bastion.Bastion;
 import isaac.bastion.BastionBlock;
 import isaac.bastion.manager.BastionBlockManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.ExplosionResult;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -57,8 +57,7 @@ public class CrossbowHandler {
         this.antiAirMissiles = antiAirMissiles;
 
         this.cooldowns = new CooldownHandler("crossbowCooldown", cooldown, (player, cooldowns) ->
-            ChatColor.DARK_RED + "" + ChatColor.BOLD + "Crossbow: " +
-                ChatColor.RED + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Crossbow", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
 
         new BukkitRunnable() {

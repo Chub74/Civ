@@ -1,5 +1,6 @@
 package com.github.maxopoly.finale;
 
+import com.github.maxopoly.finale.misc.HudText;
 import static vg.civcraft.mc.civmodcore.config.ConfigHelper.parseTime;
 
 import java.io.File;
@@ -19,9 +20,7 @@ import com.github.maxopoly.finale.misc.knockback.KnockbackConfig;
 import com.github.maxopoly.finale.misc.knockback.KnockbackModifier;
 import com.github.maxopoly.finale.misc.knockback.KnockbackType;
 import com.github.maxopoly.finale.misc.warpfruit.WarpFruitTracker;
-import org.apache.commons.lang3.text.WordUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
@@ -419,8 +418,7 @@ public class ConfigParser {
             long materialCooldown = parseTime(materialCooldownSection.getString("cooldown"));
             materialCooldowns.put(materialType,
                 new CooldownHandler(materialType.toString().toLowerCase() + "Cooldown", materialCooldown, (player, coolDownHandler) ->
-                    ChatColor.GOLD + "" + ChatColor.BOLD + WordUtils.capitalize(materialType.toString()) + ": " +
-                        ChatColor.YELLOW + CooldownHandler.formatCoolDown(coolDownHandler, player.getUniqueId())));
+                    HudText.cooldown(HudText.label(materialType), coolDownHandler.getRemainingCoolDown(player.getUniqueId()))));
         }
 
         Map<Material, Integer> zoneRadii = new HashMap<>();

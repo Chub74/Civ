@@ -1,6 +1,5 @@
 package com.github.maxopoly.finale.misc;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 public class GappleHandler {
@@ -11,8 +10,7 @@ public class GappleHandler {
     public GappleHandler(boolean enabled, long gappleCooldown) {
         this.enabled = enabled;
         gappleCooldowns = new CooldownHandler("gappleCooldown", gappleCooldown, (player, cooldowns) ->
-            ChatColor.GOLD + "" + ChatColor.BOLD + "Gapple: " +
-                ChatColor.YELLOW + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Gapple", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
     }
 

@@ -3,7 +3,6 @@ package com.github.maxopoly.finale.misc;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.external.FinaleSettingManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.players.scoreboard.bottom.BottomLine;
@@ -13,7 +12,6 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.utilities.cooldowns.ICoolDownHandler;
 import vg.civcraft.mc.civmodcore.utilities.cooldowns.TickCoolDownHandler;
 
-import java.text.DecimalFormat;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
@@ -92,17 +90,6 @@ public class CooldownHandler {
             CivScoreBoard board = getCooldownBoard();
             board.set(shooter, getCooldownText.apply(shooter, cooldowns));
         }
-    }
-
-    private static final DecimalFormat df = new DecimalFormat("#.0");
-
-    public static String formatCoolDown(ICoolDownHandler<UUID> cooldowns, UUID uuid) {
-        long cd = cooldowns.getRemainingCoolDown(uuid);
-        if (cd <= 0) {
-            return ChatColor.GREEN + "READY";
-        }
-        //convert from ticks to ms
-        return df.format(cd / 20.0) + " sec";
     }
 
 }

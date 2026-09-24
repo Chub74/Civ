@@ -1,5 +1,6 @@
 package com.github.maxopoly.finale.misc.warpfruit;
 
+import com.github.maxopoly.finale.misc.HudText;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.external.FinaleSettingManager;
 import com.github.maxopoly.finale.misc.CooldownHandler;
@@ -43,8 +44,7 @@ public class WarpFruitTracker {
         this.afterEffects = afterEffects;
 
         this.cooldownHandler = new CooldownHandler("warpfruitCooldown", warpFruitCooldown, (player, cooldowns) ->
-            ChatColor.DARK_AQUA + "" + ChatColor.BOLD + "Warp fruit: " +
-                ChatColor.AQUA + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Warp fruit", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
     }
 

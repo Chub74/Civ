@@ -1,7 +1,6 @@
 package com.github.maxopoly.finale.misc;
 
 import com.github.maxopoly.finale.Finale;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
@@ -42,8 +41,7 @@ public class ShieldHandler {
         this.shieldBashTargetDistance = shieldBashTargetDistance;
         this.shieldBashDamage = shieldBashDamage;
         this.shieldBashCooldowns = new CooldownHandler("shieldBashCooldown", shieldBashCooldown, (player, cooldowns) ->
-            ChatColor.DARK_GRAY + "" + ChatColor.BOLD + "Shield: " +
-                ChatColor.GRAY + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Shield", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
 
         this.passiveResistanceEnabled = passiveResistanceEnabled;

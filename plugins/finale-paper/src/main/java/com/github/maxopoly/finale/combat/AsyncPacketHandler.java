@@ -1,5 +1,9 @@
 package com.github.maxopoly.finale.combat;
 
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import java.time.Duration;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
@@ -20,7 +24,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-import net.md_5.bungee.api.ChatColor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSources;
@@ -44,10 +47,15 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 public class AsyncPacketHandler extends PacketAdapter implements Listener {
 
+    private static final PacketType SWING_PACKET = PacketType.fromName("PUNCH").stream()
+        .filter(type -> type.getProtocol() == PacketType.Protocol.PLAY && type.isClient())
+        .findFirst()
+        .orElse(PacketType.Play.Client.ARM_ANIMATION);
+
     private CombatConfig cc;
 
     public AsyncPacketHandler(CombatConfig cc) {
-        super(Finale.getPlugin(), ListenerPriority.HIGH, PacketType.Play.Client.USE_ENTITY, PacketType.Play.Client.ARM_ANIMATION, PacketType.Play.Client.BLOCK_DIG, PacketType.Play.Client.ENTITY_ACTION);
+        super(Finale.getPlugin(), ListenerPriority.HIGH, PacketType.Play.Client.USE_ENTITY, SWING_PACKET, PacketType.Play.Client.BLOCK_DIG, PacketType.Play.Client.ENTITY_ACTION);
 
         this.cc = cc;
 
@@ -98,7 +106,12 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
                     }
 
                     if (cpsHandler.getCPS(attacker.getUniqueId()) >= cc.getCPSLimit()) {
-                        attacker.sendMessage(ChatColor.RED + "You've hit CPS limit of " + cc.getCPSLimit() + "!");
+                        CivUI.notice(Kind.ERROR, "You're clicking faster than the limit of ",
+                                CivText.value(cc.getCPSLimit() + " CPS"))
+                            .from(Finale.getPlugin())
+                            .to(attacker)
+                            .atMostEvery(Duration.ofSeconds(1))
+                            .send();
                         return;
                     }
 
@@ -115,10 +128,10 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
             } else if (playerAction == EnumWrappers.PlayerAction.STOP_SPRINTING) {
                 sprintHandler.stopSprinting(player);
             }
-        } else if (packetType == PacketType.Play.Client.ARM_ANIMATION) {
+        } else if (packetType == SWING_PACKET) {
             Player attacker = event.getPlayer();
             PacketContainer packet = event.getPacket();
-            Hand hand = packet.getHands().getValues().get(0);
+            Hand hand = packetType == PacketType.Play.Client.ARM_ANIMATION ? packet.getHands().getValues().get(0) : Hand.MAIN_HAND;
             if (hand == Hand.MAIN_HAND && !isDigging.contains(attacker.getUniqueId())) {
                 Block targetBlock = attacker.getTargetBlockExact(4);
                 if (targetBlock != null && targetBlock.getType() != Material.AIR) {

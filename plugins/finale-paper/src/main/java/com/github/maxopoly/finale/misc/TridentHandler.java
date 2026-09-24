@@ -3,7 +3,6 @@ package com.github.maxopoly.finale.misc;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.external.FinaleSettingManager;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.players.scoreboard.bottom.BottomLine;
@@ -30,12 +29,10 @@ public class TridentHandler {
         this.generalCooldown = generalCooldown;
 
         this.riptideCooldownHandler = new CooldownHandler("riptideCooldown", riptideCooldown, (player, cooldowns) ->
-            ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Riptide: " +
-                ChatColor.GREEN + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Riptide", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
         this.generalCooldownHandler = new CooldownHandler("tridentCooldown", generalCooldown, (player, cooldowns) ->
-            ChatColor.DARK_RED + "" + ChatColor.BOLD + "Trident: " +
-                ChatColor.RED + CooldownHandler.formatCoolDown(cooldowns, player.getUniqueId())
+            HudText.cooldown("Trident", cooldowns.getRemainingCoolDown(player.getUniqueId()))
         );
     }
 

@@ -1,10 +1,10 @@
 package com.github.maxopoly.finale.listeners;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.FinaleManager;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -136,10 +136,7 @@ public class PlayerListener implements Listener {
 		}
 		if (manager.getCTPOnLogin()) {
 			Finale.getPlugin().getCombatTagPlusManager().tag(e.getPlayer(), null);
-			e.getPlayer()
-					.sendActionBar(Component.text().append(Component.text(">> ", NamedTextColor.DARK_GRAY))
-							.append(Component.text("You have been combat tagged on login", NamedTextColor.RED))
-							.append(Component.text(" <<", NamedTextColor.DARK_GRAY)).build());
+			e.getPlayer().sendActionBar(Component.text("You're in combat - everyone is tagged on login", CivText.WARN));
 		}
 	}
 

@@ -1,15 +1,18 @@
 package com.github.maxopoly.finale.listeners;
 
+import com.github.maxopoly.finale.misc.HudText;
+import java.time.Duration;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import com.github.maxopoly.finale.Finale;
 import com.github.maxopoly.finale.external.CombatTagPlusManager;
 import com.github.maxopoly.finale.external.FinaleSettingManager;
 
-import java.text.DecimalFormat;
 import java.util.UUID;
 import java.util.function.BiFunction;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -70,7 +73,7 @@ public class PearlCoolDownListener implements Listener {
     }
 
     public String getCooldownText(Player shooter) {
-        return ChatColor.DARK_PURPLE + "" + ChatColor.BOLD + "Enderpearl: " + ChatColor.LIGHT_PURPLE + formatCoolDown(shooter.getUniqueId());
+        return HudText.cooldown("Ender pearl", cds.getRemainingCoolDown(shooter.getUniqueId()));
     }
 
     public void putOnCooldown(Player shooter) {
@@ -117,8 +120,12 @@ public class PearlCoolDownListener implements Listener {
         // check whether on cooldown
         if (cds.onCoolDown(shooter.getUniqueId())) {
             e.setCancelled(true);
-            shooter.sendMessage(
-                ChatColor.RED + "You may pearl again in " + formatCoolDown(shooter.getUniqueId()) + " seconds");
+            CivUI.notice(Kind.ERROR, "You can pearl again in ",
+                    CivText.value(HudText.seconds(cds.getRemainingCoolDown(shooter.getUniqueId()))))
+                .from(Finale.getPlugin())
+                .to(shooter)
+                .atMostEvery(Duration.ofSeconds(1))
+                .send();
             return;
         }
         // tag player if desired
@@ -128,17 +135,6 @@ public class PearlCoolDownListener implements Listener {
 
         // put pearl on cooldown
         putOnCooldown(shooter);
-    }
-
-    private DecimalFormat df = new DecimalFormat("#.0");
-
-    private String formatCoolDown(UUID uuid) {
-        long cd = cds.getRemainingCoolDown(uuid);
-        if (cd <= 0) {
-            return ChatColor.GREEN + "READY";
-        }
-        //convert from ticks to ms
-        return df.format(cd / 20.0) + " sec";
     }
 
 }

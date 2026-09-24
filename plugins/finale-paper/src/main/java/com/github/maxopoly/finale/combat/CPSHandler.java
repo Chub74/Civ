@@ -1,5 +1,6 @@
 package com.github.maxopoly.finale.combat;
 
+import com.github.maxopoly.finale.misc.HudText;
 import com.github.maxopoly.finale.Finale;
 import com.google.common.collect.Sets;
 import java.util.ArrayDeque;
@@ -7,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -89,6 +89,6 @@ public class CPSHandler implements Listener {
     }
 
     public String getCPSText(Player p) {
-        return ChatColor.GOLD + "" + ChatColor.BOLD + "CPS: " + ChatColor.YELLOW + Finale.getPlugin().getManager().getCPSHandler().getCPS(p.getUniqueId());
+        return HudText.stat("CPS", Finale.getPlugin().getManager().getCPSHandler().getCPS(p.getUniqueId()));
     }
 }
