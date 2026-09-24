@@ -10,13 +10,18 @@ import java.util.HashMap;
 import com.aleksey.castlegates.CastleGates;
 import com.aleksey.castlegates.types.TimerMode;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import com.aleksey.castlegates.types.CommandMode;
 import com.aleksey.castlegates.types.TimerOperation;
+import com.aleksey.castlegates.utils.Text;
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class PlayerStateManager {
+
+    private static final Component SEPARATOR = Component.text(" ▶ ", CivText.MUTED);
 
     public static class PlayerState {
 
@@ -31,7 +36,12 @@ public class PlayerStateManager {
     private final Map<Player, Integer> _tasks = new HashMap<>();
 
     public void clearPlayerMode(Player player) {
-        Integer taskId = _tasks.get(player);
+        clearPlayerMode(player, false);
+    }
+
+    private void clearPlayerMode(Player player, boolean timedOut) {
+        // Removed, not just cancelled, so addTask schedules a fresh one next time.
+        Integer taskId = _tasks.remove(player);
 
         if (taskId != null) {
             Bukkit.getScheduler().cancelTask(taskId);
@@ -44,7 +54,11 @@ public class PlayerStateManager {
         _states.remove(player);
 
         if (player.isOnline()) {
-            player.sendMessage(ChatColor.YELLOW + "Castle Gates " + state.mode.name() + " mode off");
+            if (timedOut) {
+                CivUI.info(player, Text.mode(state.mode), " timed out", SEPARATOR, Text.mode(CommandMode.NORMAL));
+            } else {
+                CivUI.success(player, Text.mode(state.mode), SEPARATOR, Text.mode(CommandMode.NORMAL));
+            }
         }
     }
 
@@ -62,7 +76,7 @@ public class PlayerStateManager {
 
         if (state == null) {
             if (mode == CommandMode.NORMAL) {
-                player.sendMessage(ChatColor.GREEN + "Castle Gates " + mode.name() + " mode on");
+                CivUI.info(player, "You're already in ", Text.mode(CommandMode.NORMAL));
                 return;
             }
 
@@ -72,6 +86,8 @@ public class PlayerStateManager {
             return;
         }
 
+        CommandMode previous = state.mode == null ? CommandMode.NORMAL : state.mode;
+
         state.mode = mode;
         state.timer = timer;
         state.timerOperation = timerOperation;
@@ -80,7 +96,7 @@ public class PlayerStateManager {
 
         addTask(player);
 
-        player.sendMessage(ChatColor.GREEN + "Castle Gates " + mode.name() + " mode on");
+        CivUI.success(player, Text.mode(previous), SEPARATOR, Text.mode(mode));
     }
 
     public void interact(Player player) {
@@ -104,7 +120,7 @@ public class PlayerStateManager {
                     long offTime = state.lastInteracted + 1000L * CastleGates.getConfigManager().getPlayerStateResetInSeconds();
 
                     if (offTime < System.currentTimeMillis()) {
-                        clearPlayerMode(player);
+                        clearPlayerMode(player, true);
                     }
                 }
             },

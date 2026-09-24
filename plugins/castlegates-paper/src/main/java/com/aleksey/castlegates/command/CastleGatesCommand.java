@@ -5,7 +5,6 @@
 package com.aleksey.castlegates.command;
 
 import com.aleksey.castlegates.types.TimerMode;
-import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -14,6 +13,9 @@ import com.aleksey.castlegates.CastleGates;
 import com.aleksey.castlegates.types.CommandMode;
 import com.aleksey.castlegates.types.TimerOperation;
 import com.aleksey.castlegates.utils.Helper;
+import com.aleksey.castlegates.utils.Text;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class CastleGatesCommand {
 
@@ -21,6 +23,7 @@ public class CastleGatesCommand {
         if (!(sender instanceof Player player)) {
             if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) return false;
             CastleGates.getManager().reinit();
+            CivUI.success(sender, "Reloaded CastleGates");
             return true;
         }
 
@@ -86,7 +89,8 @@ public class CastleGatesCommand {
                     timerOperation = Helper.parseTimerOperation(args[2]);
 
                     if (timerOperation == null) {
-                        player.sendMessage(ChatColor.RED + "Allowed timer operations are draw, undraw and revert.");
+                        CivUI.error(player, "Timer operations are ", CivText.value("draw"), ", ", CivText.value("undraw"),
+                            " and ", CivText.value("revert"));
                         return true;
                     }
                 }
@@ -94,7 +98,7 @@ public class CastleGatesCommand {
                 if (args.length == 4 || args[2].equalsIgnoreCase("door")) {
                     if (args.length == 4) {
                         if (!args[3].equalsIgnoreCase("door")) {
-                            player.sendMessage(ChatColor.RED + "Allowed timer mode is door.");
+                            CivUI.error(player, "The only timer mode is ", CivText.value("door"));
                             return true;
                         }
                     } else {
@@ -117,19 +121,15 @@ public class CastleGatesCommand {
         try {
             timer = Integer.parseInt(text);
         } catch (NumberFormatException ex) {
+            CivUI.error(player, CivText.value(text), " isn't a number of seconds");
             return null;
         }
 
         if (timer < CastleGates.getConfigManager().getTimerMin()
             || timer > CastleGates.getConfigManager().getTimerMax()
         ) {
-            String errorMessage = "Timer interval is limited to the value between "
-                + CastleGates.getConfigManager().getTimerMin()
-                + " and "
-                + CastleGates.getConfigManager().getTimerMax()
-                + " sec";
-
-            player.sendMessage(ChatColor.RED + errorMessage);
+            CivUI.error(player, "Timers can run from ", Text.seconds(CastleGates.getConfigManager().getTimerMin()),
+                " to ", Text.seconds(CastleGates.getConfigManager().getTimerMax()));
 
             return null;
         }

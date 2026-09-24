@@ -4,11 +4,7 @@
 
 package com.aleksey.castlegates.plugins.citadel;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import org.bukkit.Location;
@@ -23,35 +19,14 @@ import com.aleksey.castlegates.database.ReinforcementInfo;
 import vg.civcraft.mc.citadel.playerstate.AbstractPlayerState;
 import vg.civcraft.mc.citadel.playerstate.PlayerStateManager;
 import vg.civcraft.mc.citadel.playerstate.ReinforcingState;
-
-public class CitadelManager extends Thread implements ICitadelManager, Runnable {
-
-    private static class UpdatedReinforcement {
-
-        public Reinforcement rein;
-        public boolean deleted;
-
-        public UpdatedReinforcement(Reinforcement rein, boolean deleted) {
-            this.rein = rein;
-            this.deleted = deleted;
-        }
-    }
-
-    private long _lastExecute = System.currentTimeMillis();
-    private AtomicBoolean _kill = new AtomicBoolean(false);
-    private AtomicBoolean _run = new AtomicBoolean(false);
-
-    private List<UpdatedReinforcement> _updatedReinforcements = new ArrayList<UpdatedReinforcement>();
-    private Queue<UpdatedReinforcement> _localUpdatedReinforcements = new ArrayDeque<UpdatedReinforcement>();
+public class CitadelManager implements ICitadelManager {
 
     @Override
     public void init() {
-        startThread();
     }
 
     @Override
     public void close() {
-        terminateThread();
     }
 
     @Override
@@ -137,9 +112,7 @@ public class CitadelManager extends Thread implements ICitadelManager, Runnable 
         info.GroupId = rein.getGroupId();
         info.Insecure = rein.isInsecure();
 
-        synchronized (this._updatedReinforcements) {
-            this._updatedReinforcements.add(new UpdatedReinforcement(rein, true));
-        }
+        rein.setHealth(-1);
 
         return info;
     }
@@ -150,11 +123,23 @@ public class CitadelManager extends Thread implements ICitadelManager, Runnable 
             return false;
 
         var type = Citadel.getInstance().getReinforcementTypeManager().getById(info.TypeId);
-        var rein = new Reinforcement(loc, type, info.GroupId, info.CreationTime, info.Health, info.Insecure, true);
 
-        synchronized (this._updatedReinforcements) {
-            this._updatedReinforcements.add(new UpdatedReinforcement(rein, false));
+        if (type == null) {
+            CastleGates.getPluginLogger().log(Level.WARNING,
+                "Could not restore reinforcement at {0}: reinforcement type {1} no longer exists",
+                new Object[]{loc, info.TypeId});
+            return false;
         }
+
+        // Anything already here would be overwritten in the cache but left in the database, so remove it first.
+        Reinforcement existing = Citadel.getInstance().getReinforcementManager().getReinforcement(loc);
+
+        if (existing != null) {
+            existing.setHealth(-1);
+        }
+
+        var rein = new Reinforcement(loc, type, info.GroupId, info.CreationTime, info.Health, info.Insecure, true);
+        Citadel.getInstance().getReinforcementManager().putReinforcement(rein);
 
         return true;
     }
@@ -165,74 +150,5 @@ public class CitadelManager extends Thread implements ICitadelManager, Runnable 
         AbstractPlayerState currentState = stateManager.getState(player);
 
         return currentState instanceof ReinforcingState;
-    }
-
-    public void startThread() {
-        setName("CastleGates CitadelManager Thread");
-        setPriority(Thread.MIN_PRIORITY);
-        start();
-
-        CastleGates.getPluginLogger().log(Level.INFO, "CitadelManager thread started");
-    }
-
-    public void terminateThread() {
-        this._kill.set(true);
-
-        while (this._run.get()) {
-            try {
-                Thread.sleep(100);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        saveData();
-
-        CastleGates.getPluginLogger().log(Level.INFO, "CitadelManager thread stopped");
-    }
-
-    @Override
-    public void run() {
-        this._run.set(true);
-
-        try {
-            while (!this.isInterrupted() && !this._kill.get()) {
-                try {
-                    long timeWait = _lastExecute + CastleGates.getConfigManager().getDataWorkerRate() - System.currentTimeMillis();
-                    _lastExecute = System.currentTimeMillis();
-                    if (timeWait > 0) {
-                        Thread.sleep(timeWait);
-                    }
-
-                    saveData();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        } finally {
-            this._run.set(false);
-        }
-    }
-
-    private void saveData() {
-        try {
-            synchronized (this._updatedReinforcements) {
-                if (this._updatedReinforcements.size() == 0) return;
-
-                this._localUpdatedReinforcements.addAll(this._updatedReinforcements);
-                this._updatedReinforcements.clear();
-            }
-
-            UpdatedReinforcement updated;
-
-            while ((updated = this._localUpdatedReinforcements.poll()) != null) {
-                if (updated.deleted)
-                    updated.rein.setHealth(-1);
-                else
-                    Citadel.getInstance().getReinforcementManager().putReinforcement(updated.rein);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

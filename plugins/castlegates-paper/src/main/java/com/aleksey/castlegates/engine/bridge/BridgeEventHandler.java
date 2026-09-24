@@ -12,7 +12,10 @@ import com.aleksey.castlegates.types.*;
 import com.aleksey.castlegates.utils.Helper;
 import com.aleksey.castlegates.utils.ParticleHelper;
 import com.aleksey.castlegates.utils.PowerResultHelper;
-import org.bukkit.ChatColor;
+import com.aleksey.castlegates.utils.Text;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -91,11 +94,7 @@ public class BridgeEventHandler {
             return;
         }
 
-        BridgeManager.RemoveResult result = _bridgeManager.removeGear(new BlockCoord(block));
-
-        if (result == BridgeManager.RemoveResult.Removed || result == BridgeManager.RemoveResult.RemovedWithLink) {
-            Helper.putItemToInventoryOrDrop(event.getPlayer(), block.getLocation(), CastleGates.getConfigManager().getCreationConsumeItem());
-        }
+        removeGearAndRefund(event.getPlayer(), block);
     }
 
     public void handleBlockRedstone(BlockRedstoneEvent event) {
@@ -126,19 +125,24 @@ public class BridgeEventHandler {
         }
     }
 
+    /** Hoeing, path-making, trampling, endermen and falling blocks all land here. */
     public void handleEntityChangeBlock(EntityChangeBlockEvent event) {
-        _bridgeManager.removeGear(new BlockCoord(event.getBlock()));
+        Player player = event.getEntity() instanceof Player p ? p : null;
+        removeGearAndRefund(player, event.getBlock());
     }
 
     public void handlePistonEvent(List<Block> blocks) {
-        ItemStack dropItem = CastleGates.getConfigManager().getCreationConsumeItem();
-
         for (Block block : blocks) {
-            BridgeManager.RemoveResult result = _bridgeManager.removeGear(new BlockCoord(block));
+            removeGearAndRefund(null, block);
+        }
+    }
 
-            if (result == BridgeManager.RemoveResult.Removed || result == BridgeManager.RemoveResult.RemovedWithLink) {
-                Helper.putItemToInventoryOrDrop(null, block.getLocation(), dropItem);
-            }
+    /** Removes the gearblock here, if any, and returns its creation item to the player or drops it at the block. */
+    private void removeGearAndRefund(Player player, Block block) {
+        BridgeManager.RemoveResult result = _bridgeManager.removeGear(new BlockCoord(block));
+
+        if (result == BridgeManager.RemoveResult.Removed || result == BridgeManager.RemoveResult.RemovedWithLink) {
+            Helper.putItemToInventoryOrDrop(player, block.getLocation(), CastleGates.getConfigManager().getCreationConsumeItem());
         }
     }
 
@@ -181,12 +185,12 @@ public class BridgeEventHandler {
 
         if (CastleGates.getConfigManager().isGearblockMustBeReinforced()
             && !CastleGates.getCitadelManager().isReinforced(location)) {
-            player.sendMessage(ChatColor.RED + "Block must be reinforced to create a gearblock.");
+            CivUI.error(player, "Reinforce this block before making it a gearblock");
             return false;
         }
 
         if (!CastleGates.getCitadelManager().canBypass(player, location)) {
-            player.sendMessage(ChatColor.RED + "Citadel has prevented the creation of a gearblock.");
+            CivUI.error(player, "You need bypass on this block's reinforcement to make it a gearblock");
             return false;
         }
 
@@ -194,23 +198,24 @@ public class BridgeEventHandler {
         List<Integer> consumeSlots = Helper.getConsumeSlots(player, consumeItem);
 
         if (consumeSlots == null && consumeItem != null) {
-            player.sendMessage(ChatColor.RED + "Not enough material left to create a gearblock.");
+            CivUI.error(player, "You need ", CivText.value(String.valueOf(consumeItem.getAmount())), " ",
+                Text.block(consumeItem.getType()), " to make a gearblock");
             return false;
         }
 
         BridgeManager.CreateResult result = _bridgeManager.createGear(block);
 
         if (result == BridgeManager.CreateResult.NotCreated) {
-            player.sendMessage(ChatColor.RED + block.getType().toString() + " cannot be used as a gearblock.");
+            CivUI.error(player, Text.block(block.getType()), " can't be a gearblock");
             return false;
         } else if (result == BridgeManager.CreateResult.AlreadyExist) {
-            player.sendMessage(ChatColor.RED + "That block is already a gearblock.");
+            CivUI.error(player, "That block is already a gearblock");
             return true;
         }
 
         Helper.consumeItem(player, consumeItem, consumeSlots);
 
-        player.sendMessage(ChatColor.GREEN + "A gearblock has been created.");
+        CivUI.success(player, "Made this block a gearblock");
 
         ParticleHelper.spawn(block, ParticleHelper.Type.Info);
 
@@ -230,16 +235,16 @@ public class BridgeEventHandler {
             return false;
 
         if (!CastleGates.getCitadelManager().canBypass(player, block.getLocation())) {
-            player.sendMessage(ChatColor.RED + "Citadel has prevented the creation of a link.");
+            CivUI.error(player, "You need bypass on this gearblock to link it");
             return false;
         }
 
         if (gearblock1.getLink() != null) {
             if (gearblock1.getLink().isDrawn()) {
-                player.sendMessage(ChatColor.RED + "Cannot unlink gearblocks in a drawn bridge/gate.");
+                CivUI.error(player, "You can't unlink gearblocks while the bridge or gate is drawn");
             } else {
                 _bridgeManager.removeLink(gearblock1.getLink());
-                player.sendMessage(ChatColor.GREEN + "The gearblocks have been unlinked.");
+                CivUI.success(player, "Unlinked the gearblocks");
             }
 
             return true;
@@ -248,7 +253,8 @@ public class BridgeEventHandler {
         FindGearResult result = findEndGear(block, event.getBlockFace());
 
         if (result == null) {
-            event.getPlayer().sendMessage(ChatColor.RED + "End gearblock not found. Link distance is limited to " + CastleGates.getConfigManager().getMaxBridgeLength() + " blocks.");
+            CivUI.error(player, "There's no gearblock to link to within ",
+                CivText.value(String.valueOf(CastleGates.getConfigManager().getMaxBridgeLength())), " blocks of this face");
         } else {
             linkGearblocks(player, gearblock1, result, true);
         }
@@ -261,7 +267,7 @@ public class BridgeEventHandler {
 
         if (!CastleGates.getCitadelManager().canBypass(player, loc)) {
             if (showError) {
-                player.sendMessage(ChatColor.RED + "Citadel has prevented the creation of a link.");
+                CivUI.error(player, "You need bypass on the gearblock at ", Text.coords(result.gearblock.getCoord()), " to link to it");
             }
 
             return false;
@@ -269,7 +275,7 @@ public class BridgeEventHandler {
 
         if (result.gearblock.getLink() != null) {
             if (showError) {
-                player.sendMessage(ChatColor.RED + "The gearblock at [" + result.gearblock.getCoord().getX() + " " + result.gearblock.getCoord().getY() + " " + result.gearblock.getCoord().getZ() + "] already has a link. Remove it before creating a new one.");
+                CivUI.error(player, "The gearblock at ", Text.coords(result.gearblock.getCoord()), " is already linked. Unlink it first");
                 ParticleHelper.spawn(player, result.gearblock, ParticleHelper.Type.Warning);
             }
 
@@ -277,14 +283,15 @@ public class BridgeEventHandler {
         }
 
         if (_bridgeManager.createLink(gearblock1, result.gearblock, result.distance)) {
-            player.sendMessage(ChatColor.GREEN + "The gearblock has been linked with the gearblock at [" + result.gearblock.getCoord().getX() + " " + result.gearblock.getCoord().getY() + " " + result.gearblock.getCoord().getZ() + "].");
+            CivUI.success(player, "Linked to the gearblock at ", Text.coords(result.gearblock.getCoord()));
             ParticleHelper.spawn(player, gearblock1, ParticleHelper.Type.Info);
             ParticleHelper.spawn(player, result.gearblock, ParticleHelper.Type.Info);
             return true;
         }
 
         if (showError) {
-            player.sendMessage(ChatColor.RED + "The gearblock at [" + result.gearblock.getCoord().getX() + " " + result.gearblock.getCoord().getY() + " " + result.gearblock.getCoord().getZ() + "] has a broken link which cannot be restored by using the clicked block. Click the block where the other gearblock used to be.");
+            CivUI.error(player, "The gearblock at ", Text.coords(result.gearblock.getCoord()),
+                " has a broken link. Click where its old partner was to restore it");
             ParticleHelper.spawn(player, result.gearblock, ParticleHelper.Type.Warning);
         }
 
@@ -352,40 +359,41 @@ public class BridgeEventHandler {
             BridgeManager.SearchBridgeBlockResult searchResult = _bridgeManager.searchBridgeBlock(blockCoord);
 
             switch (searchResult) {
-                case Bridge -> player.sendMessage("Bridge block");
-                case Gates -> player.sendMessage("Gate block");
+                case Bridge -> CivUI.info(player, "This block is part of a bridge");
+                case Gates -> CivUI.info(player, "This block is part of a gate");
             }
 
             return;
         }
 
         if (!CastleGates.getCitadelManager().canViewInformation(player, block.getLocation())) {
-            player.sendMessage(ChatColor.RED + "Gearblock");
+            CivUI.notice(Kind.INFO, "This is a gearblock")
+                .hover(CivText.info("You don't have info access on its reinforcement"))
+                .to(player)
+                .send();
         } else {
             if (gearblock.getLink() == null) {
-                player.sendMessage(ChatColor.GREEN + "The gearblock is not linked.");
-
                 if (gearblock.getBrokenLink() != null) {
-                    player.sendMessage(ChatColor.GREEN + "But contains " + gearblock.getBrokenLink().getBlocks().size() + " drawn blocks.");
+                    CivUI.info(player, "This gearblock isn't linked, but holds ",
+                        CivText.value(String.valueOf(gearblock.getBrokenLink().getBlocks().size())), " drawn blocks");
+                } else {
+                    CivUI.info(player, "This gearblock isn't linked");
                 }
             } else {
                 Gearblock gearblock2 = gearblock.getLink().getGearblock1() == gearblock ? gearblock.getLink().getGearblock2() : gearblock.getLink().getGearblock1();
-                player.sendMessage(ChatColor.GREEN + "The gearblock has been linked to the gearblock at [" + gearblock2.getCoord().getX() + " " + gearblock2.getCoord().getY() + " " + gearblock2.getCoord().getZ() + "].");
-
-                if (gearblock.getLink().isDrawn()) {
-                    player.sendMessage(ChatColor.GREEN + "The bridge/gate is drawn.");
-                }
+                CivUI.info(player, "This gearblock is linked to ", Text.coords(gearblock2.getCoord()),
+                    gearblock.getLink().isDrawn() ? " and is drawn" : "");
 
                 ParticleHelper.spawn(player, gearblock2, ParticleHelper.Type.Info);
             }
 
             if (gearblock.getTimer() != null) {
-                String message = "Timer: " + gearblock.getTimer() + " sec to process operation " + gearblock.getTimerOperation() + " in " + gearblock.getTimerMode() + " mode.";
-                player.sendMessage(ChatColor.GREEN + message);
+                CivUI.info(player, "Its timer will ",
+                    Text.timer(gearblock.getTimer(), gearblock.getTimerOperation(), gearblock.getTimerMode()));
             }
 
             if (gearblock.getLockedGearblocks() != null || gearblock.getLockGearblock() != null) {
-                player.sendMessage(ChatColor.YELLOW + "Locked");
+                CivUI.warn(player, "This gearblock is locked");
             }
         }
     }
@@ -429,7 +437,7 @@ public class BridgeEventHandler {
             return true;
 
         if (!CastleGates.getConfigManager().isTimerEnabled()) {
-            player.sendMessage(ChatColor.RED + "The timer function is disabled on this server.");
+            CivUI.error(player, "Timers are disabled on this server");
             return true;
         }
 
@@ -437,27 +445,22 @@ public class BridgeEventHandler {
         Gearblock gearblock = _storage.getGearblock(blockCoord);
 
         if (gearblock == null) {
-            player.sendMessage(ChatColor.RED + "That block is not a gearblock.");
+            CivUI.error(player, "That block isn't a gearblock");
             return true;
         }
 
         if (!CastleGates.getCitadelManager().canBypass(player, block.getLocation())) {
-            player.sendMessage(ChatColor.RED + "Citadel has prevented that operation.");
+            CivUI.error(player, "You need bypass on this gearblock to change its timer");
             return true;
         }
 
-        String message;
-
         if (gearblock.getTimer() == null) {
             _storage.setGearblockTimer(gearblock, state.timer, state.timerOperation, state.timerMode);
-            String modeText = state.timerMode == TimerMode.DEFAULT ? "DEFAULT" : "DOOR";
-            message = ChatColor.GREEN + "The gearblock's timer has been set to " + state.timer + " sec to process operation " + state.timerOperation + " in " + modeText + " mode.";
+            CivUI.success(player, "Set the timer to ", Text.timer(state.timer, state.timerOperation, state.timerMode));
         } else {
             _storage.clearGearblockTimer(gearblock);
-            message = ChatColor.YELLOW + "The gearblock's timer has been removed.";
+            CivUI.success(player, "Removed the gearblock's timer");
         }
-
-        player.sendMessage(message);
 
         ParticleHelper.spawn(player, gearblock, ParticleHelper.Type.Info);
 

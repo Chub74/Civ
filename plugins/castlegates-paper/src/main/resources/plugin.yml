@@ -4,6 +4,7 @@ version: ${version}
 author: Aleksey-Terzi
 description: 'Drawable gates and bridges'
 api-version: 26.3
+depend: [ CivModCore ]
 softdepend: [ NameLayer, Citadel, Bastion, JukeAlert ]
 commands:
   cg:
