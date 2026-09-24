@@ -6,6 +6,9 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import io.papermc.paper.scoreboard.numbers.NumberFormat;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -19,11 +22,14 @@ public class CivScoreBoard {
 
     private String scoreName;
     private Map<UUID, String> currentScoreText;
+    /** What the sidebar shows instead of the text key, when the line has one - e.g. inline sprites. */
+    private Map<UUID, Component> currentDisplay;
     private BukkitRunnable updater;
 
     CivScoreBoard(String scoreName) {
         this.scoreName = scoreName;
         this.currentScoreText = new TreeMap<>();
+        this.currentDisplay = new TreeMap<>();
     }
 
     public String getName() {
@@ -43,14 +49,16 @@ public class CivScoreBoard {
                     Entry<UUID, String> entry = iter.next();
                     Player player = Bukkit.getPlayer(entry.getKey());
                     if (player != null) {
-                        String newText = updateFunction.apply(player, entry.getValue());
+                        String newText = fit(updateFunction.apply(player, entry.getValue()));
                         if (newText == null) {
                             hideForPlayer(player);
                             iter.remove();
+                            currentDisplay.remove(entry.getKey());
                             continue;
                         }
                         if (!newText.equals(entry.getValue())) {
-                            internalUpdate(player, entry.getValue(), newText);
+                            currentDisplay.remove(entry.getKey());
+                            internalUpdate(player, entry.getValue(), newText, null);
                             entry.setValue(newText);
                         }
                     }
@@ -61,26 +69,55 @@ public class CivScoreBoard {
     }
 
     public void set(Player p, String newText) {
+        set(p, newText, null);
+    }
+
+    /**
+     * text is the line's key - unique per line, and what clients without display names see.
+     * display, if given, is shown instead and can hold anything a component can, such as sprites.
+     */
+    public void set(Player p, String newText, Component display) {
         if (newText == null) {
             hide(p);
             return;
         }
+        newText = fit(newText);
         String oldText = get(p);
-        internalUpdate(p, oldText, newText);
+        internalUpdate(p, oldText, newText, display);
         currentScoreText.put(p.getUniqueId(), newText);
+        if (display == null) {
+            currentDisplay.remove(p.getUniqueId());
+        } else {
+            currentDisplay.put(p.getUniqueId(), display);
+        }
     }
 
-    private static void internalUpdate(Player p, String oldText, String newText) {
+    /** Re-applies the current line, e.g. after the header changed and the objective was rebuilt. */
+    void refresh(Player p) {
+        set(p, get(p), currentDisplay.get(p.getUniqueId()));
+    }
+
+    private static void internalUpdate(Player p, String oldText, String newText, Component display) {
         if (oldText != null) {
             p.getScoreboard().resetScores(oldText);
         } else {
             ScoreBoardAPI.adjustScore(p.getUniqueId(), 1);
         }
-        if (newText.length() > 40) {
-            newText = newText.substring(0, 40);
-        }
         Score score = getObjective(p).getScore(newText);
         score.setScore(0);
+        score.customName(display);
+    }
+
+    /**
+     * Cut to 40 before the text is cached, so the entry reset later is the one that was shown -
+     * cutting only at display time left stale lines behind. Never ends on a dangling colour code.
+     */
+    private static String fit(String text) {
+        if (text == null || text.length() <= 40) {
+            return text;
+        }
+        String cut = text.substring(0, 40);
+        return cut.charAt(39) == LegacyComponentSerializer.SECTION_CHAR ? cut.substring(0, 39) : cut;
     }
 
     public String get(Player p) {
@@ -90,6 +127,7 @@ public class CivScoreBoard {
     public void hide(Player p) {
         hideForPlayer(p);
         currentScoreText.remove(p.getUniqueId());
+        currentDisplay.remove(p.getUniqueId());
     }
 
     private void hideForPlayer(Player p) {
@@ -110,10 +148,12 @@ public class CivScoreBoard {
             p.getScoreboard().resetScores(entry.getValue());
         }
         currentScoreText.clear();
+        currentDisplay.clear();
     }
 
     void purge(Player p) {
         currentScoreText.remove(p.getUniqueId());
+        currentDisplay.remove(p.getUniqueId());
     }
 
     private static Objective getObjective(Player p) {
@@ -125,6 +165,8 @@ public class CivScoreBoard {
             scb.clearSlot(DisplaySlot.SIDEBAR);
             objective = scb.registerNewObjective(title, title, title);
             objective.setDisplaySlot(DisplaySlot.SIDEBAR);
+            // Lines are text, not scores - hide the red numbers on the right
+            objective.numberFormat(NumberFormat.blank());
         }
         return objective;
     }

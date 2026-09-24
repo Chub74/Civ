@@ -1,15 +1,22 @@
 package vg.civcraft.mc.civmodcore.ui;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.ObjectComponent;
-import net.kyori.adventure.text.object.ObjectContents;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.object.ObjectContents;
+import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class CivText {
 
@@ -46,6 +53,28 @@ public final class CivText {
 
     /** Item textures live in their own atlas; atlases/blocks.json only carries block/. */
     public static final Key ITEM_ATLAS = Key.key("minecraft:items");
+
+    /** GUI sprites, which also carry the mob effect icons under mob_effect/. */
+    public static final Key GUI_ATLAS = Key.key("minecraft:gui");
+
+    /**
+     * Materials whose texture is not named after them. A block with several faces has no plain
+     * block/<name> sprite, so the face to show is named here rather than guessed.
+     */
+    private static final Map<Material, String> ICON_OVERRIDES = Map.ofEntries(
+        Map.entry(Material.ENCHANTING_TABLE, "block/enchanting_table_top"),
+        Map.entry(Material.GRASS_BLOCK, "block/grass_block_top"),
+        Map.entry(Material.CROSSBOW, "item/crossbow_standby"),
+        Map.entry(Material.CACTUS, "block/cactus_side"),
+        Map.entry(Material.PUMPKIN, "block/pumpkin_side"),
+        Map.entry(Material.MELON, "block/melon_side"),
+        Map.entry(Material.BAMBOO, "item/bamboo"),
+        Map.entry(Material.NETHER_WART, "item/nether_wart"),
+        Map.entry(Material.AZALEA, "block/azalea_top"),
+        Map.entry(Material.FLOWERING_AZALEA, "block/flowering_azalea_top"));
+
+    /** Rendered from a 3D model, with no flat texture to show. */
+    private static final Set<Material> NO_ICON = Set.of(Material.SHIELD);
 
     private CivText() {
     }
@@ -108,6 +137,45 @@ public final class CivText {
     @NotNull
     public static Component head(@NotNull final UUID playerId) {
         return untinted(Component.object(ObjectContents.playerHead(playerId)));
+    }
+
+    /**
+     * An item's texture, coloured the way the game colours it. Dyeable items (leather armour, leather
+     * horse armour) ship a grey texture the client tints, so drawn plain they'd pass for iron.
+     * The client multiplies a sprite by its text colour, which does the same tint here.
+     */
+    @Nullable
+    public static Component icon(@NotNull final ItemStack item) {
+        final Component icon = icon(item.getType());
+        // Undyed leather reports the default leather brown here, so it needs no special case
+        if (icon != null && item.getItemMeta() instanceof final LeatherArmorMeta dyed) {
+            return icon.color(TextColor.color(dyed.getColor().asRGB()));
+        }
+        return icon;
+    }
+
+    /** A material's texture, or null if it has none to show. */
+    @Nullable
+    public static Component icon(@NotNull final Material material) {
+        if (NO_ICON.contains(material)) {
+            return null;
+        }
+        final String override = ICON_OVERRIDES.get(material);
+        if (override != null) {
+            return override.startsWith("item/")
+                ? sprite(ITEM_ATLAS, Key.key(override))
+                : sprite(Key.key(override));
+        }
+        final String name = material.getKey().getKey();
+        return material.isBlock()
+            ? sprite(Key.key("block/" + name))
+            : sprite(ITEM_ATLAS, Key.key("item/" + name));
+    }
+
+    /** A potion effect's icon, as shown in the inventory. */
+    @NotNull
+    public static Component icon(@NotNull final PotionEffectType effect) {
+        return sprite(GUI_ATLAS, Key.key("mob_effect/" + effect.getKey().getKey()));
     }
 
     /** A sprite with something for clients too old to render object components. */

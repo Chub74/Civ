@@ -50,7 +50,7 @@ public final class ScoreBoardAPI {
 
     static void updateAllBoards(Player p) {
         for (CivScoreBoard board : boards.values()) {
-            board.set(p, board.get(p));
+            board.refresh(p);
         }
     }
 
