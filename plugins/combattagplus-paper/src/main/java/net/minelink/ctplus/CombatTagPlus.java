@@ -1,8 +1,5 @@
 package net.minelink.ctplus;
 
-import static org.bukkit.ChatColor.GREEN;
-import static org.bukkit.ChatColor.RED;
-
 
 import java.util.UUID;
 import net.minelink.ctplus.compat.base.NpcNameGeneratorFactory;
@@ -18,7 +15,7 @@ import net.minelink.ctplus.listener.TagListener;
 import net.minelink.ctplus.task.ForceFieldTask;
 import net.minelink.ctplus.task.SafeLogoutTask;
 import net.minelink.ctplus.task.TagUpdateTask;
-import net.minelink.ctplus.util.BarUtils;
+import net.minelink.ctplus.util.Messages;
 import net.minelink.ctplus.util.ReflectionUtils;
 import net.minelink.ctplus.util.Version;
 import org.bukkit.Bukkit;
@@ -27,6 +24,9 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public final class CombatTagPlus extends JavaPlugin {
 
@@ -94,8 +94,6 @@ public final class CombatTagPlus extends JavaPlugin {
 
         integrateFactions();
         integrateWorldGuard();
-
-        BarUtils.init();
 
         // Build player cache from currently online players
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -254,7 +252,7 @@ public final class CombatTagPlus extends JavaPlugin {
             reloadConfig();
             getSettings().load();
             if (sender instanceof Player) {
-                sender.sendMessage(GREEN + getName() + " config reloaded.");
+                CivUI.success(sender, "Reloaded the CombatTagPlus config");
             }
 
             getLogger().info("Config reloaded by " + sender.getName());
@@ -264,12 +262,12 @@ public final class CombatTagPlus extends JavaPlugin {
             UUID uniqueId = ((Player) sender).getUniqueId();
             Tag tag = getTagManager().getTag(uniqueId);
             if (tag == null || tag.isExpired() || !getTagManager().isTagged(uniqueId)) {
-                sender.sendMessage(getSettings().getCommandUntagMessage());
+                Messages.send(sender, Kind.SUCCESS, getSettings().getCommandUntagMessage());
                 return true;
             }
 
             String duration = settings.formatDuration(tag.getTagDuration());
-            sender.sendMessage(getSettings().getCommandTagMessage().replace("{time}", duration));
+            Messages.send(sender, Kind.WARN, getSettings().getCommandTagMessage(), Messages.value("time", duration));
         } else if (cmd.getName().equals("ctpluslogout")) {
             if (!(sender instanceof Player)) return false;
 
@@ -282,21 +280,21 @@ public final class CombatTagPlus extends JavaPlugin {
         } else if (cmd.getName().equals("ctplusuntag")) {
 
             if (args.length < 1) {
-                sender.sendMessage(RED + "Please specify a player to untag");
+                CivUI.error(sender, "Name a player to untag - ", CivText.value("/ctuntag <player>"));
                 return true;
             }
 
             @SuppressWarnings("deprecation")
             Player player = getServer().getPlayer(args[0]);
             if (player == null || getNpcPlayerHelper().isNpc(player)) {
-                sender.sendMessage(RED + args[0] + " is not currently online!");
+                CivUI.error(sender, CivText.subject(args[0]), " isn't online");
                 return true;
             }
             UUID uniqueId = player.getUniqueId();
             if (getTagManager().untag(uniqueId)) {
-                sender.sendMessage(GREEN + "Successfully untagged " + player.getName() + ".");
+                CivUI.success(sender, "Untagged ", CivText.subject(player.getName()));
             } else {
-                sender.sendMessage(GREEN + player.getName() + " is already untagged.");
+                CivUI.info(sender, CivText.subject(player.getName()), " isn't in combat");
             }
         }
 

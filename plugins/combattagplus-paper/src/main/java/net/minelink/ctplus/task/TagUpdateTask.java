@@ -2,7 +2,10 @@ package net.minelink.ctplus.task;
 
 import net.minelink.ctplus.CombatTagPlus;
 import net.minelink.ctplus.Tag;
+import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.text.Component;
 import net.minelink.ctplus.util.BarUtils;
+import net.minelink.ctplus.util.Messages;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -13,6 +16,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public final class TagUpdateTask extends BukkitRunnable {
 
@@ -36,21 +41,15 @@ public final class TagUpdateTask extends BukkitRunnable {
             return;
         }
 
-        // Remove bar before displaying the next one
-        if (plugin.getSettings().useBarApi() && BarUtils.hasBar(player)) {
-            BarUtils.removeBar(player);
-        }
-
         // Cancel if player is no longer tagged
         Tag tag = plugin.getTagManager().getTag(playerId);
         if (tag == null || tag.isExpired()) {
             if (plugin.getSettings().useBarApi()) {
-                BarUtils.setMessage(player, plugin.getSettings().getBarApiEndedMessage(), 1);
+                BarUtils.showBriefly(player, Messages.body(CivText.SUCCESS, plugin.getSettings().getBarApiEndedMessage()),
+                    BossBar.Color.GREEN, 1);
             }
 
-            if (!plugin.getSettings().getUntagMessage().isEmpty()) {
-                player.sendMessage(plugin.getSettings().getUntagMessage());
-            }
+            Messages.send(player, Kind.SUCCESS, plugin.getSettings().getUntagMessage());
             cancel();
             return;
         }
@@ -58,12 +57,12 @@ public final class TagUpdateTask extends BukkitRunnable {
         if (plugin.getSettings().useBarApi()) {
             int remainingDuration = tag.getTagDuration();
             int tagDuration = plugin.getSettings().getTagDuration();
-            float percent = ((float) remainingDuration / tagDuration) * 100;
             String remaining = plugin.getSettings().formatDuration(remainingDuration);
 
-            // Display remaining timer in boss bar
-            String message = plugin.getSettings().getBarApiCountdownMessage().replace("{remaining}", remaining);
-            BarUtils.setMessage(player, message, percent);
+            // Display remaining timer in boss bar, updated in place
+            Component name = Messages.body(CivText.WARN, plugin.getSettings().getBarApiCountdownMessage(),
+                Messages.value("remaining", remaining));
+            BarUtils.show(player, name, BossBar.Color.YELLOW, (float) remainingDuration / tagDuration);
         }
     }
 

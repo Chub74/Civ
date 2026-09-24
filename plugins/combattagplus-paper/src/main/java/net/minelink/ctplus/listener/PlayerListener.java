@@ -5,8 +5,7 @@ import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextReplacementConfig;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
 import net.minelink.ctplus.CombatTagPlus;
 import net.minelink.ctplus.Tag;
 import net.minelink.ctplus.event.CombatLogEvent;
@@ -14,6 +13,8 @@ import net.minelink.ctplus.event.PlayerCombatTagEvent;
 import net.minelink.ctplus.event.SafeLogoutEvent;
 import net.minelink.ctplus.task.SafeLogoutTask;
 import net.minelink.ctplus.task.TagUpdateTask;
+import net.minelink.ctplus.util.BarUtils;
+import net.minelink.ctplus.util.Messages;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -36,6 +37,7 @@ import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public final class PlayerListener implements Listener {
 
@@ -61,6 +63,12 @@ public final class PlayerListener implements Listener {
         // Do nothing if player is not combat tagged and NPCs only spawn if tagged
         Player player = event.getPlayer();
 
+        // A completed /logout is safe whatever else applies - checked first so the flag is always consumed
+        if (SafeLogoutTask.consumeFinished(player)) {
+            plugin.getServer().getPluginManager().callEvent(new SafeLogoutEvent(player));
+            return;
+        }
+
         // Do nothing if player is dead
         if (player.isDead()) return;
 
@@ -75,12 +83,6 @@ public final class PlayerListener implements Listener {
 
         // Do nothing if player has permission
         if (player.hasPermission("ctplus.bypass.tag")) return;
-
-        // Do nothing if player has safely logged out
-        if (SafeLogoutTask.isFinished(player)){
-            plugin.getServer().getPluginManager().callEvent(new SafeLogoutEvent(player));
-            return;
-        }
 
         plugin.getServer().getPluginManager().callEvent(
             new CombatLogEvent(
@@ -99,6 +101,9 @@ public final class PlayerListener implements Listener {
 
         // Remove player from cache
         plugin.getPlayerCache().removePlayer(player);
+
+        // The client drops boss bars on disconnect; drop our handle too
+        BarUtils.forget(player.getUniqueId());
     }
 
     @EventHandler
@@ -147,7 +152,8 @@ public final class PlayerListener implements Listener {
             Component itemName = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
                 ? item.getItemMeta().displayName()
                 : Component.translatable(item.getType());
-            itemComponent = itemName.hoverEvent(item.asHoverEvent());
+            itemComponent = Component.text().color(CivText.VALUE).append(itemName).build()
+                .hoverEvent(item.asHoverEvent());
         }
 
         // Choose a random message from the appropriate pool
@@ -160,13 +166,11 @@ public final class PlayerListener implements Listener {
             return;
         }
 
-        Component killMessage = LegacyComponentSerializer.legacyAmpersand().deserialize(template)
-            .replaceText(TextReplacementConfig.builder().matchLiteral("{victim}").replacement(Component.text(victim)).build())
-            .replaceText(TextReplacementConfig.builder().matchLiteral("{attacker}").replacement(Component.text(attacker)).build());
-
-        if (itemComponent != null) {
-            killMessage = killMessage.replaceText(TextReplacementConfig.builder().matchLiteral("{item}").replacement(itemComponent).build());
-        }
+        // Flavour text: no brand, names in SUBJECT, the rest INFO
+        Component killMessage = Messages.body(CivText.INFO, template,
+            Messages.name("victim", victim),
+            Messages.name("attacker", attacker),
+            Placeholder.component("item", itemComponent == null ? Component.empty() : itemComponent));
 
         // Broadcast kill message
         Bukkit.broadcast(killMessage, "ctplus.notify.kill");
@@ -187,9 +191,9 @@ public final class PlayerListener implements Listener {
         if (plugin.getSettings().isCommandBlacklisted(message)) {
             // Cancel command
             event.setCancelled(true);
-            if (!plugin.getSettings().getDisabledCommandMessage().isEmpty()) {
-                player.sendMessage(plugin.getSettings().getDisabledCommandMessage().replace("{command}", message));
-            }
+            // Only the command itself - never echo its arguments back
+            Messages.deny(plugin, player, plugin.getSettings().getDisabledCommandMessage(),
+                Messages.value("command", message.split(" ")[0]));
         }
     }
 
@@ -207,9 +211,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel block edit
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableBlockEditMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableBlockEditMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableBlockEditMessage());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -226,9 +228,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel block edit
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableBlockEditMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableBlockEditMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableBlockEditMessage());
     }
 
 
@@ -281,10 +281,7 @@ public final class PlayerListener implements Listener {
                 return false;
             default:
                 view.close();
-                String message = plugin.getSettings().getDisableStorageAccessMessage();
-                if (!message.isEmpty()) {
-                    player.sendMessage(message);
-                }
+                Messages.deny(plugin, player, plugin.getSettings().getDisableStorageAccessMessage());
                 return true;
         }
     }
@@ -310,9 +307,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel enderpearl throw
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableEnderpearlsMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableEnderpearlsMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableEnderpearlsMessage());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -326,18 +321,14 @@ public final class PlayerListener implements Listener {
         p = event.getVictim();
         if (p != null && p.isFlying() && !p.hasPermission("ctplus.bypass.flying")) {
             p.setAllowFlight(false);
-            if (!plugin.getSettings().getDisableFlyingMessage().isEmpty()) {
-                p.sendMessage(plugin.getSettings().getDisableFlyingMessage());
-            }
+            Messages.deny(plugin, p, plugin.getSettings().getDisableFlyingMessage());
         }
 
         // Disable flying for attacker
         p = event.getAttacker();
         if (p != null && p.isFlying() && !p.hasPermission("ctplus.bypass.flying")) {
             p.setAllowFlight(false);
-            if (!plugin.getSettings().getDisableFlyingMessage().isEmpty()) {
-                p.sendMessage(plugin.getSettings().getDisableFlyingMessage());
-            }
+            Messages.deny(plugin, p, plugin.getSettings().getDisableFlyingMessage());
         }
     }
 
@@ -361,9 +352,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel the event and inform the player
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableFlyingMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableFlyingMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableFlyingMessage());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -395,9 +384,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel the event and inform the player
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableTeleportationMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableTeleportationMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableTeleportationMessage());
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
@@ -417,9 +404,7 @@ public final class PlayerListener implements Listener {
 
         // Cancel the event and inform the player
         event.setCancelled(true);
-        if (!plugin.getSettings().getDisableCraftingMessage().isEmpty()) {
-            player.sendMessage(plugin.getSettings().getDisableCraftingMessage());
-        }
+        Messages.deny(plugin, player, plugin.getSettings().getDisableCraftingMessage());
     }
 
     @EventHandler(ignoreCancelled = true)

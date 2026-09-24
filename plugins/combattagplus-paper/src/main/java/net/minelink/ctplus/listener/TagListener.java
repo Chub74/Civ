@@ -1,22 +1,18 @@
 package net.minelink.ctplus.listener;
 
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
-import net.kyori.adventure.title.Title;
 import net.minelink.ctplus.CombatTagPlus;
 import net.minelink.ctplus.Tag;
 import net.minelink.ctplus.TagManager;
 import net.minelink.ctplus.event.PlayerCombatTagEvent;
 import net.minelink.ctplus.task.SafeLogoutTask;
 import net.minelink.ctplus.task.TagUpdateTask;
+import net.minelink.ctplus.util.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.AnimalTamer;
@@ -40,6 +36,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.projectiles.ProjectileSource;
 import org.jetbrains.annotations.Nullable;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public final class TagListener implements Listener {
 
@@ -234,32 +231,21 @@ public final class TagListener implements Listener {
         // Send combat tag notification to victim
         if (victim != null && !plugin.getTagManager().isTagged(victim.getUniqueId())
             && !plugin.getSettings().onlyTagAttacker()) {
-            if (attacker != null) {
-                String message = plugin.getSettings().getTagMessage();
-                if (!message.isEmpty()) {
-                    victim.sendMessage(message.replace("{opponent}", attacker.getName()));
-                }
-            } else {
-                String message = plugin.getSettings().getTagUnknownMessage();
-                if (!message.isEmpty()) {
-                    victim.sendMessage(message);
-                }
-            }
+            sendTagMessage(victim, attacker);
         }
 
         // Send combat tag notification to attacker
         if (attacker != null && !plugin.getTagManager().isTagged(attacker.getUniqueId())) {
-            if (victim != null) {
-                String message = plugin.getSettings().getTagMessage();
-                if (!message.isEmpty()) {
-                    attacker.sendMessage(message.replace("{opponent}", victim.getName()));
-                }
-            } else {
-                String message = plugin.getSettings().getTagUnknownMessage();
-                if (!message.isEmpty()) {
-                    attacker.sendMessage(message);
-                }
-            }
+            sendTagMessage(attacker, victim);
+        }
+    }
+
+    private void sendTagMessage(Player player, Player opponent) {
+        if (opponent != null) {
+            Messages.send(player, Kind.WARN, plugin.getSettings().getTagMessage(),
+                Messages.name("opponent", opponent.getName()));
+        } else {
+            Messages.send(player, Kind.WARN, plugin.getSettings().getTagUnknownMessage());
         }
     }
 
@@ -285,10 +271,7 @@ public final class TagListener implements Listener {
         if (!SafeLogoutTask.cancel(player)) return;
 
         // Inform player
-		player.showTitle(Title.title(
-				Component.text("LOGOUT CANCELLED").color(NamedTextColor.DARK_RED).decorate(TextDecoration.BOLD),
-				Component.text("You were PvP tagged").color(NamedTextColor.RED),
-				Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))));
+        SafeLogoutTask.showCancelled(player, "You entered combat");
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)

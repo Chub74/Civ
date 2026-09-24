@@ -1,28 +1,36 @@
 package net.minelink.ctplus.task;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.title.Title;
 import net.minelink.ctplus.CombatTagPlus;
+import net.minelink.ctplus.util.Messages;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.bukkit.util.NumberConversions;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class SafeLogoutTask extends BukkitRunnable {
 
 	private final static Map<UUID, SafeLogoutTask> tasks = new HashMap<>();
+
+	/** Players kicked by a completed /logout. The quit event can arrive after the task is gone, so it isn't tracked there. */
+	private final static Set<UUID> loggedOutSafely = new HashSet<>();
 
 	private final CombatTagPlus plugin;
 
@@ -33,8 +41,6 @@ public final class SafeLogoutTask extends BukkitRunnable {
 	private final long logoutTime;
 
 	private int remainingSeconds = Integer.MAX_VALUE;
-
-	private boolean finished;
 
 	SafeLogoutTask(CombatTagPlus plugin, Player player, long logoutTime) {
 		this.plugin = plugin;
@@ -59,10 +65,7 @@ public final class SafeLogoutTask extends BukkitRunnable {
 
 		// Cancel the task if player has moved
 		if (hasMoved(player)) {
-			player.showTitle(Title.title(
-					Component.text("LOGOUT CANCELLED").color(NamedTextColor.DARK_RED).decorate(TextDecoration.BOLD),
-					Component.text("You moved or entered PvP").color(NamedTextColor.RED),
-					Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))));
+			showCancelled(player, "You moved");
 
 			cancel();
 			return;
@@ -71,11 +74,12 @@ public final class SafeLogoutTask extends BukkitRunnable {
 		// Safely logout the player once timer is up
 		int remainingSeconds = getRemainingSeconds();
 		if (remainingSeconds <= 0) {
-			finished = true;
+			loggedOutSafely.add(playerId);
 			plugin.getTagManager().untag(playerId);
 
-			if (!plugin.getSettings().getLogoutSuccessMessage().isEmpty()) {
-				player.kickPlayer(plugin.getSettings().getLogoutSuccessMessage());
+			String message = plugin.getSettings().getLogoutSuccessMessage();
+			if (!Messages.isEmpty(message)) {
+				player.kick(Messages.body(CivText.SUCCESS, message), PlayerKickEvent.Cause.PLUGIN);
 			}
 
 			cancel();
@@ -84,30 +88,35 @@ public final class SafeLogoutTask extends BukkitRunnable {
 
 		if (remainingSeconds < this.remainingSeconds) {
 			String remaining = plugin.getSettings().formatDuration(remainingSeconds);
-			NamedTextColor color;
-
+			// Escalates as the timer runs down
+			TextColor color;
 			if (remainingSeconds <= 3) {
-				color = NamedTextColor.DARK_RED;
+				color = CivText.ERROR;
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.6f);
 			} else if (remainingSeconds <= 6) {
-				color = NamedTextColor.RED;
+				color = CivText.WARN;
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 1.2f);
 			} else {
-				color = NamedTextColor.GOLD;
+				color = CivText.HEADING;
 				player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1.0f, 0.8f);
 			}
 
-			player.showTitle(Title.title(Component.text("SAFE LOGOUT").color(color).decorate(TextDecoration.BOLD),
-					Component.text("Logging out in ").color(NamedTextColor.WHITE)
-							.append(Component.text(remaining).color(color).decorate(TextDecoration.BOLD))
-							.append(Component.text("...").color(NamedTextColor.WHITE)),
-					Title.Times.times(Duration.ofMillis(500),
-							Duration.ofSeconds(2), 
-							Duration.ofMillis(500)
-					)));
+			player.showTitle(Title.title(
+					Component.text("Safe logout", color, TextDecoration.BOLD),
+					Component.text("Logging out in ", CivText.INFO)
+							.append(Component.text(remaining, color, TextDecoration.BOLD)),
+					Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(2), Duration.ofMillis(500))));
 
 			this.remainingSeconds = remainingSeconds;
 		}
+	}
+
+	/** Shared by every way a safe logout can be cancelled. */
+	public static void showCancelled(Player player, String reason) {
+		player.showTitle(Title.title(
+				Component.text("Logout cancelled", CivText.ERROR, TextDecoration.BOLD),
+				Component.text(reason, CivText.INFO),
+				Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(3), Duration.ofSeconds(1))));
 	}
 
 	private boolean hasMoved(Player player) {
@@ -146,8 +155,9 @@ public final class SafeLogoutTask extends BukkitRunnable {
 		return false;
 	}
 
-	public static boolean isFinished(Player player) {
-		return hasTask(player) && tasks.get(player.getUniqueId()).finished;
+	/** True once per completed /logout - call it from the quit that logout caused. */
+	public static boolean consumeFinished(Player player) {
+		return loggedOutSafely.remove(player.getUniqueId());
 	}
 
 	public static boolean cancel(Player player) {

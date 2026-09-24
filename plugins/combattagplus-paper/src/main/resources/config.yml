@@ -4,20 +4,23 @@ config-version: 25
 # The duration in seconds that both the attacker and victim should be tagged in combat.
 tag-duration: 15
 
-# This message is displayed to both the attacker and victim when newly tagged. Set this to '' to display nothing. {opponent} is the other player.
-tag-message: '&cYou have engaged in combat with &b{opponent}&c. Type &b/ct &cto check your timer.'
+# Messages are MiniMessage bodies (<aqua>, <dark_gray>, ...). The "Eden »" brand and the base colour
+# (red for denials, yellow for combat, green when it ends) are added by the plugin. '' sends nothing.
+
+# This message is displayed to both the attacker and victim when newly tagged. Set this to '' to display nothing. <opponent> is the other player.
+tag-message: 'You''re in combat with <opponent> - type <aqua>/ct</aqua> to check your timer'
 
 # This message is displayed to both the attacker and victim when newly tagged if the opponent is unknown. Set this to '' to display nothing.
-tag-unknown-message: '&cYou have engaged in combat. Type &b/ct &cto check your timer.'
+tag-unknown-message: 'You''re in combat - type <aqua>/ct</aqua> to check your timer'
 
 # This message is displayed the player when their tag expires. Set this to '' to display nothing.
-untag-message: '&aYou are no longer in combat.'
+untag-message: 'You''re no longer in combat'
 
 # This message is displayed to the player when they attempt to check the remaining time on their tag, while not being tagged
-command-untag-message: '&aYou are not in combat.'
+command-untag-message: 'You''re not in combat'
 
-# This message is displayed to the player when they check the remaining time on their tag via command. {time} will be replaced with the remaining tag time.
-command-tag-message: '&c{time} seconds remaining on your combat timer.'
+# This message is displayed to the player when they check the remaining time on their tag via command. <time> will be replaced with the remaining tag time.
+command-tag-message: 'You''re in combat for another <time>'
 
 # Resets the tag time when the tagged player throws an enderpearl.
 reset-tag-on-pearl: false
@@ -35,13 +38,13 @@ mob-tagging: false
 logout-wait-time: 10
 
 # This message is displayed when the player has attempted to safely log out but moved or entered pvp.
-logout-cancelled-message: '&cLogout cancelled due to movement or pvping.'
+logout-cancelled-message: 'Logout cancelled - you moved or entered combat'
 
 # This message is displayed when the player has successfully performed a safe logout.
-logout-success-message: '&aYou were logged out safely.'
+logout-success-message: 'You logged out safely'
 
-# This message is displayed every second when the player is pending a logout. {remaining} is the time remaining.
-logout-pending-message: '&7Logging out safely in &b{remaining}&7...'
+# This message is displayed every second when the player is pending a logout. <remaining> is the time remaining.
+logout-pending-message: 'Logging out safely in <remaining>'
 
 # Instantly kills the player when logged in PvP.
 instantly-kill: false
@@ -63,12 +66,12 @@ disable-self-tagging: true
 disable-block-edit: false
 
 # This message is displayed when a player attempts to edit blocks within pvp if block editing is disabled in pvp.
-disable-block-edit-message: '&bBlock editing &cis disabled in combat.'
+disable-block-edit-message: 'You can''t edit blocks in combat'
 
 # Disable a player from accessing storage (like chests and brewing stands) in combat
 disable-storage-access: false
 
-disable-storage-access-message: '&bAccess to storage &cis disabled in combat'
+disable-storage-access-message: 'You can''t open storage in combat'
 
 # Prevent players in creative from getting tagged.
 disable-creative-tags: true
@@ -77,13 +80,13 @@ disable-creative-tags: true
 disable-enderpearls: false
 
 # This message is displayed when a player attempts to enderpearl within pvp if enderpearls are disabled in pvp.
-disable-enderpearls-message: '&bEnderpearls &care disabled in combat.'
+disable-enderpearls-message: 'You can''t throw ender pearls in combat'
 
 # Prevent tagged players from flying during combat.
 disable-flying: false
 
 # This message is displayed when a player attempts to fly within pvp if flying is disabled in pvp.
-disable-flying-message: '&bFlying &cis disabled in combat.'
+disable-flying-message: 'You can''t fly in combat'
 
 # Prevent tagged players from teleporting during combat.
 disable-teleportation: false
@@ -94,13 +97,13 @@ disable-teleportation: false
 untag-on-plugin-teleport: false
 
 # This message is displayed when a player attempts to teleport within pvp if teleportation is disabled in pvp.
-disable-teleportation-message: '&bTeleportation &cis disabled in combat.'
+disable-teleportation-message: 'You can''t teleport in combat'
 
 # Prevents tagged players from crafting during combat.
 disable-crafting: false
 
 # This message is displayed when a player attempts to craft an item while in combat if crafting is disabled.
-disable-crafting-message: '&bCrafting &cis disabled in combat.'
+disable-crafting-message: 'You can''t craft in combat'
 
 # The duration in seconds to despawn the combat logger's NPC if it hasn't died.
 npc-despawn-time: 60
@@ -116,26 +119,26 @@ random-name-prefix: PvPLogger
 
 # This pool of messages is displayed when a player is killed by another player. Set this to [] to display nothing. One is chosen randomly.
 kill-messages:
-  - '&8&l>> &c{victim} was slain by {attacker}'
-  - '&8&l>> &c{victim} was taken down by {attacker}'
-  - '&8&l>> &c{victim} got wrecked by {attacker}'
-  - '&8&l>> &c{victim} was obliterated by {attacker}'
+  - '<victim> was slain by <attacker>'
+  - '<victim> was taken down by <attacker>'
+  - '<victim> got wrecked by <attacker>'
+  - '<victim> was obliterated by <attacker>'
 
-# This pool of messages is displayed when a player is killed by another player with an item in hand. {item} will be replaced with the item name. One is chosen randomly.
+# This pool of messages is displayed when a player is killed by another player with an item in hand. <item> will be replaced with the item name. One is chosen randomly.
 kill-messages-item:
-  - '&8&l>> &c{victim} was slain by {attacker} with {item}'
-  - '&8&l>> &c{victim} was taken down by {attacker} using {item}'
-  - '&8&l>> &c{victim} got wrecked by {attacker} wielding {item}'
-  - '&8&l>> &c{victim} was obliterated by {attacker} with {item}'
+  - '<victim> was slain by <attacker>  <dark_gray>[<item>]</dark_gray>'
+  - '<victim> was taken down by <attacker>  <dark_gray>[<item>]</dark_gray>'
+  - '<victim> got wrecked by <attacker>  <dark_gray>[<item>]</dark_gray>'
+  - '<victim> was obliterated by <attacker>  <dark_gray>[<item>]</dark_gray>'
 
 # Enables BarAPI integration for displaying a boss bar counting down with the remaining tag time.
 barapi: true
 
 # Message to be displayed on BarAPI when players' pvp timer has ended.
-barapi-ended-message: '&aYou are no longer in combat!'
+barapi-ended-message: 'You''re no longer in combat'
 
 # Message to be displayed on BarAPI when the player is still in pvp.
-barapi-countdown-message: '&eCombatTag: &f{remaining}'
+barapi-countdown-message: 'In combat <dark_gray>-</dark_gray> <remaining>'
 
 # Deny movement into safezones from PVP enabled areas while combat tagged.
 deny-safezone: true
@@ -165,7 +168,7 @@ worldguard: true
 disabled-worlds: [ world_the_end ]
 
 # This message is displayed when the player tries to execute a disabled command whilst in combat.
-disabled-command-message: '&b{command}&c is disabled in combat.'
+disabled-command-message: 'You can''t use <command> in combat'
 
 # These commands are unusable by players who are combat tagged. Use '*' to blacklist all commands.
 command-blacklist:

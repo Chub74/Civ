@@ -10,6 +10,7 @@ dependencies {
         paperDevBundle(libs.versions.paper)
     }
 
+    compileOnly(project(":plugins:civmodcore-paper"))
     compileOnly(libs.barapi)
     compileOnly(files("./libs/GSit-3.3.1.jar"))
 }
