@@ -488,6 +488,12 @@ public final class Config {
         return (pref == null) ? name : pref;
     }
 
+    /** The pretty_names entry for this material, or null if none is configured. */
+    public static String getConfiguredPrettyName(String name) {
+        NameConfig nc = instance.prettyNames.get(name);
+        return (nc == null) ? null : nc.getPrettyName();
+    }
+
     public static File getTrackFile() {
         return trackFile;
     }

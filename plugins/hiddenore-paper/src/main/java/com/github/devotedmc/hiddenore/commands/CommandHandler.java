@@ -18,6 +18,8 @@ import com.github.devotedmc.hiddenore.Config;
 import com.github.devotedmc.hiddenore.DropConfig;
 import com.github.devotedmc.hiddenore.DropItemConfig;
 import com.github.devotedmc.hiddenore.HiddenOre;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 /**
  * Management and maintenance commands
@@ -40,7 +42,7 @@ public class CommandHandler implements CommandExecutor {
                 if (args.length >= 2) {
                     if ("debug".equals(args[0])) {
                         Config.isDebug = Boolean.parseBoolean(args[1]);
-                        sender.sendMessage("HiddenOre debug mode now " + (Config.isDebug ? "on" : "off"));
+                        CivUI.success(sender, "HiddenOre debug mode is now ", CivText.toggle(Config.isDebug));
                         return true;
                     }
                 }
@@ -48,11 +50,12 @@ public class CommandHandler implements CommandExecutor {
                 if (args.length >= 1) {
                     if ("save".equals(args[0])) {
                         plugin.getTracking().liveSave();
-                        sender.sendMessage("HiddenOre tracking forced live save scheduled");
+                        CivUI.success(sender, "Scheduled a save of HiddenOre tracking");
                         return true;
                     } else if ("generate".equals(args[0])) {
                         if (!(sender instanceof Player)) {
-                            sender.sendMessage("Cannot be run as console");
+                            CivUI.error(sender, "You can't run this from the console");
+                            return true;
                         }
                         Player player = (Player) sender;
                         double mult = 1;
@@ -64,13 +67,13 @@ public class CommandHandler implements CommandExecutor {
                         final double vmult = mult;
                         final UUID world = player.getWorld().getUID();
 
-                        sender.sendMessage("Generating all drops, this could cause lag");
+                        CivUI.warn(sender, "Dropping every configured drop on you - this could cause lag");
 
                         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
                             long delay = 0l;
                             Map<NamespacedKey, List<BlockConfig>> worldBlockConfigs = Config.instance.blockConfigs.getOrDefault(world, Config.instance.blockConfigs.get(null));
                             if (worldBlockConfigs == null) {
-                                sender.sendMessage("No drops configured for blocks in this world.");
+                                CivUI.error(sender, "No drops are configured for blocks in this world");
                                 return;
                             }
                             for (NamespacedKey blockConf : worldBlockConfigs.keySet()) {
@@ -79,7 +82,7 @@ public class CommandHandler implements CommandExecutor {
                                         DropConfig drop = block.getDropConfig(dropConf);
                                         for (DropItemConfig item : drop.drops) {
                                             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                                                sender.sendMessage(String.format("Block: %s, drop: %s", blockConf.toString(), dropConf));
+                                                CivUI.info(sender, "Dropping ", CivText.value(dropConf), " from ", CivText.value(blockConf.toString()));
                                                 Item dropped = player.getWorld().dropItem(player.getLocation().add(0, 1.0, 0), item.render(vmult));
                                                 dropped.setPickupDelay(20);
                                             }, delay++);
@@ -100,7 +103,7 @@ public class CommandHandler implements CommandExecutor {
                                 return true;
                             }
                         }
-                        sender.sendMessage("No world generation listener found");
+                        CivUI.error(sender, "HiddenOre isn't generating ores in this world");
                         return true;
                     } else if ("isprocessed".equals(args[0])) {
                         if (!(sender instanceof Player player)) {
@@ -108,17 +111,17 @@ public class CommandHandler implements CommandExecutor {
                         }
                         for (WorldGenerationListener worldGenerationListener : worldGenerationListeners) {
                             if (worldGenerationListener.getWorldName().equals(player.getWorld().getName())) {
-                                sender.sendMessage("Chunk processed: " + worldGenerationListener.isProcessed(player.getChunk()));
+                                CivUI.info(sender, "This chunk is ", CivText.value(worldGenerationListener.isProcessed(player.getChunk()) ? "processed" : "unprocessed"));
                                 return true;
                             }
                         }
-                        sender.sendMessage("No world generation listener found");
+                        CivUI.error(sender, "HiddenOre isn't generating ores in this world");
                         return true;
                     }
                 } else {
                     Bukkit.getPluginManager().disablePlugin(plugin);
                     Bukkit.getPluginManager().enablePlugin(plugin);
-                    sender.sendMessage("HiddenOre reloaded");
+                    CivUI.success(sender, "Reloaded HiddenOre");
                     return true;
                 }
             }

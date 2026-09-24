@@ -5,6 +5,7 @@ import com.github.devotedmc.hiddenore.BlockConfig;
 import com.github.devotedmc.hiddenore.Config;
 import com.github.devotedmc.hiddenore.HiddenOre;
 import java.lang.ref.PhantomReference;
+import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -36,6 +37,9 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitTask;
 import org.checkerframework.checker.units.qual.C;
 import org.spigotmc.AsyncCatcher;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * Populator to strip out blocks selectively from a world during generation.
@@ -106,7 +110,7 @@ public class WorldGenerationListener implements Listener {
                 chunks.add(new IntIntImmutablePair(cx >> 4, cz >> 4));
             }
         }
-        sender.sendMessage("Clearing " + chunks.size() + " chunks...");
+        CivUI.info(sender, "Clearing ", CivText.value(String.valueOf(chunks.size())), " chunks");
         Bukkit.getScheduler().runTaskAsynchronously(HiddenOre.getPlugin(), () -> {
             int total = chunks.size();
             int processed = 0;
@@ -155,16 +159,22 @@ public class WorldGenerationListener implements Listener {
                     processed++;
                     nextProgress--;
                     if (nextProgress == 0) {
-                        String message = "Processed " + processed + "/" + total + " chunks";
-                        sender.sendMessage(message);
-                        Bukkit.getConsoleSender().sendMessage(message);
+                        CivUI.notice(Kind.INFO, "Processed ", CivText.value(processed + "/" + total), " chunks")
+                            .from(HiddenOre.getPlugin())
+                            .to(sender)
+                            // Every percent goes to the log; chat gets one every few seconds
+                            .atMostEvery(Duration.ofSeconds(5))
+                            .log(Level.INFO)
+                            .send();
                         nextProgress = Math.ceilDiv(total, 100);
                     }
                 }
             }
-            String message = "Processed " + total + "/" + total + " chunks";
-            sender.sendMessage(message);
-            Bukkit.getConsoleSender().sendMessage(message);
+            CivUI.notice(Kind.SUCCESS, "Cleared ", CivText.value(String.valueOf(total)), " chunks")
+                .from(HiddenOre.getPlugin())
+                .to(sender)
+                .log(Level.INFO)
+                .send();
         });
     }
 

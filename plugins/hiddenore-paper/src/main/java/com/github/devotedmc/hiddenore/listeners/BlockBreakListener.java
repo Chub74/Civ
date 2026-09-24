@@ -1,10 +1,11 @@
 package com.github.devotedmc.hiddenore.listeners;
 
+import com.github.devotedmc.hiddenore.util.Alerts;
 import com.github.devotedmc.hiddenore.util.FakePlayer;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
@@ -125,7 +126,7 @@ public class BlockBreakListener implements Listener {
 
         boolean hasDrop = false;
 
-        StringBuilder alertUser = new StringBuilder().append(Config.instance.defaultPrefix);
+        List<Component> alertUser = new ArrayList<>();
 
         String biomeName = b.getBiome().name();
 
@@ -188,13 +189,7 @@ public class BlockBreakListener implements Listener {
             }
         }
         if (Config.isAlertUser() && hasDrop) {
-            if (Config.isListDrops()) {
-                alertUser.deleteCharAt(alertUser.length() - 1);
-            }
-            String alert = alertUser.toString();
-            if (alert.length() > 0) {
-                event.getPlayer().sendMessage(ChatColor.GOLD + alert);
-            }
+            Alerts.found(event.getPlayer(), Config.instance.defaultPrefix, alertUser);
         }
 
         plugin.getTracking().postTrackBreak(event.getBlock().getLocation(), true);
@@ -235,11 +230,11 @@ public class BlockBreakListener implements Listener {
      * @param dropConfig  The actual drop config being invoked
      * @param blockName   The configured name of the block config
      * @param blockConfig The actual block config being invoked.
-     * @param alertBuffer a StringBuffer used to report to the user on what was found, if configured.
+     * @param alertBuffer collects what was found, to report to the user if configured.
      * @return true if everything went well, false if the generate was cancelled or other error.
      */
     private Boolean doDrops(boolean clearBlock, Block sourceBlock, BlockBreakEvent event, Player player, String biomeName, ToolConfig dropTool,
-                            String dropName, DropConfig dropConfig, String blockName, BlockConfig blockConfig, StringBuilder alertBuffer) {
+                            String dropName, DropConfig dropConfig, String blockName, BlockConfig blockConfig, List<Component> alertBuffer) {
         // Remove block, drop special drop and cancel the event
         if (!clearBlock) {
             HiddenOreGenerateEvent hoge = new HiddenOreGenerateEvent(player, sourceBlock, Material.AIR);
@@ -277,7 +272,7 @@ public class BlockBreakListener implements Listener {
     }
 
     private void doActualDrops(final List<ItemStack> items, final Location sourceLocation, final Player player,
-                               String dropName, String blockName, BlockConfig blockConfig, StringBuilder alertBuffer) {
+                               String dropName, String blockName, BlockConfig blockConfig, List<Component> alertBuffer) {
         final HiddenOreEvent hoe = new HiddenOreEvent(player, sourceLocation, items);
         Bukkit.getPluginManager().callEvent(hoe);
         if (!hoe.isCancelled()) {
@@ -302,18 +297,17 @@ public class BlockBreakListener implements Listener {
             if (Config.isAlertUser()) {
                 if (blockConfig.hasCustomPrefix(dropName)) {
                     // Custom prefix items are immediately reported to a player
-                    StringBuilder customAlerts = new StringBuilder(blockConfig.getPrefix(dropName));
+                    List<Component> customAlerts = new ArrayList<>();
 
                     for (ItemStack item : hoe.getDrops()) {
-                        buildAlert(customAlerts, item, null, item.getAmount(), null);
+                        customAlerts.add(Alerts.find(item, item.getAmount(), false));
                     }
-                    player.sendMessage(ChatColor.GOLD + customAlerts.toString());
+                    Alerts.found(player, blockConfig.getPrefix(dropName), customAlerts);
                 } else {
                     // otherwise, if list drops are enabled we aggregate and report items when done everything
                     if (Config.isListDrops()) {
                         for (ItemStack item : hoe.getDrops()) {
-                            buildAlert(alertBuffer, item, null, item.getAmount(), ",");
-
+                            alertBuffer.add(Alerts.find(item, item.getAmount(), false));
                         }
                     }
                 }
@@ -324,7 +318,7 @@ public class BlockBreakListener implements Listener {
 
     }
 
-    private boolean doActualGenerate(final List<ItemStack> items, final Location sourceLocation, final Player player, String dropName, String blockName, BlockConfig blockConfig, StringBuilder alertBuffer, DropConfig dropConfig) {
+    private boolean doActualGenerate(final List<ItemStack> items, final Location sourceLocation, final Player player, String dropName, String blockName, BlockConfig blockConfig, List<Component> alertBuffer, DropConfig dropConfig) {
         int maxWalk = 0;
         int cPlace = 0;
         double cAttempt = 0;
@@ -396,15 +390,11 @@ public class BlockBreakListener implements Listener {
                 if (placed > 0 && Config.isAlertUser()) {
                     if (blockConfig.hasCustomPrefix(dropName)) {
                         // if this block has a custom prefix we alert immediately
-                        StringBuilder customAlerts = new StringBuilder(blockConfig.getPrefix(dropName));
-
-                        buildAlert(customAlerts, null, name, placed, " nearby");
-
-                        player.sendMessage(ChatColor.GOLD + customAlerts.toString());
+                        Alerts.found(player, blockConfig.getPrefix(dropName), List.of(Alerts.find(xform, placed, true)));
                     } else {
                         // otherwise, we aggregate our notices and send them after all drop / gen is done.
                         if (Config.isListDrops()) {
-                            buildAlert(alertBuffer, null, name, placed, " nearby,");
+                            alertBuffer.add(Alerts.find(xform, placed, true));
                         }
                     }
                     
@@ -420,18 +410,6 @@ public class BlockBreakListener implements Listener {
         return false;
     }
 
-    private void buildAlert(StringBuilder alertBuilder, ItemStack item, String nameOverride, int amount, String postfix) {
-        String name = nameOverride;
-        if (name == null && item != null) {
-            name = item.hasItemMeta() && item.getItemMeta().hasDisplayName() ?
-                item.getItemMeta().getDisplayName() : Config.getPrettyName(item.getType().name());
-        }
-
-        alertBuilder.append(" ").append(amount).append(" ").append(name);
-        if (postfix != null) {
-            alertBuilder.append(postfix);
-        }
-    }
 
     private static BlockFace[] visibleFaces = new BlockFace[]{
         BlockFace.DOWN, BlockFace.UP, BlockFace.EAST, BlockFace.WEST, BlockFace.NORTH, BlockFace.SOUTH
