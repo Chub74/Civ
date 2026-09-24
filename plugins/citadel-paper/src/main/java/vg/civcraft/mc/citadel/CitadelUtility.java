@@ -1,8 +1,6 @@
 package vg.civcraft.mc.citadel;
 
 import java.util.logging.Level;
-import java.util.Map;
-import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -116,24 +114,10 @@ public class CitadelUtility {
         return LegacyComponentSerializer.legacySection().deserialize(message);
     }
 
-    /**
-     * Materials whose texture is not named after them. A block with several faces has no plain
-     * block/<name> sprite, so the face to show is named here rather than guessed.
-     */
-    private static final Map<Material, String> SPRITE_OVERRIDES = Map.of(
-        Material.ENCHANTING_TABLE, "block/enchanting_table_top",
-        Material.GRASS_BLOCK, "block/grass_block_top");
-
-    /** The texture for a material, as atlas and sprite. */
-    private static Component sprite(Material material) {
-        String override = SPRITE_OVERRIDES.get(material);
-        if (override != null) {
-            return CivText.sprite(Key.key(override));
-        }
-        String name = material.getKey().getKey();
-        return material.isBlock()
-            ? CivText.sprite(Key.key("block/" + name))
-            : CivText.sprite(CivText.ITEM_ATLAS, Key.key("item/" + name));
+    /** The texture for a material. Empty if it has none. */
+    public static Component sprite(Material material) {
+        Component icon = CivText.icon(material);
+        return icon == null ? Component.empty() : icon;
     }
 
     /** The type's texture and name, with the real item tooltip on hover. */

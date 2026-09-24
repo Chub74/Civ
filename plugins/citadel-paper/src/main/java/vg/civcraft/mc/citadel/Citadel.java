@@ -9,6 +9,7 @@ import vg.civcraft.mc.citadel.activity.ActivityMap;
 import vg.civcraft.mc.citadel.command.CitadelCommandManager;
 import vg.civcraft.mc.citadel.listener.BlockListener;
 import vg.civcraft.mc.citadel.listener.EntityListener;
+import vg.civcraft.mc.citadel.listener.HiddenOreListener;
 import vg.civcraft.mc.citadel.listener.InventoryListener;
 import vg.civcraft.mc.citadel.listener.ModeListener;
 import vg.civcraft.mc.citadel.listener.RedstoneListener;
@@ -213,5 +214,8 @@ public class Citadel extends ACivMod {
         getServer().getPluginManager().registerEvents(new RedstoneListener(config.getMaxRedstoneDistance()), this);
         getServer().getPluginManager().registerEvents(new ActivityListener(activityMap), this);
         getServer().getPluginManager().registerEvents(new WorldBorderListener(), this);
+        if (getServer().getPluginManager().isPluginEnabled("HiddenOre")) {
+            getServer().getPluginManager().registerEvents(new HiddenOreListener(), this);
+        }
     }
 }

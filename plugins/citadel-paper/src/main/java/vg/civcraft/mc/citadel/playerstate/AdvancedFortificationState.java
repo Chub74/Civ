@@ -9,11 +9,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
-import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 import vg.civcraft.mc.namelayer.group.Group;
 
 public class AdvancedFortificationState extends AbstractPlayerState {
@@ -100,7 +101,7 @@ public class AdvancedFortificationState extends AbstractPlayerState {
 
     @Override
     public String getOverlayText() {
-        return ChatColor.GOLD + "CTAF";
+        return HudLine.of(CivText.mode("Advanced fortification"));
     }
 
 }

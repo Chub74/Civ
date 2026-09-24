@@ -3,20 +3,24 @@ package vg.civcraft.mc.citadel.command;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.Description;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemLore;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.ui.CivText;
@@ -26,12 +30,15 @@ import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 import static java.util.stream.Collectors.partitioningBy;
 
 public class ReinforcementsGUI extends BaseCommand {
+
+    /** MultiPageView only takes a String title. */
+    private static final String TITLE = LegacyComponentSerializer.legacySection()
+        .serialize(CivText.heading("Reinforcements"));
 
     private DecimalFormat format = new DecimalFormat("##.##");
 
@@ -43,33 +50,40 @@ public class ReinforcementsGUI extends BaseCommand {
             .stream().collect(partitioningBy(i ->
                 i.isAllowedInWorld(sender.getWorld().getName())));
 
-        List<ReinforcementType> allowedTypes = allowedOrNot.get(true);
-        List<ReinforcementType> disallowedTypes = allowedOrNot.get(false);
-
         // sort ascending by health
-        Collections.sort(allowedTypes, (o1, o2) -> Double.compare(o1.getHealth(), o2.getHealth()));
-        Collections.sort(disallowedTypes, (o1, o2) -> Double.compare(o1.getHealth(), o2.getHealth()));
-        List<IClickable> clicks = new LinkedList<>();
+        List<ReinforcementType> allowedTypes = new ArrayList<>(allowedOrNot.get(true));
+        List<ReinforcementType> disallowedTypes = new ArrayList<>(allowedOrNot.get(false));
+        allowedTypes.sort(Comparator.comparingDouble(ReinforcementType::getHealth));
+        disallowedTypes.sort(Comparator.comparingDouble(ReinforcementType::getHealth));
 
+        List<IClickable> clicks = new LinkedList<>();
         clicks.addAll(getMaterialClicks(allowedTypes, true));
 
-        if (disallowedTypes.size() > 0) {
-            for (int i = 0; i < 18 - (allowedTypes.size() % 9); i++) {
-                clicks.add(new DecorationStack(Material.AIR));
-            }
+        if (!disallowedTypes.isEmpty()) {
+            addDivider(clicks, "Not usable in this world");
+            clicks.addAll(getMaterialClicks(disallowedTypes, false));
         }
-        clicks.addAll(getMaterialClicks(disallowedTypes, false));
 
         List<AcidType> acidTypes = Citadel.getInstance().getAcidManager().getAcidTypes();
-        // check if dimensional reinforcements
-        int size = disallowedTypes.size() > 0 ? disallowedTypes.size() : allowedTypes.size();
-        for (int i = 0; i < 18 - (size % 9); i++) {
+        if (!acidTypes.isEmpty()) {
+            addDivider(clicks, "Acid blocks");
+            clicks.addAll(getAcidTypeClicks(acidTypes));
+        }
+
+        MultiPageView pageView = new MultiPageView(sender, clicks, TITLE, true);
+        pageView.showScreen();
+    }
+
+    /** Finishes the current row with empty slots, then a row of labelled panes that names the next section. */
+    private void addDivider(List<IClickable> clicks, String label) {
+        while (clicks.size() % 9 != 0) {
             clicks.add(new DecorationStack(Material.AIR));
         }
-        clicks.addAll(getAcidTypeClicks(acidTypes));
-
-        MultiPageView pageView = new MultiPageView(sender, clicks, ChatColor.BLUE + "Reinforcements", true);
-        pageView.showScreen();
+        for (int i = 0; i < 9; i++) {
+            ItemStack pane = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
+            pane.setData(DataComponentTypes.ITEM_NAME, CivText.heading(label));
+            clicks.add(new DecorationStack(pane));
+        }
     }
 
     private List<IClickable> getMaterialClicks(List<ReinforcementType> types, boolean allowed) {
@@ -77,30 +91,31 @@ public class ReinforcementsGUI extends BaseCommand {
 
         for (ReinforcementType type : types) {
             ItemStack is = type.getItem().clone();
-            ItemUtils.setComponentDisplayName(is, Component.text(ChatColor.AQUA + type.getName() + (allowed ? ChatColor.GREEN + " (Allowed in current dimension)" : ChatColor.RED + " (Not allowed in current dimension)")));
-            ItemUtils.addLore(is, ChatColor.GREEN + "Health: " + format.format(type.getHealth()));
-            ItemUtils.addLore(is, ChatColor.GOLD + "Maturation time: "
-                + TextUtil.formatDuration(type.getMaturationTime(), TimeUnit.MILLISECONDS));
+            // A custom name would override ITEM_NAME and render italic.
+            is.unsetData(DataComponentTypes.CUSTOM_NAME);
+            is.setData(DataComponentTypes.ITEM_NAME, CivText.value(type.getName()));
+
+            List<Component> lore = existingLore(is);
+            lore.add(line("Health ", CivText.value(format.format(type.getHealth()))));
+            lore.add(line("Matures in ",
+                CivText.value(TextUtil.formatDuration(type.getMaturationTime(), TimeUnit.MILLISECONDS))));
             if (type.getAcidTime() > 0) {
-                ItemUtils.addLore(is, ChatColor.GOLD + "Acid maturation time: "
-                    + TextUtil.formatDuration(type.getAcidTime(), TimeUnit.MILLISECONDS));
+                lore.add(line("Acid matures in ",
+                    CivText.value(TextUtil.formatDuration(type.getAcidTime(), TimeUnit.MILLISECONDS))));
             } else {
-                ItemUtils.addLore(is, ChatColor.GOLD + "Can not be used for acid");
+                lore.add(line("Can't be used for acid"));
             }
-            ItemUtils.addLore(is,
-                ChatColor.WHITE + "Return chance: " + format.format(type.getReturnChance() * 100.0) + " %");
+            lore.add(line("Return chance ", CivText.value(format.format(type.getReturnChance() * 100.0) + "%")));
+            lore.add(line("Allowed in ", CivText.value(type.getAllowedWorlds().isEmpty()
+                ? "every world"
+                : String.join(", ", type.getAllowedWorlds()))));
+            lore.add(Component.empty());
+            lore.add(allowed
+                ? line(CivText.SUCCESS, "Usable in this world")
+                : line(CivText.ERROR, "Not usable in this world"));
+            is.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
 
-            ItemUtils.addComponentLore(is, Component.text(ChatColor.GOLD + "Allowed dimensions:"));
-            List<Component> allowedDimensionComponents = type.getAllowedWorlds().stream().map(e ->
-                Component.text(ChatColor.GREEN + " - " + e)).collect(Collectors.toList());
-
-            if (allowedDimensionComponents.isEmpty()) {
-                ItemUtils.addComponentLore(is, Component.text(" * Everywhere", CivText.VALUE));
-            } else {
-                ItemUtils.addComponentLore(is, allowedDimensionComponents);
-            }
-            IClickable click = new DecorationStack(is);
-            clickables.add(click);
+            clickables.add(new DecorationStack(is));
         }
 
         return clickables;
@@ -111,15 +126,43 @@ public class ReinforcementsGUI extends BaseCommand {
 
         for (AcidType acidType : acidTypes) {
             ItemStack is = new ItemStack(acidType.material());
-            String blockName = ItemUtils.getItemName(acidType.material());
-            ItemUtils.setComponentDisplayName(is, Component.text(ChatColor.RED + blockName));
-            ItemUtils.addLore(is, ChatColor.GOLD + "Acid faces: " + (acidType.blockFaces().stream().map(BlockFace::toString).collect(Collectors.joining(", "))));
-            ItemUtils.addLore(is, ChatColor.GOLD + "Maturation modifier: " + format.format(acidType.modifier()) + "x");
+            is.setData(DataComponentTypes.ITEM_NAME,
+                Component.translatable(acidType.material()).color(CivText.VALUE));
 
-            IClickable click = new DecorationStack(is);
-            clickables.add(click);
+            String faces = acidType.blockFaces().stream()
+                .map(face -> face.name().toLowerCase(Locale.ROOT))
+                .collect(Collectors.joining(", "));
+            is.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
+                line("Acid faces ", CivText.value(faces)),
+                line("Maturation modifier ", CivText.value(format.format(acidType.modifier()) + "x")))));
+
+            clickables.add(new DecorationStack(is));
         }
 
         return clickables;
+    }
+
+    /** The item's own lore, followed by a blank line, so ours reads as a separate block. */
+    private static List<Component> existingLore(ItemStack is) {
+        List<Component> lore = new ArrayList<>();
+        ItemLore current = is.getData(DataComponentTypes.LORE);
+        if (current != null && !current.lines().isEmpty()) {
+            lore.addAll(current.lines());
+            lore.add(Component.empty());
+        }
+        return lore;
+    }
+
+    private static Component line(Object... parts) {
+        return line(CivText.INFO, parts);
+    }
+
+    /** Lore renders italic unless told otherwise. */
+    private static Component line(TextColor colour, Object... parts) {
+        TextComponent.Builder line = Component.text().color(colour).decoration(TextDecoration.ITALIC, false);
+        for (Object part : parts) {
+            line.append(part instanceof Component component ? component : Component.text(String.valueOf(part)));
+        }
+        return line.build();
     }
 }

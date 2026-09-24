@@ -1,7 +1,6 @@
 package vg.civcraft.mc.citadel.playerstate;
 
 import net.kyori.adventure.text.Component;
-import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -11,6 +10,7 @@ import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 import vg.civcraft.mc.namelayer.group.Group;
 
 public class FortificationState extends AbstractPlayerState {
@@ -77,7 +77,12 @@ public class FortificationState extends AbstractPlayerState {
 
     @Override
     public String getOverlayText() {
-        return String.format("%sCTF %s%s %s%s", ChatColor.GOLD, ChatColor.LIGHT_PURPLE, group.getName(), ChatColor.AQUA,
-            type.getName());
+        return HudLine.of(CivText.mode("Fortifying"), CivText.group(group.getName()), CivText.value(type.getName()));
+    }
+
+    @Override
+    public Component getOverlayDisplay() {
+        return HudLine.component(CivText.mode("Fortifying"), CivText.group(group.getName()),
+            CitadelUtility.sprite(type.getItem().getType()), CivText.value(type.getName()));
     }
 }

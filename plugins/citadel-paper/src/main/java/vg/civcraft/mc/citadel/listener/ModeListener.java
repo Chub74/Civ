@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -23,8 +24,6 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import net.kyori.adventure.text.TextComponent;
-import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.CitadelUtility;
@@ -43,6 +42,8 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSetting;
 import vg.civcraft.mc.civmodcore.players.settings.SettingChangeListener;
 import vg.civcraft.mc.civmodcore.players.settings.impl.DisplayLocationSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 import vg.civcraft.mc.civmodcore.utilities.DoubleInteractFixer;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
@@ -117,25 +118,26 @@ public class ModeListener implements Listener {
     }
 
     private void setCtiOverlay(Player player, boolean state) {
-        updateDisplaySetting(player, settingMan.getInformationLocationSetting(), state, ChatColor.GOLD + "CTI",
-            ctiBottomLine, ctiBoard);
+        updateDisplaySetting(player, settingMan.getInformationLocationSetting(), state, HudLine.of(CivText.mode("Information mode")),
+            null, ctiBottomLine, ctiBoard);
     }
 
     private void setCtbOverlay(Player player, boolean state) {
-        updateDisplaySetting(player, settingMan.getBypassLocationSetting(), state, ChatColor.AQUA + "CTB",
-            ctbBottomLine, ctbBoard);
+        updateDisplaySetting(player, settingMan.getBypassLocationSetting(), state, HudLine.of(CivText.mode("Bypass mode")),
+            null, ctbBottomLine, ctbBoard);
     }
 
     private void setReinModeOverlay(Player player, AbstractPlayerState state) {
         if (state == null) {
             return;
         }
-        updateDisplaySetting(player, settingMan.getModeLocationSetting(), true, state.getOverlayText(), reinBottomLine,
-            reinBoard);
+        updateDisplaySetting(player, settingMan.getModeLocationSetting(), true, state.getOverlayText(),
+            state.getOverlayDisplay(), reinBottomLine, reinBoard);
     }
 
+    /** display, if not null, replaces text on the sidebar only - the action bar can't show components. */
     private static void updateDisplaySetting(Player player, DisplayLocationSetting locSetting, boolean state, String text,
-                                             BottomLine bottomLine, CivScoreBoard scoreBoard) {
+                                             Component display, BottomLine bottomLine, CivScoreBoard scoreBoard) {
         if (player == null) {
             return;
         }
@@ -151,7 +153,7 @@ public class ModeListener implements Listener {
                 bottomLine.updatePlayer(player, text);
             }
             if (locSetting.showOnSidebar(player.getUniqueId())) {
-                scoreBoard.set(player, text);
+                scoreBoard.set(player, text, display);
             }
         }
     }

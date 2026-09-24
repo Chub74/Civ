@@ -10,6 +10,7 @@ import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 
 public class InsecureState extends AbstractPlayerState {
 
@@ -56,6 +57,6 @@ public class InsecureState extends AbstractPlayerState {
 
     @Override
     public String getOverlayText() {
-        return ChatColor.GREEN + "CTIN";
+        return HudLine.of(CivText.mode("Insecure mode"));
     }
 }

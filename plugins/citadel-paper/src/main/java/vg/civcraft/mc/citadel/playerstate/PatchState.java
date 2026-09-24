@@ -16,6 +16,7 @@ import vg.civcraft.mc.citadel.listener.ModeListener;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 
 public class PatchState extends AbstractPlayerState {
 
@@ -92,6 +93,6 @@ public class PatchState extends AbstractPlayerState {
 
     @Override
     public String getOverlayText() {
-        return ChatColor.GREEN + "CTP";
+        return HudLine.of(CivText.mode("Patch mode"));
     }
 }

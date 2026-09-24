@@ -111,6 +111,11 @@ public abstract class AbstractPlayerState {
 
     public abstract String getOverlayText();
 
+    /** Sidebar display for the overlay line, when it needs more than text - e.g. a sprite. Null: show the text. */
+    public Component getOverlayDisplay() {
+        return null;
+    }
+
     @Override
     public abstract boolean equals(Object o);
 }

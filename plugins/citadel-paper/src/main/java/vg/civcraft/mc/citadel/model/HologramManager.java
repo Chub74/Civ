@@ -29,6 +29,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
+import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.listener.ModeListener;
 
 public class HologramManager {
@@ -142,10 +143,10 @@ public class HologramManager {
             Location location = getHoloLocation(reinforcement, player);
             fakeEntity.getIntegers()
                 .write(0, hologramId)
-                .write(1, 0)
-                .write(2, 0)
-                .write(3, 0)
-                .write(4, 0);
+                .write(1, 0);
+
+            fakeEntity.getModifier().withType(Vec3.class)
+                .write(0, new Vec3(0, 0, 0));
 
             fakeEntity.getUUIDs().write(0, UUID.randomUUID());
 
@@ -191,7 +192,7 @@ public class HologramManager {
             if (hasPermission) {
                 component = component.append(Component.newline());
                 component = component.append(Component.text(reinforcement.getGroup().getName(), NamedTextColor.LIGHT_PURPLE)).append(Component.newline());
-                component = component.append(Component.text(reinforcement.getType().getName(), NamedTextColor.AQUA));
+                component = component.append(CitadelUtility.item(reinforcement.getType()));
                 if (!reinforcement.isMature()) {
                     component = component.append(Component.newline()).append(Component.text(ModeListener.formatProgress(reinforcement.getCreationTime(), reinforcement.getType().getMaturationTime(), ""), NamedTextColor.GRAY));
                 }
