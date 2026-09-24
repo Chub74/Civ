@@ -8,7 +8,7 @@ import isaac.bastion.storage.BastionBlockStorage;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.logging.Level;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -26,6 +26,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class BastionBreakListener implements Listener {
 
@@ -37,16 +38,15 @@ public class BastionBreakListener implements Listener {
         this.manager = manager;
     }
 
-    private void dropBastionItem(Location loc, BastionType type, Player player, TextComponent chatMessage) {
+    private void dropBastionItem(Location loc, BastionType type, Player player, Component chatMessage) {
         ItemStack item = type.getItemRepresentation();
         new BukkitRunnable() {
             @Override
             public void run() {
                 loc.getWorld().dropItem(loc.add(0.5, 0.5, 0.5), item).setVelocity(new Vector(0, 0.05, 0));
-                ;
 
                 if (player != null && chatMessage != null) {
-                    player.spigot().sendMessage(chatMessage);
+                    CivUI.success(player, chatMessage);
                 }
             }
         }.runTaskLater(Bastion.getPlugin(), 1);
@@ -64,11 +64,11 @@ public class BastionBreakListener implements Listener {
         if (type != null) {
             Bastion.getPlugin().getLogger().log(Level.INFO, "BastionType broken {0}", type.toString());
 
-            TextComponent chatMessage = null;
+            Component chatMessage = null;
             BastionBlock bastion = storage.getBastionBlock(block.getLocation());
             if (bastion != null) {
                 if (this.manager.canListBastionsForGroup(event.getPlayer(), bastion.getListGroupId())) {
-                    chatMessage = this.manager.bastionDeletedMessageComponent(bastion);
+                    chatMessage = this.manager.bastionDeletedMessage(bastion);
                 }
 
                 bastion.destroy();

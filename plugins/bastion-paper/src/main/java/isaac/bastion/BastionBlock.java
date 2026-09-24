@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -13,6 +13,7 @@ import vg.civcraft.mc.citadel.Citadel;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.model.Reinforcement;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 import vg.civcraft.mc.civmodcore.world.locations.QTBox;
 import vg.civcraft.mc.namelayer.GroupManager;
@@ -365,68 +366,40 @@ public class BastionBlock implements QTBox, Comparable<BastionBlock> {
 
     @Override
     public String toString() {
-        SimpleDateFormat dateFormator = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-        StringBuilder result = new StringBuilder(ChatColor.GOLD + "" + ChatColor.BOLD + "Bastion Info" + ChatColor.AQUA + "\n");
-
-        String strength = getStrengthText();
-        result.append("Health: " + ChatColor.GOLD + "" + (strength != null ? strength : "unknown") + ChatColor.AQUA + "\n");
-        if (!isMature()) {
-            result.append("Mature in: " + ChatColor.GOLD + "" + TextUtil.formatDuration(type.getWarmupTime()) + ChatColor.AQUA + "\n");
-        } else {
-            result.append("Mature?: " + ChatColor.GOLD + "Yes" + ChatColor.AQUA + "\n");
-        }
-        result.append("Placed: " + ChatColor.GOLD + "" + dateFormator.format(new Date(placed)) + ChatColor.AQUA + "\n");
-        result.append("Group: " + ChatColor.GOLD + getGroupName() + ChatColor.AQUA + "\n");
-        result.append("Location: " + ChatColor.GOLD + "" + this.location.getBlockX() + " " + this.location.getBlockY() + " " + this.location.getBlockZ());
-        return result.toString();
+        return "BastionBlock{location=" + location + ", type=" + type + ", placed=" + placed + "}";
     }
 
-    /**
-     * Creates an info message, adds more info if dev is true
-     *
-     * @param dev If the player is a dev
-     * @return An info message
-     */
-    public String infoMessage(boolean dev) {
-        StringBuilder result = new StringBuilder(ChatColor.GREEN.toString());
-        if (dev) {
-            return result.append(this.toString()).toString();
-        }
-
+    /** The inspection line: bastion strength alone, or every field when dev is true. */
+    public Component infoComponent(boolean dev) {
         String strength = getStrengthText();
-
-        if (strength != null) {
-            result.append("Bastion: ");
-            result.append(strength);
+        if (!dev) {
+            return strength == null
+                ? Component.empty()
+                : Component.text("Bastion: ").append(Component.text(strength, CivText.VALUE));
         }
-
-        return result.toString();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        Component maturity = isMature()
+            ? Component.text("Mature: ").append(Component.text("yes", CivText.VALUE))
+            : Component.text("Mature in: ").append(Component.text(TextUtil.formatDuration(type.getWarmupTime()), CivText.VALUE));
+        return Component.text()
+            .append(CivText.heading("Bastion Info")).append(Component.newline())
+            .append(Component.text("Health: ")).append(Component.text(strength != null ? strength : "unknown", CivText.VALUE)).append(Component.newline())
+            .append(maturity).append(Component.newline())
+            .append(Component.text("Placed: ")).append(Component.text(dateFormat.format(new Date(placed)), CivText.VALUE)).append(Component.newline())
+            .append(Component.text("Group: ")).append(CivText.group(getGroupName())).append(Component.newline())
+            .append(Component.text("Location: ")).append(Component.text(getLocationText(), CivText.VALUE))
+            .build();
     }
 
-    public String getHoverText() {
-        StringBuilder hoverText = new StringBuilder();
-
-        hoverText.append("Location: ");
-        hoverText.append(getLocationText());
-        hoverText.append("\n");
-
-        hoverText.append("Group: ");
-        hoverText.append(getGroupName());
-        hoverText.append("\n");
-
-        hoverText.append("Type: ");
-        hoverText.append(this.type.getItemName());
-        hoverText.append("\n");
-
-        hoverText.append("Shape: ");
-        hoverText.append(this.type.isSquare() ? "Square" : "Circle");
-        hoverText.append("\n");
-
-        hoverText.append("Radius: ");
-        hoverText.append(this.type.getEffectRadius());
-        hoverText.append("\n");
-
-        return hoverText.toString();
+    /** Location, group, type, shape and radius, for the hover on a bastion notice. */
+    public Component hoverComponent() {
+        return Component.text()
+            .append(Component.text("Location: ")).append(Component.text(getLocationText(), CivText.VALUE)).append(Component.newline())
+            .append(Component.text("Group: ")).append(CivText.group(getGroupName())).append(Component.newline())
+            .append(Component.text("Type: ")).append(Component.text(type.getItemName(), CivText.VALUE)).append(Component.newline())
+            .append(Component.text("Shape: ")).append(Component.text(type.isSquare() ? "Square" : "Circle", CivText.VALUE)).append(Component.newline())
+            .append(Component.text("Radius: ")).append(Component.text(String.valueOf(type.getEffectRadius()), CivText.VALUE))
+            .build();
     }
 
     public String getLocationText() {

@@ -18,6 +18,7 @@ import isaac.bastion.utils.BastionSettingManager;
 import java.util.LinkedList;
 import java.util.logging.Level;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.plugin.Plugin;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.dao.DatabaseCredentials;
 import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
@@ -25,6 +26,10 @@ import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public final class Bastion extends ACivMod {
+
+    private static final String MIN_CIVMODCORE_VERSION = "3.1.0";
+
+    private static final String MIN_CITADEL_VERSION = "5.2.4";
 
     private static Bastion plugin;
     private static BastionBlockStorage blockStorage;
@@ -37,6 +42,10 @@ public final class Bastion extends ACivMod {
     public void onEnable() {
         super.onEnable();
         plugin = this;
+        if (!isDependencyCompatible("CivModCore", MIN_CIVMODCORE_VERSION)
+            || !isDependencyCompatible("Citadel", MIN_CITADEL_VERSION)) {
+            return;
+        }
         saveDefaultConfig();
         reloadConfig();
         BastionType.loadBastionTypes(getConfig().getConfigurationSection("bastions"));
@@ -140,6 +149,42 @@ public final class Bastion extends ACivMod {
 
     public static CommonSettings getCommonSettings() {
         return commonSettings;
+    }
+
+    private boolean isDependencyCompatible(String pluginName, String required) {
+        Plugin dependency = getServer().getPluginManager().getPlugin(pluginName);
+        String found = dependency == null ? "not installed" : dependency.getDescription().getVersion();
+        if (dependency != null && compareVersions(found, required) >= 0) {
+            return true;
+        }
+        severe("Bastion " + getDescription().getVersion() + " requires " + pluginName + " " + required
+            + "+ but found " + found + ". Update " + pluginName + ", then restart.");
+        getServer().getPluginManager().disablePlugin(this);
+        return false;
+    }
+
+    /** Numeric major.minor.patch comparison. A missing or non-numeric segment counts as 0. */
+    private static int compareVersions(String actual, String required) {
+        String[] actualParts = actual.split("\\.");
+        String[] requiredParts = required.split("\\.");
+        int length = Math.max(actualParts.length, requiredParts.length);
+        for (int i = 0; i < length; i++) {
+            int actualPart = i < actualParts.length ? parseIntSafe(actualParts[i]) : 0;
+            int requiredPart = i < requiredParts.length ? parseIntSafe(requiredParts[i]) : 0;
+            int cmp = Integer.compare(actualPart, requiredPart);
+            if (cmp != 0) {
+                return cmp;
+            }
+        }
+        return 0;
+    }
+
+    private static int parseIntSafe(String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private void registerNameLayerPermissions() {

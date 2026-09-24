@@ -11,7 +11,6 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.TreeSet;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Effect;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -20,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class EnderPearlManager {
 
@@ -455,7 +455,7 @@ public class EnderPearlManager {
                 }
 
                 if (blocking.getType().isBlockMidair()) {
-                    player.sendMessage(ChatColor.RED + "Ender pearl blocked by Bastion Block");
+                    CivUI.error(player, "A bastion blocked your ender pearl");
                     if (!blocking.getType().isConsumeOnBlock()) {
                         player.getInventory().addItem(new ItemStack(Material.ENDER_PEARL));
                         player.updateInventory();

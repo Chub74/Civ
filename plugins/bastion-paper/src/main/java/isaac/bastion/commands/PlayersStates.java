@@ -4,10 +4,14 @@ import isaac.bastion.Bastion;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class PlayersStates {
+
+    private static final Component SEPARATOR = Component.text(" ▶ ", CivText.MUTED);
 
     static public enum Mode {
         NORMAL, INFO, DELETE, OFF, BASTION, MATURE
@@ -47,15 +51,14 @@ public class PlayersStates {
         }
 
         UUID pid = player.getUniqueId();
-
-        Mode old = playersModes.get(pid);
-
-        if (old != null && old != mode && old != Mode.NORMAL) {
-            player.sendMessage(ChatColor.YELLOW + "Bastion " + old.name() + " mode off");
-        }
-        player.sendMessage(ChatColor.GREEN + "Bastion " + mode.name() + " mode on");
-
+        Mode old = playersModes.getOrDefault(pid, Mode.NORMAL);
         playersModes.put(pid, mode);
+
+        if (old == mode) {
+            CivUI.info(player, "You're already in ", CivText.mode(modeName(mode)));
+            return;
+        }
+        CivUI.success(player, CivText.mode(modeName(old)), SEPARATOR, CivText.mode(modeName(mode)));
     }
 
     public static void toggleModeForPlayer(Player player, Mode mode) {
@@ -64,5 +67,16 @@ public class PlayersStates {
             mode = Mode.NORMAL;
         }
         setModeForPlayer(player, mode);
+    }
+
+    private static String modeName(Mode mode) {
+        return switch (mode) {
+            case NORMAL -> "Normal mode";
+            case INFO -> "Info mode";
+            case DELETE -> "Delete mode";
+            case OFF -> "Off mode";
+            case BASTION -> "Bastion mode";
+            case MATURE -> "Mature mode";
+        };
     }
 }

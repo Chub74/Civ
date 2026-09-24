@@ -5,14 +5,12 @@ import isaac.bastion.BastionBlock;
 import isaac.bastion.BastionType;
 import isaac.bastion.Permissions;
 import isaac.bastion.utils.BastionSettingManager;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,6 +25,8 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSetting;
 import vg.civcraft.mc.civmodcore.players.settings.SettingChangeListener;
 import vg.civcraft.mc.civmodcore.players.settings.impl.DisplayLocationSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -101,7 +101,7 @@ public class ModeListener implements Listener {
         Set<BastionBlock> bastionBlocks = Bastion.getBastionManager().getBlockingBastions(location);
         if (bastionBlocks.isEmpty()) {
             if (settingMan.getShowNoBastion(player.getUniqueId())) {
-                updateDisplaySetting(player, ChatColor.WHITE + "No Bastion");
+                updateDisplaySetting(player, HudLine.of("Bastion", CivText.info("none")));
             } else {
                 hideAll(player);
             }
@@ -117,28 +117,28 @@ public class ModeListener implements Listener {
             }
         }
         if (!alliedBastions.isEmpty() && !enemyBastions.isEmpty()) {
-            updateDisplaySetting(player,
-                String.format("%s%sConflict Bastion %s[%s] %s[%s]", ChatColor.YELLOW, ChatColor.BOLD,
-                    ChatColor.GREEN, buildBastionTypeList(alliedBastions), ChatColor.RED,
-                    buildBastionTypeList(enemyBastions)));
+            updateDisplaySetting(player, HudLine.of("Bastion", Component.text("contested", CivText.WARN),
+                CivText.value(buildBastionTypeList(alliedBastions, enemyBastions))));
             return;
         }
         if (!alliedBastions.isEmpty()) {
-            updateDisplaySetting(player,
-                String.format("%sAlly Bastion [%s]", ChatColor.GREEN, buildBastionTypeList(alliedBastions)));
+            updateDisplaySetting(player, HudLine.of("Bastion", Component.text("allied", CivText.SUCCESS),
+                CivText.value(buildBastionTypeList(alliedBastions))));
             return;
         }
-        updateDisplaySetting(player, String.format("%s%sEnemy Bastion [%s]", ChatColor.RED, ChatColor.BOLD,
-            buildBastionTypeList(enemyBastions)));
+        updateDisplaySetting(player, HudLine.of("Bastion", Component.text("enemy", CivText.ERROR),
+            CivText.value(buildBastionTypeList(enemyBastions))));
     }
 
-    private String buildBastionTypeList(Set<BastionType> types) {
-        List<String> identifiers = new ArrayList<>();
-        for (BastionType type : types) {
-            identifiers.add(type.getOverlayName());
+    @SafeVarargs
+    private String buildBastionTypeList(Set<BastionType>... typeSets) {
+        Set<String> identifiers = new TreeSet<>();
+        for (Set<BastionType> types : typeSets) {
+            for (BastionType type : types) {
+                identifiers.add(type.getOverlayName());
+            }
         }
-        Collections.sort(identifiers);
-        return String.join(",", identifiers);
+        return String.join(", ", identifiers);
     }
 
     /**

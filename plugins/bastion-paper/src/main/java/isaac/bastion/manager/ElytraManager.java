@@ -18,7 +18,6 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -28,6 +27,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.util.Vector;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -285,7 +285,7 @@ public class ElytraManager {
     }
 
     private void doImpact(Player p, boolean breakElytra, boolean damageElytra, double explosionStrength) {
-        p.sendMessage(ChatColor.RED + "Elytra flight blocked by Bastion Block");
+        CivUI.error(p, "A bastion blocked your elytra flight");
         p.setVelocity(new Vector(0, 0, 0));
         PlayerInventory inv = p.getInventory();
         if (breakElytra) {

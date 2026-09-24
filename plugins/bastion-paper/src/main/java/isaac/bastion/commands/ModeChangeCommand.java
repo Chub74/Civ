@@ -9,6 +9,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class ModeChangeCommand implements CommandExecutor {
 
@@ -40,7 +41,7 @@ public class ModeChangeCommand implements CommandExecutor {
                             player.getInventory().getItemInMainHand(), new Location(player.getLocation().getWorld(),
                             x, y - 1, z).getBlock(), BlockFace.UP));
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("One of the arguments you provided was not a number");
+                    CivUI.error(sender, "One of the arguments you provided isn't a number");
                 }
             }
         }

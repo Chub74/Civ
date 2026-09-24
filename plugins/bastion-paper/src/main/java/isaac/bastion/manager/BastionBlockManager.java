@@ -18,16 +18,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.citadel.CitadelUtility;
 import vg.civcraft.mc.citadel.model.Reinforcement;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
@@ -231,57 +231,37 @@ public class BastionBlockManager {
         return NameLayerAPI.getGroupManager().hasAccess(group, player.getUniqueId(), permission);
     }
 
-    public TextComponent bastionDeletedMessageComponent(BastionBlock bastion) {
-        TextComponent component = new TextComponent(ChatColor.GREEN + "Bastion deleted");
-
-        String hoverText = bastion.getHoverText();
-        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
-
-        return component;
+    public Component bastionDeletedMessage(BastionBlock bastion) {
+        return Component.text("Bastion deleted").hoverEvent(HoverEvent.showText(bastion.hoverComponent()));
     }
 
-    public TextComponent bastionCreatedMessageComponent(Location location) {
+    public Component bastionCreatedMessage(Location location, Reinforcement reinforcement) {
         BastionBlock bastion = storage.getBastionBlock(location);
-
-        TextComponent component = new TextComponent(ChatColor.GREEN + "Bastion block created");
-
-        String hoverText = bastion.getHoverText();
-        component.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
-
-        return component;
+        return Component.text("Bastion created, reinforced with ")
+            .append(CitadelUtility.item(reinforcement.getType()))
+            .append(Component.text(" on "))
+            .append(CitadelUtility.group(reinforcement.getGroup()))
+            .hoverEvent(HoverEvent.showText(bastion.hoverComponent()));
     }
 
-    public TextComponent infoMessageComponent(boolean dev, Block block, Block clicked, Player player) {
-        BastionBlock bastion = storage.getBastionBlock(clicked.getLocation()); // Get the bastion at the location
-        // clicked.
-
-        if (bastion == null)
-            return new TextComponent(infoMessage(dev, block, clicked, player));
-
-        TextComponent component = new TextComponent(bastion.infoMessage(dev));
-
+    /** An inspection result: the bastion at the clicked block, or a summary of what's blocking the target block. */
+    public Component infoMessage(boolean dev, Block block, Block clicked, Player player) {
+        BastionBlock bastion = storage.getBastionBlock(clicked.getLocation());
+        if (bastion == null) {
+            return blockingSummary(dev, block, player);
+        }
+        Component component = bastion.infoComponent(dev);
         if (canListBastionsForGroup(player, bastion.getListGroupId())) {
-            String hoverText = bastion.getHoverText();
-            component.setHoverEvent(
-                new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hoverText)));
+            component = component.hoverEvent(HoverEvent.showText(bastion.hoverComponent()));
         }
-
         return component;
     }
 
-    public String infoMessage(boolean dev, Block block, Block clicked, Player player) {
-        BastionBlock bastion = storage.getBastionBlock(clicked.getLocation()); // Get the bastion at the location
-        // clicked.
-
-        if (bastion != null) { // See if anything was found
-            return bastion.infoMessage(dev); // If there is actually something there tell the player about it.
-        }
-
-        StringBuilder sb = new StringBuilder();
-
+    private Component blockingSummary(boolean dev, Block block, Player player) {
         Set<BastionBlock> bastions = getBlockingBastions(block.getLocation());
+        Component summary;
         if (bastions.isEmpty()) {
-            sb.append(ChatColor.YELLOW).append("No Bastion Block");
+            summary = Component.text("No bastion here");
         } else {
             Set<BastionType> alliedBastions = new HashSet<>();
             Set<BastionType> enemyBastions = new HashSet<>();
@@ -293,26 +273,28 @@ public class BastionBlockManager {
                 }
             }
             if (alliedBastions.isEmpty()) {
-                sb.append(ChatColor.RED).append(String.format("Enemy %s prevent you from building",
-                    String.join(" ", enemyBastions.stream().map(BastionType::getName).collect(Collectors.toList()))));
+                summary = Component.text("Enemy ").append(bastionTypeList(enemyBastions))
+                    .append(Component.text(" blocks you from building here"));
+            } else if (enemyBastions.isEmpty()) {
+                summary = Component.text("Your allied ").append(bastionTypeList(alliedBastions))
+                    .append(Component.text(" protects this from others"));
             } else {
-                if (enemyBastions.isEmpty()) {
-                    sb.append(ChatColor.GREEN).append(String.format("Allied %s prevent others from building",
-                        String.join(" ", alliedBastions.stream().map(BastionType::getName).collect(Collectors.toList()))));
-                } else {
-                    sb.append(ChatColor.RED).append(String.format("Enemy %s prevent you from building and allied %s prevent others from building",
-                        String.join(" ", enemyBastions.stream().map(BastionType::getName).collect(Collectors.toList())),
-                        String.join(" ", alliedBastions.stream().map(BastionType::getName).collect(Collectors.toList()))));
-                }
+                summary = Component.text("Enemy ").append(bastionTypeList(enemyBastions))
+                    .append(Component.text(" blocks you, allied ")).append(bastionTypeList(alliedBastions))
+                    .append(Component.text(" protects others"));
             }
         }
-
         if (dev) {
             for (BastionBlock bas : bastions) {
-                sb.append('\n' + bas.toString());
+                summary = summary.append(Component.newline()).append(bas.infoComponent(true));
             }
         }
-        return sb.toString();
+        return summary;
+    }
+
+    private Component bastionTypeList(Set<BastionType> types) {
+        List<String> names = types.stream().map(BastionType::getName).sorted().collect(Collectors.toList());
+        return Component.text(String.join(", ", names), CivText.VALUE);
     }
 
     public Boolean changeBastionGroup(Player player, Reinforcement reinforcement, Location location) {

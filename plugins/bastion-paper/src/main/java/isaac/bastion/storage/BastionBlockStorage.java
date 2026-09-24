@@ -23,7 +23,6 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -360,7 +359,7 @@ public class BastionBlockStorage {
                     }
                 }
             } catch (SQLException e) {
-                log.log(Level.SEVERE, ChatColor.RED + "===== Error loading bastions from database, shutting down =====", e);
+                log.log(Level.SEVERE, "Error loading bastions from database, shutting down", e);
                 Bukkit.getServer().getPluginManager().disablePlugin(Bastion.getPlugin());
             }
         }

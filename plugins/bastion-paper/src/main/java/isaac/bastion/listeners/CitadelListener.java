@@ -6,7 +6,6 @@ import isaac.bastion.BastionType;
 import isaac.bastion.Permissions;
 import isaac.bastion.manager.BastionBlockManager;
 import java.util.Set;
-import org.bukkit.ChatColor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -14,6 +13,7 @@ import vg.civcraft.mc.citadel.events.ReinforcementChangeTypeEvent;
 import vg.civcraft.mc.citadel.events.ReinforcementCreationEvent;
 import vg.civcraft.mc.citadel.events.ReinforcementGroupChangeEvent;
 import vg.civcraft.mc.citadel.events.ReinforcementRepairEvent;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class CitadelListener implements Listener {
@@ -33,7 +33,7 @@ public class CitadelListener implements Listener {
             if (type.isBlockReinforcements()) {
                 event.setCancelled(true);
                 if (!Bastion.getSettingManager().getIgnorePlacementMessages(event.getPlayer().getUniqueId())) {
-                    event.getPlayer().sendMessage(ChatColor.RED + "Bastion prevented reinforcement");
+                    CivUI.error(event.getPlayer(), "A bastion prevented that reinforcement");
                 }
                 blockManager.erodeFromPlace(event.getPlayer(), preblocking);
                 return;

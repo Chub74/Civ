@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -37,6 +36,8 @@ import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 import org.bukkit.event.world.StructureGrowEvent;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -65,14 +66,13 @@ public final class BastionDamageListener implements Listener {
             if (!bastion.getType().isOnlyDirectDestruction()) {
                 event.setCancelled(true);
                 if (!Bastion.getSettingManager().getIgnorePlacementMessages(event.getPlayer().getUniqueId())) {
-                    event.getPlayer().sendMessage(ChatColor.RED + "Bastion removed block");
+                    CivUI.error(event.getPlayer(), "A bastion removed that block");
                 }
                 Material mat = event.getBlock().getType();
                 if (!Bastion.getCommonSettings().getCancelPlacementAndDamage().contains(mat)) {
                     blockManager.erodeFromPlace(event.getPlayer(), blocking);
                 } else {
-                    event.getPlayer().sendMessage(String.format("%s%s cannot be used to damage bastions", ChatColor.RED,
-                        ItemUtils.getItemName(mat)));
+                    CivUI.error(event.getPlayer(), CivText.value(ItemUtils.getItemName(mat)), " can't be used to damage bastions");
                 }
                 return;
             }
@@ -139,7 +139,7 @@ public final class BastionDamageListener implements Listener {
             .getBlockingBastionsWithoutPermission(state.getLocation(), player.getUniqueId(), permission)
             .stream().anyMatch(bastion -> !bastion.getType().isOnlyDirectDestruction()));
         if (removed && !Bastion.getSettingManager().getIgnorePlacementMessages(player.getUniqueId())) {
-            player.sendMessage(ChatColor.RED + "Bastion prevented fertilizing");
+            CivUI.error(player, "A bastion prevented that fertilizing");
         }
     }
 
@@ -150,7 +150,7 @@ public final class BastionDamageListener implements Listener {
         if (!blocking.isEmpty()) {
             event.setCancelled(true);
             if (!Bastion.getSettingManager().getIgnorePlacementMessages(event.getPlayer().getUniqueId())) {
-                event.getPlayer().sendMessage(ChatColor.RED + "Emptying bucket prevented by Bastion");
+                CivUI.error(event.getPlayer(), "A bastion prevented emptying that bucket");
             }
         }
     }
@@ -201,7 +201,7 @@ public final class BastionDamageListener implements Listener {
 
         if (!blocking.isEmpty()) {
             blockManager.erodeFromTeleport(event.getPlayer(), blocking);
-            event.getPlayer().sendMessage(ChatColor.RED + "Ender pearl blocked by Bastion Block");
+            CivUI.error(event.getPlayer(), "A bastion blocked your ender pearl");
             boolean consume = false;
             for (BastionBlock block : blocking) {
                 if (block.getType().isConsumeOnBlock()) {
@@ -231,7 +231,7 @@ public final class BastionDamageListener implements Listener {
 
         if (!blocking.isEmpty()) {
             blockManager.erodeFromTeleport(event.getPlayer(), blocking);
-            event.getPlayer().sendMessage(ChatColor.RED + "Ender pearl blocked by Bastion Block");
+            CivUI.error(event.getPlayer(), "A bastion blocked your ender pearl");
             boolean consume = false;
             for (BastionBlock block : blocking) {
                 if (block.getType().isConsumeOnBlock()) {
