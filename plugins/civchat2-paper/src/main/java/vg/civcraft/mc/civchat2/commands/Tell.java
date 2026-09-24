@@ -10,10 +10,11 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
 import vg.civcraft.mc.civchat2.database.CivChatDAO;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 
 public class Tell extends BaseCommand {
@@ -28,26 +29,26 @@ public class Tell extends BaseCommand {
             UUID chattingWith = chatMan.getChannel(player);
             if (chattingWith != null) {
                 chatMan.removeChannel(player);
-                player.sendMessage(ChatStrings.chatRemovedFromChat);
+                CivUI.success(player, "You left private chat");
             } else {
-                player.sendMessage(ChatStrings.chatNotInPrivateChat);
+                CivUI.error(player, "You aren't in private chat");
             }
             return;
         }
 
         Player receiver = Bukkit.getPlayer(targetPlayer);
         if (receiver == null) {
-            player.sendMessage(ChatStrings.chatPlayerNotFound);
+            CivUI.error(player, "No player exists with that name");
             return;
         }
 
         if (!(receiver.isOnline())) {
-            player.sendMessage(ChatStrings.chatPlayerIsOffline);
+            CivUI.error(player, "That player is offline");
             return;
         }
 
         if (player == receiver) {
-            player.sendMessage(ChatStrings.chatCantMessageSelf);
+            CivUI.error(player, "You can't message yourself");
             return;
         }
 
@@ -57,16 +58,16 @@ public class Tell extends BaseCommand {
         } else {
             CivChatDAO db = CivChat2.getInstance().getDatabaseManager();
             if (db.isIgnoringPlayer(player.getUniqueId(), receiver.getUniqueId())) {
-                player.sendMessage(String.format(ChatStrings.chatNeedToUnignore, receiver.getDisplayName()));
+                CivUI.error(player, "You need to unignore ", CivText.subject(receiver.getName()));
                 return;
             }
 
             if (db.isIgnoringPlayer(receiver.getUniqueId(), player.getUniqueId())) {
-                player.sendMessage(ChatStrings.chatPlayerIgnoringYou);
+                CivUI.error(player, "That player is ignoring you");
                 return;
             }
             chatMan.addChatChannel(player, receiver);
-            player.sendMessage(String.format(ChatStrings.chatNowChattingWith, receiver.getDisplayName()));
+            CivUI.success(player, "You're now chatting with ", CivText.subject(receiver.getName()));
         }
     }
 }

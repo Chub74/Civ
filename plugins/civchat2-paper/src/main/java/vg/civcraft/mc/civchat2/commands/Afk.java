@@ -6,10 +6,11 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class Afk extends BaseCommand {
 
@@ -21,15 +22,15 @@ public class Afk extends BaseCommand {
         if (afkMessageRaw == null) {
             afkMessage = ChatStrings.chatPlayerAfk;
         } else {
-            afkMessage = Component.text(afkMessageRaw, NamedTextColor.AQUA);
+            afkMessage = CivText.info(afkMessageRaw);
         }
 
         boolean isAfk = CivChat2.getInstance().getCivChat2Manager().togglePlayerAfk(player, afkMessage);
         if (!isAfk) {
-            player.sendMessage(ChatStrings.chatNotAfk);
+            CivUI.success(player, "You're no longer AFK");
             return;
         }
 
-        player.sendMessage(ChatStrings.chatAfk);
+        CivUI.success(player, "You're now AFK - type /afk to remove AFK status");
     }
 }

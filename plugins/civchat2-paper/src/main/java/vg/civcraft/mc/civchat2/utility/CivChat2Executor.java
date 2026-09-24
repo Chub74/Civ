@@ -7,6 +7,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civchat2.CivChat2;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class CivChat2Executor implements CommandExecutor {
 
@@ -56,7 +57,7 @@ public class CivChat2Executor implements CommandExecutor {
                 result.delete(0, result.length());
                 return true;
             } else {
-                player.sendMessage(ChatColor.RED + "You do not have permission to use that command");
+                CivUI.error(player, "You don't have permission to use that command");
                 debugMsg("Player did not have proper permissions (not op)");
                 return true;
             }

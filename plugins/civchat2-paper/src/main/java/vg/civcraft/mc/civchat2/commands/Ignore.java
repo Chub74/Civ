@@ -8,9 +8,10 @@ import co.aikar.commands.annotation.Syntax;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.database.CivChatDAO;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class Ignore extends BaseCommand {
 
@@ -25,24 +26,24 @@ public class Ignore extends BaseCommand {
                 ignoredPlayerNonFinal = Bukkit.getServer().getOfflinePlayer(targetPlayer);
             }
             if (!ignoredPlayerNonFinal.hasPlayedBefore() && !ignoredPlayerNonFinal.isOnline()) {
-                player.sendMessage(ChatStrings.chatPlayerNotFound);
+                CivUI.error(player, "No player exists with that name");
                 return;
             }
             OfflinePlayer ignoredPlayer = ignoredPlayerNonFinal;
             Bukkit.getScheduler().runTask(CivChat2.getInstance(), () -> {
                 if (player.equals(ignoredPlayer)) {
-                    player.sendMessage(ChatStrings.chatCantIgnoreSelf);
+                    CivUI.error(player, "You can't ignore yourself");
                     return;
                 }
                 CivChatDAO db = CivChat2.getInstance().getDatabaseManager();
                 if (!db.isIgnoringPlayer(player.getUniqueId(), ignoredPlayer.getUniqueId())) {
                     // Player added to the list
                     db.addIgnoredPlayer(player.getUniqueId(), ignoredPlayer.getUniqueId());
-                    player.sendMessage(String.format(ChatStrings.chatNowIgnoring, ignoredPlayer.getName()));
+                    CivUI.success(player, "You're now ignoring ", CivText.subject(ignoredPlayer.getName()));
                 } else {
                     // Player removed from the list
                     db.removeIgnoredPlayer(player.getUniqueId(), ignoredPlayer.getUniqueId());
-                    player.sendMessage(String.format(ChatStrings.chatStoppedIgnoring, ignoredPlayer.getName()));
+                    CivUI.success(player, "You stopped ignoring ", CivText.subject(ignoredPlayer.getName()));
                 }
             });
         });

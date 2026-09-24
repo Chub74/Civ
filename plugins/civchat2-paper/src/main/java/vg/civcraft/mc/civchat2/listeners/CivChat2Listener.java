@@ -6,9 +6,8 @@ import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.audience.Audience;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -24,6 +23,8 @@ import vg.civcraft.mc.civchat2.CivChat2Manager;
 import vg.civcraft.mc.civchat2.database.CivChatDAO;
 import vg.civcraft.mc.civchat2.event.GlobalChatEvent;
 import vg.civcraft.mc.civchat2.utility.CivChat2SettingsManager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
@@ -56,27 +57,32 @@ public class CivChat2Listener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerQuit(PlayerQuitEvent playerQuitEvent) {
         playerQuitEvent.quitMessage(null);
+        Player left = playerQuitEvent.getPlayer();
+        if (left.hasPermission("civchat2.leavejoinimmune")) {
+            return;
+        }
+        Component line = presenceLine("- ", CivText.ERROR, left, " left the server");
         for (Player p : Bukkit.getOnlinePlayers()) {
-            if (settings.getShowLeaves(p.getUniqueId()) && !db.isIgnoringPlayer(p.getUniqueId(), playerQuitEvent.getPlayer().getUniqueId())) {
-                if (playerQuitEvent.getPlayer().hasPermission("civchat2.leavejoinimmune")) {
-                    continue;
-                }
-                p.sendMessage(playerQuitEvent.getPlayer().displayName().append(Component.text(" has left the game", NamedTextColor.YELLOW)));
+            if (p.equals(left)) {
+                continue;
+            }
+            if (settings.getShowLeaves(p.getUniqueId()) && !db.isIgnoringPlayer(p.getUniqueId(), left.getUniqueId())) {
+                p.sendMessage(line);
             }
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onPlayerJoin(PlayerJoinEvent playerJoinEvent) {
-        if (!CivChat2.getInstance().getPluginConfig().getLoginAnnounce()) {
-            playerJoinEvent.joinMessage(null);
-        }
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (settings.getShowJoins(p.getUniqueId()) && !db.isIgnoringPlayer(p.getUniqueId(), playerJoinEvent.getPlayer().getUniqueId())) {
-                if (playerJoinEvent.getPlayer().hasPermission("civchat2.leavejoinimmune")) {
-                    continue;
+        // Replaced by the line below; loginAnnounce would otherwise show both.
+        playerJoinEvent.joinMessage(null);
+        Player joined = playerJoinEvent.getPlayer();
+        if (!joined.hasPermission("civchat2.leavejoinimmune")) {
+            Component line = presenceLine("+ ", CivText.SUCCESS, joined, " joined the server");
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (settings.getShowJoins(p.getUniqueId()) && !db.isIgnoringPlayer(p.getUniqueId(), joined.getUniqueId())) {
+                    p.sendMessage(line);
                 }
-                p.sendMessage(playerJoinEvent.getPlayer().displayName().append(Component.text(" has joined the game", NamedTextColor.YELLOW)));
             }
         }
 
@@ -97,9 +103,18 @@ public class CivChat2Listener implements Listener {
             Group group = GroupManager.getGroup(globalChat);
             if (group != null && !group.isCurrentMember(playerJoinEvent.getPlayer().getUniqueId())) {
                 group.addMember(playerJoinEvent.getPlayer().getUniqueId(), PlayerType.MEMBERS);
-                playerJoinEvent.getPlayer().sendMessage(ChatColor.GREEN + "You autojoined global chat, which is called '!'. Use it like this: '/g ! Hello'");
+                CivUI.success(playerJoinEvent.getPlayer(), "You autojoined global chat - talk in it with ",
+                    CivText.value("/g ! Hello"));
             }
         }
+    }
+
+    private Component presenceLine(String marker, TextColor markerColour, Player player, String verb) {
+        return Component.text()
+            .append(Component.text(marker, markerColour))
+            .append(chatman.identityTag(player))
+            .append(Component.text(verb, CivText.INFO))
+            .build();
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -111,10 +126,9 @@ public class CivChat2Listener implements Listener {
     public void onGlobalChatEvent(GlobalChatEvent localchat) {
 
         if (localWarn.contains(localchat.getPlayer().getUniqueId())) {
-            localchat.getPlayer().sendMessage(ChatColor.GOLD
-                + "Only players within "
-                + CivChat2.getInstance().getPluginConfig().getChatRange()
-                + " blocks of you can see your messages. Join a group to chat with players farther away!");
+            CivUI.warn(localchat.getPlayer(), "Only players within ",
+                CivText.value(String.valueOf(CivChat2.getInstance().getPluginConfig().getChatRange())),
+                " blocks can see your messages - join a group to chat with players farther away");
             localWarn.remove(localchat.getPlayer().getUniqueId());
         }
     }
@@ -137,18 +151,13 @@ public class CivChat2Listener implements Listener {
 
 
                 if (chatChannel != null) {
-                    StringBuilder sb = new StringBuilder();
                     Player receiver = Bukkit.getPlayer(chatChannel);
                     if (receiver != null) {
                         chatman.sendPrivateMsg(sender, receiver, chatMessage);
                         return;
                     } else {
                         chatman.removeChannel(sender);
-                        String offlineMessage = sb.append(ChatColor.GOLD)
-                            .append("The player you were chatting with has gone offline,")
-                            .append(" you have been moved to regular chat").toString();
-                        sb.delete(0, sb.length());
-                        sender.sendMessage(offlineMessage);
+                        CivUI.info(sender, "The player you were chatting with went offline - you're back in regular chat");
                         return;
                     }
                 }
@@ -161,8 +170,7 @@ public class CivChat2Listener implements Listener {
                         // Player lost perm to write in the chat
                     } else {
                         chatman.removeGroupChat(sender);
-                        sender.sendMessage(ChatColor.RED
-                            + "You have been removed from groupchat because you were removed from the group or lost the permission required to groupchat");
+                        CivUI.error(sender, "You were removed from group chat - you lost access or were removed from the group");
                     }
                 }
                 Set<Player> playerViewers = new HashSet<>();

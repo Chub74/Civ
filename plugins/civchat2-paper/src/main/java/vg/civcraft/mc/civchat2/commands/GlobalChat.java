@@ -7,9 +7,10 @@ import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
@@ -30,29 +31,29 @@ public class GlobalChat extends BaseCommand {
         Group currentGroup = chatMan.getGroupChatting(player);
 
         if (globalGroup == null) {
-            player.sendMessage(ChatStrings.chatGroupNotFound);
+            CivUI.error(player, "There's no group with that name");
             return;
         }
         if (!NameLayerAPI.getGroupManager().hasAccess(globalGroup, player.getUniqueId(),
             PermissionType.getPermission("WRITE_CHAT"))) {
-            player.sendMessage(ChatStrings.chatGroupNoPerms);
+            CivUI.error(player, "You don't have permission to chat in ", CivText.group(globalGroupName));
             return;
         }
         if (CivChat2.getInstance().getDatabaseManager().isIgnoringGroup(player.getUniqueId(), globalGroupName)) {
-            player.sendMessage(String.format(ChatStrings.chatNeedToUnignore, globalGroupName));
+            CivUI.error(player, "You need to unignore ", CivText.group(globalGroupName));
             return;
         }
         if (chatMessage == null) {
             if (currentGroup != null) { // Check if currently in group
                 if (currentGroup == globalGroup) { // Check if current group global
-                    player.sendMessage(ChatStrings.chatGroupAlreadyChatting);
+                    CivUI.info(player, "You're already chatting in ", CivText.group(globalGroupName));
                 } else { // Switch to global group from current group
-                    player.sendMessage(String.format(ChatStrings.chatGroupNowChattingIn, globalGroupName));
+                    CivUI.success(player, "You're now chatting in ", CivText.group(globalGroupName));
                     chatMan.removeGroupChat(player);
                     chatMan.addGroupChat(player, globalGroup);
                 }
             } else { // Switch to global group
-                player.sendMessage(String.format(ChatStrings.chatGroupNowChattingIn, globalGroupName));
+                CivUI.success(player, "You're now chatting in ", CivText.group(globalGroupName));
                 if (chatMan.getChannel(player) != null) {
                     chatMan.removeChannel(player);
                 }

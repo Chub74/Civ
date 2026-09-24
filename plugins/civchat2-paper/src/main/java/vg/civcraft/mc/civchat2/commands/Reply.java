@@ -9,9 +9,10 @@ import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class Reply extends BaseCommand {
 
@@ -24,17 +25,17 @@ public class Reply extends BaseCommand {
 
         Player receiver = Bukkit.getPlayer(receiverUUID);
         if (receiver == null) {
-            player.sendMessage(ChatStrings.chatNoOneToReplyTo);
+            CivUI.error(player, "You have no one to reply to");
             return;
         }
 
         if (!(receiver.isOnline())) {
-            player.sendMessage(ChatStrings.chatPlayerIsOffline);
+            CivUI.error(player, "That player is offline");
             return;
         }
 
         if (player.getUniqueId().equals(receiver.getUniqueId())) {
-            player.sendMessage(ChatStrings.chatCantMessageSelf);
+            CivUI.error(player, "You can't message yourself");
             return;
         }
 
@@ -45,6 +46,6 @@ public class Reply extends BaseCommand {
         // Player to chat with reply user
         chatMan.removeChannel(player);
         chatMan.addChatChannel(player, receiver);
-        player.sendMessage(String.format(ChatStrings.chatNowChattingWith, receiver.getName()));
+        CivUI.success(player, "You're now chatting with ", CivText.subject(receiver.getName()));
     }
 }

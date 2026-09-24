@@ -11,9 +11,9 @@ import java.util.HashSet;
 import java.util.Set;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class Exit extends BaseCommand {
 
@@ -24,7 +24,7 @@ public class Exit extends BaseCommand {
         if (message == null) {
             chatMan.removeChannel(player);
             chatMan.removeGroupChat(player);
-            player.sendMessage(ChatStrings.chatMovedToGlobal);
+            CivUI.success(player, "You're now in local chat");
             return;
         }
         Set<Player> players = new HashSet<>(CivChat2.getInstance().getServer().getOnlinePlayers());

@@ -9,14 +9,17 @@ import java.time.temporal.ChronoUnit;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.event.HoverEventSource;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civchat2.CivChat2;
 
 public class StarManager {
 
     private static final String STAR = "⋆";
+    private static final String ADMIN_STAR = "✧";
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("d MMM uuuu");
 
     private final boolean playtimeStars;
@@ -63,17 +66,24 @@ public class StarManager {
         return HoverEvent.showText(Component.text("Rank: " + rank + "\nJoined: " + joined));
     }
 
-    public String getPrefix(Player player) {
+    /** The rank/playtime star prefix */
+    public Component getPrefix(Player player) {
         if (!CivChat2.getInstance().getCivChat2SettingsManager().isShowPrefix(player.getUniqueId())) {
-            return "";
+            return Component.empty();
         }
+        Component stars = getStars(player);
+        // One unstyled space after any stars, so every rank sits the same distance from the name
+        return stars == null ? Component.empty() : Component.text().append(stars).append(Component.space()).build();
+    }
 
+    /** Null if the player has no stars. */
+    private Component getStars(Player player) {
         if (player.hasPermission("civchat.admin")) {
-            return ChatColor.DARK_RED + STAR;
+            return Component.text(ADMIN_STAR, NamedTextColor.RED, TextDecoration.BOLD);
         } else if (player.hasPermission("civchat.superfriend")) {
-            return ChatColor.RED + STAR + STAR;
+            return Component.text(STAR.repeat(2), NamedTextColor.RED);
         } else if (player.hasPermission("civchat.mod")) {
-            return ChatColor.RED + STAR;
+            return Component.text(STAR, NamedTextColor.RED);
         }
 
         int greenStars = 0;
@@ -87,21 +97,25 @@ public class StarManager {
             greenStars = 1;
         }
 
-        StringBuilder stars = new StringBuilder();
+        Component stars = null;
         if (playtimeStars) {
             long firstPlayed = getJoined(player);
             int yellowStars = firstPlayed == 0 ? 0 : (int) LocalDateTime.ofInstant(Instant.ofEpochMilli(firstPlayed), ZoneId.systemDefault()).until(LocalDateTime.now(), ChronoUnit.YEARS);
             yellowStars = Math.max(0, yellowStars - greenStars);
             if (yellowStars > 0) {
-                stars.append(ChatColor.YELLOW);
+                stars = Component.text(STAR.repeat(yellowStars), NamedTextColor.YELLOW);
             }
-            stars.append(STAR.repeat(yellowStars));
         }
         if (greenStars > 0) {
-            stars.append(ChatColor.GREEN);
+            Component green = Component.text(STAR.repeat(greenStars), NamedTextColor.GREEN);
+            stars = stars == null ? green : stars.append(green);
         }
-        stars.append(STAR.repeat(greenStars));
 
-        return stars.toString();
+        return stars;
+    }
+
+    /** Legacy-serialized prefix for PlaceholderAPI, which can only return a String. */
+    public String getLegacyPrefix(Player player) {
+        return LegacyComponentSerializer.legacySection().serialize(getPrefix(player));
     }
 }

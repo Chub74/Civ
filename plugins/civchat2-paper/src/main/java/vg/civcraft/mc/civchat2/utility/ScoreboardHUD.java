@@ -2,7 +2,6 @@ package vg.civcraft.mc.civchat2.utility;
 
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
@@ -11,6 +10,8 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.bottom.BottomLineAPI;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.CivScoreBoard;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.players.settings.impl.DisplayLocationSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.HudLine;
 
 public class ScoreboardHUD {
 
@@ -47,9 +48,9 @@ public class ScoreboardHUD {
             CivChat2Manager chatman = CivChat2.getInstance().getCivChat2Manager();
             String text;
             if (chatman.getChannel(p) != null && Bukkit.getPlayer(chatman.getChannel(p)) != null) {
-                text = ChatColor.GOLD + "Messaging " + ChatColor.LIGHT_PURPLE + Bukkit.getPlayer(chatman.getChannel(p)).getName();
+                text = HudLine.of("Messaging", CivText.subject(Bukkit.getPlayer(chatman.getChannel(p)).getName()));
             } else if (chatman.getGroupChatting(p) != null) {
-                text = ChatColor.GOLD + "Chat Group " + ChatColor.LIGHT_PURPLE + chatman.getGroupChatting(p).getName();
+                text = HudLine.of("Chatting in", CivText.group(chatman.getGroupChatting(p).getName()));
             } else {
                 chatBoard.hide(p);
                 chatBottomLine.removePlayer(p);
@@ -71,7 +72,7 @@ public class ScoreboardHUD {
         CivChat2Manager chatman = CivChat2.getInstance().getCivChat2Manager();
         DisplayLocationSetting afkStatusLocation = settingMan.getAfkStatusLocation();
 
-        String text = ChatColor.LIGHT_PURPLE + "AFK";
+        String text = HudLine.of(CivText.mode("💤 AFK"));
 
         if (chatman.isPlayerAfk(p) && afkStatusLocation.showOnActionbar(p.getUniqueId())) {
             afkBottomLine.updatePlayer(p, text);

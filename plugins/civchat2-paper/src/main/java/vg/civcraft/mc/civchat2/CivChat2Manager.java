@@ -19,7 +19,6 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civchat2.broadcaster.ServerBroadcaster;
@@ -31,8 +30,9 @@ import vg.civcraft.mc.civchat2.prefix.StarManager;
 import vg.civcraft.mc.civchat2.utility.CivChat2Config;
 import vg.civcraft.mc.civchat2.utility.CivChat2FileLogger;
 import vg.civcraft.mc.civchat2.utility.ScoreboardHUD;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.players.settings.impl.LongSetting;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
@@ -172,14 +172,16 @@ public class CivChat2Manager {
         if (event.isCancelled()) {
             return;
         }
-        Component senderName = getCustomName(sender);
-        Component receiverName = getCustomName(receiver);
+        Component senderName = identityTag(sender);
+        Component receiverName = identityTag(receiver);
 
-        Component receiverMessage = Component.empty().color(NamedTextColor.LIGHT_PURPLE)
-            .append(Component.text("From "))
+        // A neutral, uncoloured root - senderName must not inherit "From "'s colour as an ancestor.
+        Component receiverMessage = Component.text()
+            .append(Component.text("From ", CivText.MUTED))
             .append(senderName)
-            .append(Component.text(": "))
-            .append(chatMessage);
+            .append(Component.text(": ", CivText.MUTED))
+            .append(chatMessage)
+            .build();
 
         if (isPlayerAfk(receiver)) {
             receiver.sendMessage(receiverMessage);
@@ -187,20 +189,21 @@ public class CivChat2Manager {
             return;
             // Player is ignoring the sender
         } else if (DBM.isIgnoringPlayer(receiver.getUniqueId(), sender.getUniqueId())) {
-            sender.sendMessage(parse(ChatStrings.chatPlayerIgnoringYou));
+            CivUI.error(sender, "That player is ignoring you");
             return;
         } else if (DBM.isIgnoringPlayer(sender.getUniqueId(), receiver.getUniqueId())) {
-            sender.sendMessage(parse(ChatStrings.chatNeedToUnignore, receiverName));
+            CivUI.error(sender, "You need to unignore ", receiverName);
             return;
         }
         chatLog.logPrivateMessage(sender, PlainTextComponentSerializer.plainText().serialize(chatMessage), receiver.getName());
         replyList.put(receiver.getUniqueId(), sender.getUniqueId());
         replyList.put(sender.getUniqueId(), receiver.getUniqueId());
-        sender.sendMessage(Component.empty().color(NamedTextColor.LIGHT_PURPLE)
-            .append(Component.text("To "))
+        sender.sendMessage(Component.text()
+            .append(Component.text("To ", CivText.MUTED))
             .append(receiverName)
-            .append(Component.text(": "))
+            .append(Component.text(": ", CivText.MUTED))
             .append(chatMessage)
+            .build()
         );
         receiver.sendMessage(receiverMessage);
     }
@@ -232,7 +235,8 @@ public class CivChat2Manager {
         Group targetChatGroup = groupChatChannels.get(sender.getUniqueId());
         if (mutedUntil > System.currentTimeMillis()) {
             if (targetChatGroup == null || targetChatGroup.getName().equals(instance.getPluginConfig().getGlobalChatGroupName())) {
-                sender.sendMessage(String.format(ChatStrings.globalMuted, TextUtil.formatDuration(mutedUntil - System.currentTimeMillis())));
+                CivUI.error(sender, "You're muted from global and local chat for ",
+                    CivText.value(TextUtil.formatDuration(mutedUntil - System.currentTimeMillis())));
                 return;
             }
         }
@@ -271,7 +275,7 @@ public class CivChat2Manager {
                             newColor = NamedTextColor.NAMES.valueOrThrow(config.getColorAtDistance(receiverDistance).toLowerCase());
                         }
 
-                        receiver.sendMessage(messageFormat.render(sender, getCustomName(sender), Component.empty().color(newColor).append(chatMessage), receiver));
+                        receiver.sendMessage(messageFormat.render(sender, identityTag(sender), Component.empty().color(newColor).append(chatMessage), receiver));
                         receivers.add(receiver.getName());
                     }
                 }
@@ -281,11 +285,20 @@ public class CivChat2Manager {
         chatLog.logGlobalMessage(sender, PlainTextComponentSerializer.plainText().serialize(chatMessage), receivers);
     }
 
-    private Component getCustomName(Player sender) {
-        return Component.empty()
-            .append(Component.text(starManager.getPrefix(sender)))
-            .append(customNames.containsKey(sender.getUniqueId()) ? customNames.get(sender.getUniqueId()) : Component.text(sender.getDisplayName()))
-            .hoverEvent(starManager.hover(sender));
+    /**
+     * Rank stars, then the name - no brackets. Used by every chat surface and by join/quit lines.
+     * A name without a chosen colour is SUBJECT, so it never inherits the surrounding line's colour.
+     */
+    public Component identityTag(Player player) {
+        Component name = customNames.containsKey(player.getUniqueId())
+            ? customNames.get(player.getUniqueId())
+            : player.displayName();
+        return Component.text()
+            .color(CivText.SUBJECT)
+            .append(starManager.getPrefix(player))
+            .append(name)
+            .build()
+            .hoverEvent(starManager.hover(player));
     }
 
 
@@ -297,7 +310,7 @@ public class CivChat2Manager {
      */
     public void flagMessage(Player sender, Component chatMessage) {
         //Flag inappropriate message, mute sender for X seconds (defined in config)
-        sender.sendMessage(ChatColor.RED + "Your message has been flagged for inappropriate content.");
+        CivUI.error(sender, "Your message was flagged for inappropriate content");
         if (muteTimeSeconds > 0) {
             banSetting.setValue(sender, System.currentTimeMillis() + TimeUnit.SECONDS.toMillis((long)muteTimeSeconds)); // mute player automatically
         }
@@ -311,7 +324,7 @@ public class CivChat2Manager {
 
 
         // Log the filtered message to console and mods
-        Component senderName = getCustomName(sender);
+        Component senderName = identityTag(sender);
 
         Component filtered = Component.text("[Filtered]: " + plain, NamedTextColor.RED);
         Set<String> modPlayers = doSendGroupMsg(sender.getUniqueId(), senderName, modsGroup, filtered);
@@ -476,7 +489,8 @@ public class CivChat2Manager {
         if (group.getName().equals(config.getGlobalChatGroupName())) {
             long mutedUntil = instance.getCivChat2SettingsManager().getGlobalChatMuteSetting().getValue(sender);
             if (mutedUntil > System.currentTimeMillis()) {
-                sender.sendMessage(String.format(ChatStrings.globalMuted, TextUtil.formatDuration(mutedUntil - System.currentTimeMillis())));
+                CivUI.error(sender, "You're muted from global and local chat for ",
+                    CivText.value(TextUtil.formatDuration(mutedUntil - System.currentTimeMillis())));
                 return;
             }
             if (containsBannedWord(plainMessage) && !sender.hasPermission("civchat2.globalmute")) {
@@ -492,7 +506,7 @@ public class CivChat2Manager {
             return;
         }
 
-        Component senderName = getCustomName(sender);
+        Component senderName = identityTag(sender);
         Set<String> players = doSendGroupMsg(sender.getUniqueId(), senderName, group, message);
         chatLog.logGroupMessage(sender, plainMessage, group.getName(), players);
         broadcaster.broadcastGroup(sender.getUniqueId(), sender.getName(), senderName, group.getName(), message);
@@ -532,12 +546,15 @@ public class CivChat2Manager {
                     .showGroupColors(receiver.getUniqueId())
                     ? group.getGroupColor() : NamedTextColor.GRAY;
 
-            Component compMessage = Component.text("[", NamedTextColor.GRAY)
+            // A neutral, uncoloured root - senderName must not inherit the group's colour as an ancestor.
+            Component separator = Component.text(" » ", CivText.MUTED);
+            Component compMessage = Component.text()
                 .append(Component.text(group.getName(), color))
-                .append(Component.text("] ", NamedTextColor.GRAY))
+                .append(separator)
                 .append(senderName)
-                .append(Component.text(": ", NamedTextColor.GRAY))
-                .append(Component.empty().color(NamedTextColor.WHITE).append(message));
+                .append(separator)
+                .append(Component.empty().color(NamedTextColor.WHITE).append(message))
+                .build();
 
             receiver.sendMessage(compMessage);
         }
@@ -575,16 +592,6 @@ public class CivChat2Manager {
         Preconditions.checkNotNull(player, "player");
 
         return groupChatChannels.get(player.getUniqueId());
-    }
-
-    public String parse(String text) {
-
-        return ChatUtils.parseColor(text);
-    }
-
-    public String parse(String text, Object... args) {
-
-        return String.format(ChatUtils.parseColor(text), args);
     }
 
     public void setCustomName(UUID player, Component name) {

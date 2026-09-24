@@ -8,9 +8,10 @@ import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civchat2.ChatStrings;
 import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
@@ -29,7 +30,7 @@ public class GroupChat extends BaseCommand {
         if (targetGroup == null && chatMessage == null) {
             // Check if player is in groupchat and move them to normal chat
             if (isGroupChatting) {
-                player.sendMessage(ChatStrings.chatMovedToGlobal);
+                CivUI.success(player, "You're now in local chat");
                 chatMan.removeGroupChat(player);
                 return;
             }
@@ -39,16 +40,16 @@ public class GroupChat extends BaseCommand {
         }
         group = GroupManager.getGroup(targetGroup);
         if (group == null) {
-            player.sendMessage(ChatStrings.chatGroupNotFound);
+            CivUI.error(player, "There's no group with that name");
             return;
         }
         if (!NameLayerAPI.getGroupManager().hasAccess(group, player.getUniqueId(),
             PermissionType.getPermission("WRITE_CHAT"))) {
-            player.sendMessage(ChatStrings.chatGroupNoPerms);
+            CivUI.error(player, "You don't have permission to chat in ", CivText.group(group.getName()));
             return;
         }
         if (CivChat2.getInstance().getDatabaseManager().isIgnoringGroup(player.getUniqueId(), group.getName())) {
-            player.sendMessage(String.format(ChatStrings.chatNeedToUnignore, group.getName()));
+            CivUI.error(player, "You need to unignore ", CivText.group(group.getName()));
             return;
         }
         if (chatMessage == null) {
@@ -56,14 +57,14 @@ public class GroupChat extends BaseCommand {
                 // Player already groupchatting check if it's this group
                 Group curGroup = chatMan.getGroupChatting(player);
                 if (curGroup == group) {
-                    player.sendMessage(ChatStrings.chatGroupAlreadyChatting);
+                    CivUI.info(player, "You're already chatting in ", CivText.group(group.getName()));
                 } else {
-                    player.sendMessage(String.format(ChatStrings.chatGroupNowChattingIn, group.getName()));
+                    CivUI.success(player, "You're now chatting in ", CivText.group(group.getName()));
                     chatMan.removeGroupChat(player);
                     chatMan.addGroupChat(player, group);
                 }
             } else {
-                player.sendMessage(String.format(ChatStrings.chatGroupNowChattingIn, group.getName()));
+                CivUI.success(player, "You're now chatting in ", CivText.group(group.getName()));
                 if (chatMan.getChannel(player) != null) {
                     chatMan.removeChannel(player);
                 }

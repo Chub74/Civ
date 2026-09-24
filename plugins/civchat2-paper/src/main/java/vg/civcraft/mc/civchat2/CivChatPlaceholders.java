@@ -19,7 +19,7 @@ public class CivChatPlaceholders extends PlaceholderExpansion {
         params = params.toLowerCase();
 
         if (params.equalsIgnoreCase("prefix")) {
-            return starManager.getPrefix(player) + ChatColor.RESET;
+            return starManager.getLegacyPrefix(player) + ChatColor.RESET;
         } else {
             return null;
         }
