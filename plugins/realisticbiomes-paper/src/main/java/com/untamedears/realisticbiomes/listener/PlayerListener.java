@@ -10,13 +10,24 @@ import com.untamedears.realisticbiomes.model.Plant;
 import com.untamedears.realisticbiomes.utils.Constants;
 import com.untamedears.realisticbiomes.utils.RBUtils;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Animals;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -27,6 +38,8 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 public class PlayerListener implements Listener {
 
@@ -34,10 +47,18 @@ public class PlayerListener implements Listener {
 
     }
 
+    /** Seconds the info-stick hologram stays up */
+    private static final long HOLOGRAM_LIFETIME_TICKS = 160L;
+
+    private static final SimpleDateFormat DEBUG_DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+
     private GrowthConfigManager growthConfigs;
     private AnimalConfigManager animalManager;
     private PlantManager plantManager;
     private DecimalFormat decimalFormat = new DecimalFormat("0.####");
+
+    /** One hologram per player */
+    private final Map<UUID, TextDisplay> activeInfoHolograms = new HashMap<>();
 
     public PlayerListener(GrowthConfigManager growthConfigs, AnimalConfigManager animalManager,
                           PlantManager plantManager) {
@@ -68,10 +89,51 @@ public class PlayerListener implements Listener {
             return;
         }
 
-        event.getPlayer().sendMessage(interactPlant.config.getPlantInfoString(block, interactPlant.plant));
+        Component info = interactPlant.config.getPlantStatusComponent(block, interactPlant.plant);
         if (event.getPlayer().hasPermission("rb.op")) {
-            event.getPlayer().sendMessage(interactPlant.plant.toString());
+            info = info.append(Component.newline()).append(debugInfo(interactPlant.plant));
         }
+        showInfoHologram(event.getPlayer(), block.getLocation(), info);
+    }
+
+    /** Created/location/next-update, laid out as labelled lines instead of Plant's single debug toString().*/
+    private Component debugInfo(Plant plant) {
+        String nextUpdate = plant.getNextUpdate() == Long.MAX_VALUE
+            ? "never"
+            : TextUtil.formatDuration(Math.max(0, plant.getNextUpdate() - System.currentTimeMillis()), TimeUnit.MILLISECONDS);
+        Location loc = plant.getLocation();
+        return Component.text()
+            .append(Component.text("Created: ", CivText.MUTED))
+            .append(Component.text(DEBUG_DATE_FORMAT.format(new Date(plant.getCreationTime())), CivText.VALUE))
+            .append(Component.newline())
+            .append(Component.text("Location: ", CivText.MUTED))
+            .append(Component.text(loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ(), CivText.VALUE))
+            .append(Component.newline())
+            .append(Component.text("Next update: ", CivText.MUTED))
+            .append(Component.text(nextUpdate, CivText.VALUE))
+            .build();
+    }
+
+    private void showInfoHologram(Player player, Location blockLocation, Component content) {
+        TextDisplay previous = activeInfoHolograms.remove(player.getUniqueId());
+        if (previous != null) {
+            previous.remove();
+        }
+
+        Location holoLocation = blockLocation.clone().add(0.5, 1.2, 0.5);
+        TextDisplay display = holoLocation.getWorld().spawn(holoLocation, TextDisplay.class, entity -> {
+            entity.text(content);
+            entity.setBillboard(Display.Billboard.CENTER);
+            entity.setVisibleByDefault(false);
+            entity.setPersistent(false);
+        });
+        player.showEntity(RealisticBiomes.getInstance(), display);
+        activeInfoHolograms.put(player.getUniqueId(), display);
+
+        Bukkit.getScheduler().runTaskLater(RealisticBiomes.getInstance(), () -> {
+            display.remove();
+            activeInfoHolograms.remove(player.getUniqueId(), display);
+        }, HOLOGRAM_LIFETIME_TICKS);
     }
 
     private InteractPlant getInteractPlant(Block block) {

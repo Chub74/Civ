@@ -18,9 +18,12 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.event.Cancellable;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
 
@@ -118,6 +121,41 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
             sb.append(ChatColor.GOLD + "Light multiplier: " + lightMultiplier);
         }
         return sb.toString();
+    }
+
+    public Component getPlantStatusComponent(Block block, Plant plant) {
+        Component heading = CivText.heading(this.name);
+        Component status;
+        if (isFullyGrown(plant)) {
+            status = CivText.info("Fully grown");
+        } else {
+            long totalTime = getPersistentGrowthTime(block);
+            long passedTime = System.currentTimeMillis() - plant.getCreationTime();
+            long timeRemaining = Math.max(0, totalTime - passedTime);
+            if (timeRemaining >= INFINITE_TIME || totalTime == -1) {
+                status = CivText.info("Will never grow here");
+            } else if (plant.getNextUpdate() == Long.MAX_VALUE) {
+                status = CivText.info("Doesn't grow");
+            } else if (timeRemaining <= 0) {
+                status = CivText.info("Grows now");
+            } else {
+                status = Component.text("Grows in ", CivText.INFO)
+                    .append(Component.text(TextUtil.formatDuration(timeRemaining, TimeUnit.MILLISECONDS), CivText.VALUE));
+            }
+        }
+        // The item the player planted - wheat seeds, carrot, sapling - as the heading's icon
+        Material planted = block.getBlockData().getPlacementMaterial();
+        Component icon = CivText.icon(planted.isAir() ? item.getType() : planted);
+
+        TextComponent.Builder hologram = Component.text();
+        if (icon != null) {
+            hologram.append(icon).append(Component.space());
+        }
+        return hologram
+            .append(heading)
+            .append(Component.newline())
+            .append(status)
+            .build();
     }
 
     public short getID() {
