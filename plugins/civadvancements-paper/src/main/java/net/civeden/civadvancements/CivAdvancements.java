@@ -2,6 +2,7 @@ package net.civeden.civadvancements;
 
 import java.io.File;
 import net.civeden.civadvancements.commands.CivAdvancementsCommandHandler;
+import net.civeden.civadvancements.listeners.AnnounceListener;
 import net.civeden.civadvancements.listeners.BastionAdvancementListener;
 import net.civeden.civadvancements.listeners.BreweryXAdvancementListener;
 import net.civeden.civadvancements.listeners.CharcoalListener;
@@ -52,6 +53,7 @@ public class CivAdvancements extends ACivMod {
 
         // Always-on listeners (vanilla events only)
         pm.registerEvents(new WelcomeListener(advancementManager, civConfig, challengeTracker), this);
+        pm.registerEvents(new AnnounceListener(), this);
         pm.registerEvents(new CharcoalListener(advancementManager), this);
         pm.registerEvents(new ClayListener(advancementManager), this);
         pm.registerEvents(new StatisticAdvancementListener(advancementManager), this);
@@ -141,6 +143,11 @@ public class CivAdvancements extends ACivMod {
         rewardManager = new RewardManager(civConfig);
         advancementManager.setConfig(civConfig);
         advancementManager.reloadAll();
+    }
+
+    /** The current config - replaced on reload, so read it each time rather than keeping it. */
+    public CivAdvancementsConfig getCivConfig() {
+        return civConfig;
     }
 
     public static CivAdvancements getInstance() {

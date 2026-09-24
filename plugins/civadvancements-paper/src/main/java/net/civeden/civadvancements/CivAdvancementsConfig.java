@@ -30,6 +30,17 @@ public class CivAdvancementsConfig {
         return config.getStringList("welcome.messages");
     }
 
+    // --- Advancement announcements ---
+
+    public boolean isAnnounceEnabled() {
+        return config.getBoolean("announce.enabled", true);
+    }
+
+    /** task, goal or challenge. Falls back to the jar's default; '' hides that kind. */
+    public String getAnnounceFormat(String frame) {
+        return config.getString("announce." + frame);
+    }
+
     // --- Per-advancement text ---
 
     public String getAdvancementTitle(String key) {

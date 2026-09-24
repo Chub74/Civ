@@ -13,6 +13,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public class WelcomeListener implements Listener {
 
@@ -52,7 +54,8 @@ public class WelcomeListener implements Listener {
 
         List<String> messages = config.getWelcomeMessages();
         for (String line : messages) {
-            player.sendMessage(MM.deserialize(line));
+            // Lines are bodies only - CivUI adds the brand.
+            player.sendMessage(CivUI.render(Kind.INFO, true, false, MM.deserialize(line)));
         }
 
         adv.award(player, AdvancementManager.JOINED);

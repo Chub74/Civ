@@ -7,12 +7,21 @@
 welcome:
   enabled: true
   title: "<gold><bold>Welcome to Eden!</bold></gold>"
-  subtitle: "<yellow>Press L to open your guide</yellow>"
-  # Each entry is a separate chat line sent after the title
+  subtitle: "<gray>Press <aqua>L</aqua> to open your guide</gray>"
+  # Each entry is a separate chat line sent after the title. Body only - the "Eden »" brand is added for you.
   messages:
-    - "<gray>[<gold>Eden</gold>]</gray> Reinforce your blocks by holding stone, deepslate, iron ingots, or diamond and typing <yellow>/ctf <group></yellow> — gives blocks hit points so others can't break them easily."
-    - "<gray>[<gold>Eden</gold>]</gray> Chat is <yellow>GLOBAL(!)</yellow> by default. Use <yellow>/g</yellow> or <yellow>/local</yellow> to locally (within 1,000 blocks)."
-    - "<gray>[<gold>Eden</gold>]</gray> Follow the <yellow>Guide</yellow> tab in your Advancements (<yellow>L key</yellow>) to learn more about Eden!"
+    - 'Hold stone, deepslate, iron or diamond and type <aqua>/ctf \<group></aqua> to reinforce blocks so others can''t easily break them'
+    - 'You talk in global chat <aqua>!</aqua> by default - type <aqua>/local</aqua> to talk only to players within <aqua>1,000</aqua> blocks'
+    - 'Open the <aqua>Guide</aqua> tab in your advancements (<aqua>L</aqua>) to learn more about Eden'
+
+# Replaces vanilla's "has made the advancement" chat line - for every advancement, vanilla and Eden's own.
+# One layout per kind. <player> is the name with rank stars and name colour, <advancement> the title with
+# its description on hover. Text is gray unless tagged. '' hides that kind; enabled: false keeps vanilla's.
+announce:
+  enabled: true
+  task: '<gold>✦</gold> <player> made the advancement <advancement>'
+  goal: '<gold>✦</gold> <player> reached the goal <advancement>'
+  challenge: '<light_purple>✦</light_purple> <player> completed the challenge <advancement>'
 
 # Advancement display text and tree layout.
 # - parent: key of the advancement this one branches from (must match another key here, or "root")
