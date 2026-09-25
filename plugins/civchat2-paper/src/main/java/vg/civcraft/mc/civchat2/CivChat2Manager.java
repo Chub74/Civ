@@ -31,6 +31,7 @@ import vg.civcraft.mc.civchat2.utility.CivChat2Config;
 import vg.civcraft.mc.civchat2.utility.CivChat2FileLogger;
 import vg.civcraft.mc.civchat2.utility.ScoreboardHUD;
 import vg.civcraft.mc.civmodcore.players.settings.impl.LongSetting;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
@@ -184,7 +185,7 @@ public class CivChat2Manager {
             .build();
 
         if (isPlayerAfk(receiver)) {
-            receiver.sendMessage(receiverMessage);
+            receiver.sendMessage(Bedrock.adapt(receiver, receiverMessage));
             sender.sendMessage(getPlayerAfkMessage(receiver));
             return;
             // Player is ignoring the sender
@@ -198,14 +199,14 @@ public class CivChat2Manager {
         chatLog.logPrivateMessage(sender, PlainTextComponentSerializer.plainText().serialize(chatMessage), receiver.getName());
         replyList.put(receiver.getUniqueId(), sender.getUniqueId());
         replyList.put(sender.getUniqueId(), receiver.getUniqueId());
-        sender.sendMessage(Component.text()
+        sender.sendMessage(Bedrock.adapt(sender, Component.text()
             .append(Component.text("To ", CivText.MUTED))
             .append(receiverName)
             .append(Component.text(": ", CivText.MUTED))
             .append(chatMessage)
             .build()
-        );
-        receiver.sendMessage(receiverMessage);
+        ));
+        receiver.sendMessage(Bedrock.adapt(receiver, receiverMessage));
     }
 
     /**
@@ -275,7 +276,7 @@ public class CivChat2Manager {
                             newColor = NamedTextColor.NAMES.valueOrThrow(config.getColorAtDistance(receiverDistance).toLowerCase());
                         }
 
-                        receiver.sendMessage(messageFormat.render(sender, identityTag(sender), Component.empty().color(newColor).append(chatMessage), receiver));
+                        receiver.sendMessage(Bedrock.adapt(receiver, messageFormat.render(sender, identityTag(sender), Component.empty().color(newColor).append(chatMessage), receiver)));
                         receivers.add(receiver.getName());
                     }
                 }
@@ -286,7 +287,7 @@ public class CivChat2Manager {
     }
 
     /**
-     * Rank stars, then the name - no brackets. Used by every chat surface and by join/quit lines.
+     * Rank stars, the player's face, then the name - no brackets. Used by every chat surface and by join/quit lines.
      * A name without a chosen colour is SUBJECT, so it never inherits the surrounding line's colour.
      */
     public Component identityTag(Player player) {
@@ -296,6 +297,8 @@ public class CivChat2Manager {
         return Component.text()
             .color(CivText.SUBJECT)
             .append(starManager.getPrefix(player))
+            .append(CivText.head(player))
+            .append(Component.space())
             .append(name)
             .build()
             .hoverEvent(starManager.hover(player));
@@ -556,7 +559,7 @@ public class CivChat2Manager {
                 .append(Component.empty().color(NamedTextColor.WHITE).append(message))
                 .build();
 
-            receiver.sendMessage(compMessage);
+            receiver.sendMessage(Bedrock.adapt(receiver, compMessage));
         }
 
         Set<String> players = new HashSet<>();
