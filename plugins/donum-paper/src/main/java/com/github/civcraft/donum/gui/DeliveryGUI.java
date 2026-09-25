@@ -2,6 +2,8 @@ package com.github.civcraft.donum.gui;
 
 import com.github.civcraft.donum.Donum;
 import com.github.civcraft.donum.inventories.DeliveryInventory;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.UUID;
 import net.md_5.bungee.api.ChatColor;
@@ -109,11 +111,16 @@ public class DeliveryGUI {
 
             @Override
             public void clicked(Player p) {
+                String complaint = Donum.getConfiguration().getComplaintURL();
+                if (!isWebLink(complaint)) {
+                    // Not a URL (e.g. "Message X on discord"), so the client can't open it; show it as plain text
+                    p.sendMessage(ChatColor.GREEN + complaint);
+                    return;
+                }
                 TextComponent link = new TextComponent(
                     "Click this message to write the admins a message about lost items. This will open a new tab in your default browser!");
                 link.setColor(ChatColor.GREEN);
-                link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, Donum.getConfiguration()
-                    .getComplaintURL()));
+                link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, complaint));
                 link.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("Open link")
                     .create()));
                 p.spigot().sendMessage(link);
@@ -175,6 +182,18 @@ public class DeliveryGUI {
                 showScreen();
             }
         };
+    }
+
+    private static boolean isWebLink(String value) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        try {
+            URI uri = new URI(value);
+            return "http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme());
+        } catch (URISyntaxException e) {
+            return false;
+        }
     }
 
 }

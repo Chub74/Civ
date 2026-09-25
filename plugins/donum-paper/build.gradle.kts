@@ -5,4 +5,5 @@ dependencies {
 
     compileOnly(project(":plugins:civmodcore-paper"))
     compileOnly(project(":plugins:namelayer-paper"))
+    compileOnly(project(":plugins:combattagplus-paper"))
 }
