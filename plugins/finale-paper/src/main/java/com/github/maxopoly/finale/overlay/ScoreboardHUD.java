@@ -25,6 +25,7 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.bottom.BottomLineAPI;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.CivScoreBoard;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.players.settings.impl.DisplayLocationSetting;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.HudLine;
 
@@ -199,7 +200,8 @@ public class ScoreboardHUD implements Listener {
             .append(CivText.info("/" + max))
             .build();
 
-        Component icon = CivText.icon(item);
+        // Bedrock can't draw the icon, so it gets the slot name the icon stands in for
+        Component icon = Bedrock.isBedrock(p) ? null : CivText.icon(item);
         Component display = HudLine.component(icon == null ? slot : icon, percent, points);
         board.set(p, sortingPrefix(order) + HudLine.of(slot, percent, points), display);
     }
@@ -217,7 +219,7 @@ public class ScoreboardHUD implements Listener {
                 seconds <= 30 ? CivText.WARN : CivText.VALUE);
         }
         Component display = HudLine.component(CivText.icon(effect.getType()), CivText.subject(name), time);
-        board.set(p, sortingPrefix(order) + HudLine.of(name, time), display);
+        board.set(p, sortingPrefix(order) + HudLine.of(name, time), Bedrock.adapt(p, display));
     }
 
     private void updateCoordinates(Player p, DisplayLocationSetting setting) {

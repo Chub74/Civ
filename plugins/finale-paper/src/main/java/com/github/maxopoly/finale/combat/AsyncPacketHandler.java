@@ -52,10 +52,20 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
         .findFirst()
         .orElse(PacketType.Play.Client.ARM_ANIMATION);
 
+    private static final PacketType ATTACK_PACKET = findAttackPacket();
+
+    private static PacketType findAttackPacket() {
+        try {
+            return (PacketType) PacketType.Play.Client.class.getField("ATTACK").get(null);
+        } catch (ReflectiveOperationException e) {
+            return PacketType.Play.Client.USE_ENTITY;
+        }
+    }
+
     private CombatConfig cc;
 
     public AsyncPacketHandler(CombatConfig cc) {
-        super(Finale.getPlugin(), ListenerPriority.HIGH, PacketType.Play.Client.USE_ENTITY, SWING_PACKET, PacketType.Play.Client.BLOCK_DIG, PacketType.Play.Client.ENTITY_ACTION);
+        super(Finale.getPlugin(), ListenerPriority.HIGH, ATTACK_PACKET, SWING_PACKET, PacketType.Play.Client.BLOCK_DIG, PacketType.Play.Client.ENTITY_ACTION);
 
         this.cc = cc;
 
@@ -71,16 +81,16 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
         PacketType packetType = event.getPacketType();
 
         CPSHandler cpsHandler = Finale.getPlugin().getManager().getCPSHandler();
-        if (packetType == PacketType.Play.Client.USE_ENTITY) {
+        if (packetType == ATTACK_PACKET) {
             Player attacker = event.getPlayer();
             World world = attacker.getWorld();
 
             PacketContainer packet = event.getPacket();
-            StructureModifier<WrappedEnumEntityUseAction> actions = packet.getEnumEntityUseActions();
-            EntityUseAction action = actions.read(0).getAction();
-
-            if (action != EntityUseAction.ATTACK) {
-                return;
+            if (packetType == PacketType.Play.Client.USE_ENTITY) {
+                StructureModifier<WrappedEnumEntityUseAction> actions = packet.getEnumEntityUseActions();
+                if (actions.read(0).getAction() != EntityUseAction.ATTACK) {
+                    return;
+                }
             }
             event.setCancelled(true);
             new BukkitRunnable() {
