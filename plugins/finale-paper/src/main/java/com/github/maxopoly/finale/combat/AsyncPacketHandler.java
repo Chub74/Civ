@@ -10,11 +10,9 @@ import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
 import com.comphenix.protocol.reflect.StructureModifier;
-import com.comphenix.protocol.wrappers.BlockPosition;
 import com.comphenix.protocol.wrappers.EnumWrappers;
 import com.comphenix.protocol.wrappers.EnumWrappers.EntityUseAction;
 import com.comphenix.protocol.wrappers.EnumWrappers.Hand;
-import com.comphenix.protocol.wrappers.EnumWrappers.PlayerDigType;
 import com.comphenix.protocol.wrappers.WrappedEnumEntityUseAction;
 import com.github.maxopoly.finale.Finale;
 import com.google.common.collect.Sets;
@@ -25,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSources;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -156,18 +155,19 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
                 return;
             }
 
-            PacketContainer packet = event.getPacket();
-            BlockPosition position = packet.getBlockPositionModifier().getValues().get(0);
-            PlayerDigType digType = packet.getPlayerDigTypes().getValues().get(0);
-            if (digType == PlayerDigType.START_DESTROY_BLOCK) {
-                Block block = attacker.getWorld().getBlockAt(position.getX(), position.getY(), position.getZ());
+            if (!(event.getPacket().getHandle() instanceof ServerboundPlayerActionPacket actionPacket)) {
+                return;
+            }
+            BlockPos blockPos = actionPacket.getPos();
+            ServerboundPlayerActionPacket.Action digType = actionPacket.getAction();
+            if (digType == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK) {
+                Block block = attacker.getWorld().getBlockAt(blockPos.getX(), blockPos.getY(), blockPos.getZ());
                 if (block.getType() == Material.BEDROCK || block.getType() == Material.BARRIER && !isDigging.contains(attacker.getUniqueId())) {
                     isDigging.add(attacker.getUniqueId());
                     cpsHandler.updateClicks(attacker);
                     return;
                 }
 
-                BlockPos blockPos = new BlockPos(position.getX(), position.getY(), position.getZ());
                 ServerLevel nmsWorld = ((CraftWorld) block.getWorld()).getHandle();
                 float strength = nmsWorld.getBlockState(blockPos).getDestroySpeed(nmsWorld, blockPos);
 
@@ -186,7 +186,7 @@ public class AsyncPacketHandler extends PacketAdapter implements Listener {
                         cpsHandler.updateClicks(attacker);
                     }
                 }
-            } else if (digType == PlayerDigType.ABORT_DESTROY_BLOCK || digType == PlayerDigType.STOP_DESTROY_BLOCK) {
+            } else if (digType == ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK || digType == ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK) {
                 isDigging.remove(attacker.getUniqueId());
                 lastRemovals.put(attacker.getUniqueId(), System.currentTimeMillis());
             }
