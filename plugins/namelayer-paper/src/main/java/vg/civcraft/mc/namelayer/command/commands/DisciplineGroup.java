@@ -5,10 +5,11 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.CommandPermission;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class DisciplineGroup extends BaseCommandMiddle {
 
@@ -24,15 +25,15 @@ public class DisciplineGroup extends BaseCommandMiddle {
             return;
         }
         if (!p.isOp() || !p.hasPermission("namelayer.admin")) {
-            p.sendMessage(ChatColor.RED + "You do not have permission for this op command.");
+            CivUI.error(p, "You don't have permission to discipline groups");
             return;
         }
         if (g.isDisciplined()) {
             g.setDisciplined(false);
-            sender.sendMessage(ChatColor.GREEN + "Group has been enabled.");
+            CivUI.success(sender, "Re-enabled the group ", NLText.group(g));
         } else {
             g.setDisciplined(true);
-            sender.sendMessage(ChatColor.GREEN + "Group has been disabled.");
+            CivUI.success(sender, "Disciplined the group ", NLText.group(g));
         }
     }
 }

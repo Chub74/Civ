@@ -1,35 +1,58 @@
 package vg.civcraft.mc.namelayer.gui;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemLore;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.inventory.ItemStack;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public class MenuUtils {
 
+    /** A toggle: its state as a toggle value, what a click does as a hint */
     public static ItemStack toggleButton(boolean initState, String name, boolean canModify) {
-        ItemStack is = null;
-        if (initState) {
-            is = AbstractGroupGUI.yesStack();
+        ItemStack is = initState ? AbstractGroupGUI.yesStack() : AbstractGroupGUI.noStack();
+        name(is, CivText.value(name));
+        if (canModify) {
+            lore(is, CivText.toggle(initState), Component.empty(), hint(initState ? "Click to turn off" : "Click to turn on"));
         } else {
-            is = AbstractGroupGUI.noStack();
+            lore(is, CivText.toggle(initState), Component.empty(),
+                Component.text("You don't have permission to change this", CivText.ERROR));
         }
-        if (initState) {
-            if (canModify) {
-                ItemUtils.addLore(is, ChatColor.GOLD + "Currently turned on", ChatColor.AQUA + "Click to turn off");
-            }
-        } else {
-            if (canModify) {
-                ItemUtils.addLore(is, ChatColor.GOLD + "Currently turned off", ChatColor.AQUA + "Click to turn on");
-            }
-        }
-        if (!canModify) {
-            ItemUtils.addLore(is, ChatColor.RED + "You don't have permission to", ChatColor.RED + "modify this setting");
-        }
-        ItemUtils.setDisplayName(is, name);
         return is;
+    }
+
+    /** Sets the item's base name, which never renders italic and replaces any custom name */
+    public static void name(ItemStack is, Component name) {
+        is.unsetData(DataComponentTypes.CUSTOM_NAME);
+        is.setData(DataComponentTypes.ITEM_NAME, name.colorIfAbsent(CivText.VALUE));
+    }
+
+    /** Appends lore lines, with the italics lore otherwise gets turned off */
+    public static void lore(ItemStack is, Component... lines) {
+        List<Component> lore = new ArrayList<>();
+        ItemLore current = is.getData(DataComponentTypes.LORE);
+        if (current != null) {
+            lore.addAll(current.lines());
+        }
+        for (Component line : lines) {
+            lore.add(line.colorIfAbsent(CivText.INFO).decorationIfAbsent(TextDecoration.ITALIC, TextDecoration.State.FALSE));
+        }
+        is.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+    }
+
+    /** The last lore line: what a click does */
+    public static Component hint(String text) {
+        return Component.text(text, CivText.MUTED);
+    }
+
+    /** ClickableInventory only takes a String title */
+    public static String title(String text) {
+        return LegacyComponentSerializer.legacySection().serialize(CivText.heading(text));
     }
 
     public static ItemStack getPlayerSkull(UUID uuid) {

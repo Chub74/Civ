@@ -6,12 +6,14 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -30,14 +32,15 @@ public class ListPermissions extends BaseCommandMiddle {
         UUID uuid = NameLayerAPI.getUUID(p.getName());
         PlayerType playerType = g.getPlayerType(uuid);
         if (playerType == null) {
-            p.sendMessage(ChatColor.RED + "You do not have access to this group.");
+            CivUI.error(p, "You're not on ", NLText.group(g));
             return;
         }
         String perms = null;
+        PlayerType shown = playerType;
         GroupPermission gPerm = gm.getPermissionforGroup(g);
         if (playerRank != null) {
             if (!gm.hasAccess(g, uuid, PermissionType.getPermission("LIST_PERMS"))) {
-                p.sendMessage(ChatColor.RED + "You do not have permission in this group to run this command.");
+                CivUI.error(p, "You don't have permission to see other ranks' permissions on ", NLText.group(g));
                 return;
             }
             PlayerType check = PlayerType.getPlayerType(playerRank);
@@ -46,9 +49,10 @@ public class ListPermissions extends BaseCommandMiddle {
                 return;
             }
             perms = gPerm.listPermsforPlayerType(check);
+            shown = check;
         } else
             perms = gPerm.listPermsforPlayerType(playerType);
 
-        p.sendMessage(ChatColor.GREEN + perms);
+        CivUI.info(p, NLText.rank(shown), " on ", NLText.group(g), " can: ", CivText.value(perms.trim()));
     }
 }

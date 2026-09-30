@@ -4,12 +4,13 @@ import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.Description;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.command.TabCompleters.GroupTabCompleter;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class GetDefaultGroup extends BaseCommandMiddle {
 
@@ -21,9 +22,9 @@ public class GetDefaultGroup extends BaseCommandMiddle {
 
         String x = gm.getDefaultGroup(uuid);
         if (x == null) {
-            p.sendMessage(ChatColor.RED + "You do not currently have a default group use /nlsdg to set it");
+            CivUI.error(p, "You don't have a default group. Set one with ", NLText.command("/nlsdg "));
         } else {
-            p.sendMessage(ChatColor.GREEN + "Your current default group is " + x);
+            CivUI.info(p, "Your default group is ", NLText.group(x));
         }
     }
 

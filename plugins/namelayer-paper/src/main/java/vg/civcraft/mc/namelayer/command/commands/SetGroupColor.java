@@ -9,10 +9,13 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class SetGroupColor extends BaseCommandMiddle {
@@ -29,7 +32,7 @@ public class SetGroupColor extends BaseCommandMiddle {
         }
 
         if (targetColor == null || targetColor.isEmpty()) {
-            player.sendRichMessage("<red>You need to enter a value</red>");
+            CivUI.error(player, "Give a colour name or a hex value");
             return;
         }
 
@@ -38,21 +41,21 @@ public class SetGroupColor extends BaseCommandMiddle {
             color = TextColor.fromHexString(targetColor);
         }
         if (color == null) {
-            player.sendRichMessage("<red>The value you entered was not a valid hex value or color.</red>");
+            CivUI.error(player, CivText.value(targetColor), " isn't a colour name or hex value");
             return;
         }
         GroupManager.PlayerType playerType = group.getPlayerType(uuid);
         if (playerType == null) {
-            player.sendRichMessage("<red>You do not have access to that group.</red>");
+            CivUI.error(player, "You're not on ", NLText.group(group));
             return;
         }
         if (!gm.hasAccess(group, uuid, PermissionType.getPermission("EDIT_COLOR"))) {
-            player.sendRichMessage("<red>You do not have permission to modify " + group.getName() + " </red>");
+            CivUI.error(player, "You don't have permission to change the colour of ", NLText.group(group));
             return;
         }
         group.setGroupColor(color);
-        player.sendMessage(Component.text("You have changed the group color to ", NamedTextColor.GREEN)
-            .append(Component.text(group.getName()).color(group.getGroupColor())));
+        CivUI.success(player, "Changed the colour of ", NLText.group(group), " to ",
+            Component.text(group.getName(), group.getGroupColor()));
     }
 
 }

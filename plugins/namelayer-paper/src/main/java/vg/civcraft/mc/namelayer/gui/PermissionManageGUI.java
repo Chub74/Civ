@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -17,9 +17,12 @@ import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -35,7 +38,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
     }
 
     public void showScreen() {
-        ClickableInventory ci = new ClickableInventory(27, g.getName());
+        ClickableInventory ci = new ClickableInventory(27, MenuUtils.title(g.getName()));
         if (!validGroup()) {
             return;
         }
@@ -59,8 +62,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
             produceSelectionClickable(Material.DIAMOND_CHESTPLATE,
                 PlayerType.OWNER), 17);
         ItemStack backStack = new ItemStack(Material.ARROW);
-        ItemUtils.setDisplayName(backStack, ChatColor.GOLD
-            + "Go back to member management");
+        MenuUtils.name(backStack, Component.text("Go back to member management", CivText.VALUE));
         ci.setSlot(new Clickable(backStack) {
 
             @Override
@@ -78,12 +80,10 @@ public class PermissionManageGUI extends AbstractGroupGUI {
         im.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         is.setItemMeta(im);
         Clickable c;
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "View and edit permissions for "
-            + PlayerType.getNiceRankName(pType));
+        MenuUtils.name(is, Component.text("View and edit permissions for " + PlayerType.getNiceRankName(pType), CivText.VALUE));
         if (!gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("LIST_PERMS"))) {
-            ItemUtils.addLore(is, ChatColor.RED + "You are not allowed to list",
-                ChatColor.RED + "permissions for this group");
+            MenuUtils.lore(is, Component.text("You are not allowed to list", CivText.ERROR), Component.text("permissions for this group", CivText.ERROR));
             c = new DecorationStack(is);
         } else {
             c = new Clickable(is) {
@@ -103,12 +103,11 @@ public class PermissionManageGUI extends AbstractGroupGUI {
         }
         if (!gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("LIST_PERMS"))) {
-            p.sendMessage(ChatColor.RED
-                + "You are not allowed to list permissions for this group");
+            CivUI.error(p, "You don't have permission to see the permissions of ", NLText.group(g));
             showScreen();
             return;
         }
-        ClickableInventory ci = new ClickableInventory(54, g.getName());
+        ClickableInventory ci = new ClickableInventory(54, MenuUtils.title(g.getName()));
         final List<Clickable> clicks = new ArrayList<>();
         final GroupPermission gp = gm.getPermissionforGroup(g);
 
@@ -123,22 +122,12 @@ public class PermissionManageGUI extends AbstractGroupGUI {
 
             if (hasPerm) {
                 is = yesStack();
-                ItemUtils.addLore(
-                    is,
-                    ChatColor.DARK_AQUA
-                        + PlayerType.getNiceRankName(pType)
-                        + "s currently have", ChatColor.DARK_AQUA
-                        + "this permission");
+                MenuUtils.lore(is, Component.text("" + PlayerType.getNiceRankName(pType) + "s currently have", CivText.INFO), Component.text("this permission", CivText.INFO));
             } else {
                 is = noStack();
-                ItemUtils.addLore(
-                    is,
-                    ChatColor.DARK_AQUA
-                        + PlayerType.getNiceRankName(pType)
-                        + "s currently don't have", ChatColor.DARK_AQUA
-                        + "this permission");
+                MenuUtils.lore(is, Component.text("" + PlayerType.getNiceRankName(pType) + "s currently don't have", CivText.INFO), Component.text("this permission", CivText.INFO));
             }
-            ItemUtils.setDisplayName(is, perm.getName());
+            MenuUtils.name(is, Component.text(String.valueOf(perm.getName()), CivText.VALUE));
             String desc = perm.getDescription();
             if (desc != null) {
                 final int MAX_CHARS = 35;
@@ -147,7 +136,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
                 for (int i = 0; i < words.length; i++) {
                     line.append(words[i]).append(" ");
                     if (line.length() >= MAX_CHARS || i == words.length - 1) {
-                        ItemUtils.addLore(is, ChatColor.GREEN + line.toString().trim());
+                        MenuUtils.lore(is, Component.text(String.valueOf(line.toString().trim()), CivText.INFO));
                         line = new StringBuilder();
                     }
                 }
@@ -155,16 +144,11 @@ public class PermissionManageGUI extends AbstractGroupGUI {
             if (pType == PlayerType.NOT_BLACKLISTED && !perm.getCanBeBlacklisted()) {
                 canEdit = false;
 
-                ItemUtils.addLore(
-                    is,
-                    ChatColor.AQUA
-                        + "This permission cannot be toggled for "
-                        + PlayerType.getNiceRankName(pType)
-                );
+                MenuUtils.lore(is, Component.text("This permission cannot be toggled for " + PlayerType.getNiceRankName(pType), CivText.INFO));
             }
 
             if (canEdit) {
-                ItemUtils.addLore(is, ChatColor.AQUA + "Click to toggle");
+                MenuUtils.lore(is, MenuUtils.hint("Click to toggle"));
                 c = new Clickable(is) {
 
                     @Override
@@ -184,8 +168,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
                                 }
                             }
                         } else {
-                            p.sendMessage(ChatColor.RED
-                                + "Something changed while you were modifying permissions, so cancelled the process");
+                            CivUI.error(p, "The permissions changed while you were editing them, so nothing was saved");
                         }
                         showPermissionEditing(pType);
                     }
@@ -202,7 +185,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
 
         if (currentPage > 0) {
             ItemStack back = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(back, ChatColor.GOLD + "Go to previous page");
+            MenuUtils.name(back, Component.text("Go to previous page", CivText.VALUE));
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -218,7 +201,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
         // next button
         if ((45 * (currentPage + 1)) < clicks.size()) {
             ItemStack forward = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(forward, ChatColor.GOLD + "Go to next page");
+            MenuUtils.name(forward, Component.text("Go to next page", CivText.VALUE));
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -233,7 +216,7 @@ public class PermissionManageGUI extends AbstractGroupGUI {
         }
 
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Go back");
+        MenuUtils.name(backToOverview, Component.text("Go back", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override

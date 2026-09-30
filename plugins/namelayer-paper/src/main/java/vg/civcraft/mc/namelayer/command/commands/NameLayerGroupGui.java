@@ -5,13 +5,14 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.gui.GUIGroupOverview;
 import vg.civcraft.mc.namelayer.gui.MainGroupGUI;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class NameLayerGroupGui extends BaseCommandMiddle {
@@ -22,7 +23,7 @@ public class NameLayerGroupGui extends BaseCommandMiddle {
     @CommandCompletion("@NL_Groups")
     public void execute(CommandSender sender, @Optional String groupName) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.BLUE + "Go back home console man, we dont want you here");
+            CivUI.error(sender, "Only players can open the group menu");
             return;
         }
         if (groupName == null) {
@@ -32,11 +33,11 @@ public class NameLayerGroupGui extends BaseCommandMiddle {
         }
         Group g = gm.getGroup(groupName);
         if (g == null) {
-            sender.sendMessage(ChatColor.RED + "This group doesn't exist");
+            CivUI.error(sender, "There's no group called ", NLText.group(groupName));
             return;
         }
         if (!gm.hasAccess(g, ((Player) sender).getUniqueId(), PermissionType.getPermission("OPEN_GUI"))) {
-            sender.sendMessage(ChatColor.RED + "You don't have permission to do this");
+            CivUI.error(sender, "You don't have permission to open the menu for ", NLText.group(g));
             return;
         }
         MainGroupGUI gui = new MainGroupGUI((Player) sender, g);

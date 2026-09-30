@@ -3,13 +3,10 @@ package vg.civcraft.mc.namelayer.gui;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -18,8 +15,6 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.util.StringUtil;
-import vg.civcraft.mc.civmodcore.chat.dialog.Dialog;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
@@ -32,6 +27,11 @@ import vg.civcraft.mc.namelayer.group.BlackList;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.listeners.PlayerListener;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import java.util.ArrayList;
+import java.util.List;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class MainGroupGUI extends AbstractGroupGUI {
 
@@ -79,7 +79,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         if (!validGroup()) {
             return;
         }
-        ClickableInventory ci = new ClickableInventory(54, g.getName());
+        ClickableInventory ci = new ClickableInventory(54, MenuUtils.title(g.getName()));
         final List<Clickable> clicks = constructClickables();
         if (clicks.size() < 36 * currentPage) {
             // would show an empty page, so go to previous
@@ -94,7 +94,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         // back button
         if (currentPage > 0) {
             ItemStack back = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(back, ChatColor.GOLD + "Go to previous page");
+            MenuUtils.name(back, Component.text("Go to previous page", CivText.VALUE));
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -113,7 +113,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         // next button
         if ((36 * (currentPage + 1)) < clicks.size()) {
             ItemStack forward = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(forward, ChatColor.GOLD + "Go to next page");
+            MenuUtils.name(forward, Component.text("Go to next page", CivText.VALUE));
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -141,7 +141,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
 
         // exit button
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Close");
+        MenuUtils.name(backToOverview, Component.text("Close", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -183,13 +183,11 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 meta.setColor(Color.BLACK);
                 meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
                 is.setItemMeta(meta);
-                ItemUtils.setDisplayName(is, NameLayerAPI.getCurrentName(uuid));
+                MenuUtils.name(is, Component.text(String.valueOf(NameLayerAPI.getCurrentName(uuid)), CivText.VALUE));
                 Clickable c;
                 if (gm.hasAccess(g, p.getUniqueId(),
                     PermissionType.getPermission("BLACKLIST"))) {
-                    ItemUtils.addLore(is, ChatColor.GREEN + "Click to remove "
-                        + NameLayerAPI.getCurrentName(uuid), ChatColor.GREEN
-                        + "from the blacklist");
+                    MenuUtils.lore(is, Component.text("Click to remove " + NameLayerAPI.getCurrentName(uuid), CivText.MUTED), Component.text("from the blacklist", CivText.INFO));
                     c = new Clickable(is) {
 
                         @Override
@@ -203,21 +201,15 @@ public class MainGroupGUI extends AbstractGroupGUI {
                                         + " from the blacklist of "
                                         + g.getName() + " via the gui");
                                 black.removeBlacklistMember(g, uuid, true);
-                                p.sendMessage(ChatColor.GREEN + "You removed "
-                                    + NameLayerAPI.getCurrentName(uuid)
-                                    + " from the blacklist");
+                                CivUI.success(p, "Unblacklisted ", NLText.player(uuid), " on ", NLText.group(g));
                             } else {
-                                p.sendMessage(ChatColor.RED
-                                    + "You lost permission to remove this player from the blacklist");
+                                CivUI.error(p, "You no longer have permission to unblacklist on ", NLText.group(g));
                             }
                             showScreen();
                         }
                     };
                 } else {
-                    ItemUtils.addLore(is, ChatColor.RED
-                            + "You don't have permission to remove",
-                        ChatColor.RED + NameLayerAPI.getCurrentName(uuid)
-                            + "from the blacklist");
+                    MenuUtils.lore(is, Component.text("You don't have permission to remove", CivText.ERROR), Component.text("" + NameLayerAPI.getCurrentName(uuid) + "from the blacklist", CivText.ERROR));
                     c = new DecorationStack(is);
                 }
                 clicks.add(c);
@@ -234,32 +226,32 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 is.setItemMeta(im);
                 final String playerName = NameLayerAPI
                     .getCurrentName(entry.getKey());
-                ItemUtils.setDisplayName(is, ChatColor.GOLD + playerName);
+                MenuUtils.name(is, Component.text(String.valueOf(playerName), CivText.VALUE));
                 boolean canRevoke = false;
                 switch (entry.getValue()) {
                     case MEMBERS:
-                        ItemUtils.addLore(is, ChatColor.AQUA + "Invited as: Member");
+                        MenuUtils.lore(is, Component.text().append(CivText.info("Invited as ")).append(CivText.value("Member")).build());
                         if (gm.hasAccess(g, p.getUniqueId(),
                             PermissionType.getPermission("MEMBERS"))) {
                             canRevoke = true;
                         }
                         break;
                     case MODS:
-                        ItemUtils.addLore(is, ChatColor.AQUA + "Invited as: Mod");
+                        MenuUtils.lore(is, Component.text().append(CivText.info("Invited as ")).append(CivText.value("Mod")).build());
                         if (gm.hasAccess(g, p.getUniqueId(),
                             PermissionType.getPermission("MODS"))) {
                             canRevoke = true;
                         }
                         break;
                     case ADMINS:
-                        ItemUtils.addLore(is, ChatColor.AQUA + "Invited as: Admin");
+                        MenuUtils.lore(is, Component.text().append(CivText.info("Invited as ")).append(CivText.value("Admin")).build());
                         if (gm.hasAccess(g, p.getUniqueId(),
                             PermissionType.getPermission("ADMINS"))) {
                             canRevoke = true;
                         }
                         break;
                     case OWNER:
-                        ItemUtils.addLore(is, ChatColor.AQUA + "Invited as: Owner");
+                        MenuUtils.lore(is, Component.text().append(CivText.info("Invited as ")).append(CivText.value("Owner")).build());
                         if (gm.hasAccess(g, p.getUniqueId(),
                             PermissionType.getPermission("OWNER"))) {
                             canRevoke = true;
@@ -270,8 +262,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 }
                 Clickable c = null;
                 if (canRevoke) {
-                    ItemUtils.addLore(is, ChatColor.GREEN
-                        + "Click to revoke this invite");
+                    MenuUtils.lore(is, MenuUtils.hint("Click to revoke this invite"));
                     c = new Clickable(is) {
 
                         @Override
@@ -279,10 +270,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
                             UUID invitedUUID = NameLayerAPI.getUUID(playerName);
                             PlayerType pType = g.getInvite(invitedUUID);
                             if (pType == null) {
-                                p.sendMessage(ChatColor.RED
-                                    + "Failed to revoke invite for "
-                                    + playerName
-                                    + ". This player isn't invited currently.");
+                                CivUI.error(p, CivText.subject(playerName), " isn't invited any more");
                                 showScreen();
                             }
                             // make sure the player still has permission to do
@@ -310,8 +298,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
                                     break;
                             }
                             if (!allowed) {
-                                p.sendMessage(ChatColor.RED
-                                    + "You don't have permission to revoke this invite");
+                                CivUI.error(p, "You don't have permission to revoke that invite");
                             } else {
                                 NameLayerPlugin.log(Level.INFO, arg0.getName()
                                     + " revoked an invite for " + NameLayerAPI.getCurrentName(invitedUUID)
@@ -319,15 +306,13 @@ public class MainGroupGUI extends AbstractGroupGUI {
                                 g.removeInvite(invitedUUID, true);
                                 PlayerListener.removeNotification(invitedUUID, g);
 
-                                p.sendMessage(ChatColor.GREEN + playerName
-                                    + "'s invitation has been revoked.");
+                                CivUI.success(p, "Revoked ", CivText.subject(playerName), "'s invite to the group ", NLText.group(g));
                             }
                             showScreen();
                         }
                     };
                 } else {
-                    ItemUtils.addLore(is, ChatColor.RED
-                        + "You don't have permission to revoke this invite");
+                    MenuUtils.lore(is, Component.text("You don't have permission to revoke this invite", CivText.ERROR));
                     c = new DecorationStack(is);
                 }
                 if (c != null) {
@@ -386,8 +371,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
             getAccordingPermission(pType))
             || gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("GROUPSTATS"));
-        ItemStack is = MenuUtils.toggleButton(initialState, ChatColor.GOLD
-            + "Show " + PlayerType.getNiceRankName(pType) + "s", canEdit);
+        ItemStack is = MenuUtils.toggleButton(initialState, "Show " + PlayerType.getNiceRankName(pType) + "s", canEdit);
         Clickable c;
         if (canEdit) {
             c = new Clickable(is) {
@@ -431,21 +415,17 @@ public class MainGroupGUI extends AbstractGroupGUI {
         ItemMeta im = is.getItemMeta();
         im.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         is.setItemMeta(im);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + NameLayerAPI.getCurrentName(toDisplay));
+        MenuUtils.name(is, Component.text(String.valueOf(NameLayerAPI.getCurrentName(toDisplay)), CivText.VALUE));
         if (g.isOwner(toDisplay)) { // special case for primary owner
             is.editMeta(itemMeta -> itemMeta.setEnchantmentGlintOverride(true));
-            ItemUtils.addLore(is, ChatColor.AQUA + "Rank: Primary Owner");
-            ItemUtils.addLore(is, ChatColor.RED + "You don't have permission",
-                ChatColor.RED + "to modify the rank of this player");
+            MenuUtils.lore(is, Component.text().append(CivText.info("Rank ")).append(CivText.value("Primary Owner")).build());
+            MenuUtils.lore(is, Component.text("You don't have permission", CivText.ERROR), Component.text("to modify the rank of this player", CivText.ERROR));
             c = new DecorationStack(is);
 
         } else {
-            ItemUtils.addLore(is, ChatColor.AQUA + "Rank: "
-                + getRankName(toDisplay));
+            MenuUtils.lore(is, Component.text().append(CivText.info("Rank ")).append(CivText.value(getRankName(toDisplay))).build());
             if (gm.hasAccess(g, p.getUniqueId(), getAccordingPermission(rank))) {
-                ItemUtils.addLore(is, ChatColor.GREEN
-                    + "Click to modify this player's", ChatColor.GREEN
-                    + "rank or to remove them");
+                MenuUtils.lore(is, MenuUtils.hint("Click to modify this player's"), Component.text("rank or to remove them", CivText.MUTED));
                 c = new Clickable(is) {
 
                     @Override
@@ -454,9 +434,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
                     }
                 };
             } else {
-                ItemUtils.addLore(is,
-                    ChatColor.RED + "You don't have permission",
-                    ChatColor.RED + "to modify the rank of this player");
+                MenuUtils.lore(is, Component.text("You don't have permission", CivText.ERROR), Component.text("to modify the rank of this player", CivText.ERROR));
                 c = new DecorationStack(is);
             }
         }
@@ -475,13 +453,13 @@ public class MainGroupGUI extends AbstractGroupGUI {
             showScreen();
             return;
         }
-        ClickableInventory ci = new ClickableInventory(27, g.getName());
+        ClickableInventory ci = new ClickableInventory(27, MenuUtils.title(g.getName()));
         String playerName = NameLayerAPI.getCurrentName(uuid);
 
         ItemStack info = new ItemStack(Material.PAPER);
-        ItemUtils.setDisplayName(info, ChatColor.GOLD + playerName);
+        MenuUtils.name(info, Component.text(String.valueOf(playerName), CivText.VALUE));
         String rankName = getRankName(uuid);
-        ItemUtils.addLore(info, ChatColor.GOLD + "Current rank: " + rankName);
+        MenuUtils.lore(info, Component.text().append(CivText.info("Current rank ")).append(CivText.value(rankName)).build());
         ci.setSlot(new DecorationStack(info), 4);
 
         Clickable memberClick = setupDetailSlot(Material.LEATHER_CHESTPLATE,
@@ -498,7 +476,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         ci.setSlot(ownerClick, 16);
 
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Back to overview");
+        MenuUtils.name(backToOverview, Component.text("Back to overview", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -522,12 +500,11 @@ public class MainGroupGUI extends AbstractGroupGUI {
         mod.setItemMeta(im);
         Clickable modClick;
         if (rank == pType) {
-            ItemUtils.setDisplayName(mod, ChatColor.GOLD + "Remove this player");
+            MenuUtils.name(mod, Component.text("Remove this player", CivText.VALUE));
             mod.lore(List.of(Component.text("/nlrm " + g.getName() + " " + NameLayerAPI.getCurrentName(toChange))
-                .color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false)));
+                .color(CivText.VALUE).decoration(TextDecoration.ITALIC, false)));
             if (!gm.hasAccess(g, p.getUniqueId(), getAccordingPermission(pType))) {
-                ItemUtils.addLore(mod, ChatColor.RED
-                    + "You dont have permission to do this");
+                MenuUtils.lore(mod, Component.text("You don't have permission to do this", CivText.ERROR));
                 modClick = new DecorationStack(mod);
             } else {
                 modClick = new Clickable(mod) {
@@ -544,17 +521,11 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 };
             }
         } else {
-            ItemUtils.setDisplayName(
-                mod,
-                ChatColor.GOLD
-                    + demoteOrPromote(g.getPlayerType(toChange), pType,
-                    true) + " this player to "
-                    + PlayerType.getNiceRankName(pType));
+            MenuUtils.name(mod, Component.text("" + demoteOrPromote(g.getPlayerType(toChange), pType, true) + " this player to " + PlayerType.getNiceRankName(pType), CivText.VALUE));
             mod.lore(List.of(Component.text("/nlpp " + g.getName() + " " + NameLayerAPI.getCurrentName(toChange) + " " + pType)
-                .color(NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false)));
+                .color(CivText.VALUE).decoration(TextDecoration.ITALIC, false)));
             if (!gm.hasAccess(g, p.getUniqueId(), getAccordingPermission(pType))) {
-                ItemUtils.addLore(mod, ChatColor.RED
-                    + "You dont have permission to do this");
+                MenuUtils.lore(mod, Component.text("You don't have permission to do this", CivText.ERROR));
                 modClick = new DecorationStack(mod);
             } else {
                 modClick = new Clickable(mod) {
@@ -574,23 +545,19 @@ public class MainGroupGUI extends AbstractGroupGUI {
         if (gm.hasAccess(g, p.getUniqueId(),
             getAccordingPermission(g.getCurrentRank(toRemove)))) {
             if (!g.isMember(toRemove)) {
-                p.sendMessage(ChatColor.RED
-                    + "This player is no longer on the group and can't be removed");
+                CivUI.error(p, NLText.player(toRemove), " isn't on ", NLText.group(g), " any more");
                 return;
             }
             if (g.isOwner(toRemove)) {
-                p.sendMessage(ChatColor.RED
-                    + "This player owns the group and can't be removed");
+                CivUI.error(p, NLText.player(toRemove), " owns ", NLText.group(g), ", so you can't remove them");
             }
             NameLayerPlugin.log(Level.INFO,
                 p.getName() + " kicked " + NameLayerAPI.getCurrentName(toRemove)
                     + " from " + g.getName() + " via the gui");
             g.removeMember(toRemove);
-            p.sendMessage(ChatColor.GREEN + NameLayerAPI.getCurrentName(toRemove)
-                + " has been removed from the group");
+            CivUI.success(p, "Removed ", NLText.player(toRemove), " from ", NLText.group(g));
         } else {
-            p.sendMessage(ChatColor.RED
-                + "You have lost permission to remove this player");
+            CivUI.error(p, "You no longer have permission to do that on ", NLText.group(g));
         }
     }
 
@@ -598,15 +565,11 @@ public class MainGroupGUI extends AbstractGroupGUI {
         if (gm.hasAccess(g, p.getUniqueId(),
             getAccordingPermission(g.getCurrentRank(toChange)))) {
             if (!g.isMember(toChange)) {
-                p.sendMessage(ChatColor.RED
-                    + "This player is no longer on the group and can't be "
-                    + demoteOrPromote(g.getCurrentRank(toChange), newRank,
-                    false) + "d");
+                CivUI.error(p, NLText.player(toChange), " isn't on ", NLText.group(g), " any more");
                 return;
             }
             if (g.isOwner(toChange)) {
-                p.sendMessage(ChatColor.RED
-                    + "This player owns the group and can't be demoted");
+                CivUI.error(p, NLText.player(toChange), " owns ", NLText.group(g), ", so you can't change their rank");
             }
             OfflinePlayer prom = Bukkit.getOfflinePlayer(toChange);
             NameLayerPlugin.log(
@@ -622,35 +585,27 @@ public class MainGroupGUI extends AbstractGroupGUI {
                     g.getCurrentRank(toChange), newRank);
                 Bukkit.getPluginManager().callEvent(event);
                 if (event.isCancelled()) {
-                    p.sendMessage(ChatColor.RED
-                        + "Could not change player rank, you should complain about this");
+                    CivUI.error(p, "Couldn't change the rank of ", NLText.player(toChange), ". Tell an admin");
                     return;
                 }
                 g.removeMember(toChange);
                 g.addMember(toChange, newRank);
-                oProm.sendMessage(ChatColor.GREEN
-                    + "You have been promoted to " + getRankName(toChange)
-                    + " in (Group) " + g.getName());
+                CivUI.info(oProm, "You're now ", CivText.value(getRankName(toChange)), " on ", NLText.group(g));
             } else {
                 // player is offline change their perms
                 g.removeMember(toChange);
                 g.addMember(toChange, newRank);
             }
-            p.sendMessage(ChatColor.GREEN
-                + NameLayerAPI.getCurrentName(toChange)
-                + " has been "
-                + demoteOrPromote(g.getCurrentRank(toChange), newRank,
-                false) + "d to " + getRankName(toChange));
+            CivUI.success(p, NLText.player(toChange), " is now ", CivText.value(getRankName(toChange)), " on ", NLText.group(g));
         } else {
-            p.sendMessage(ChatColor.RED
-                + "You have lost permission to remove this player");
+            CivUI.error(p, "You no longer have permission to do that on ", NLText.group(g));
         }
     }
 
     private Clickable createBlacklistToggle() {
         ItemStack is = MenuUtils.toggleButton(
             showBlacklist,
-            ChatColor.GOLD + "Show blacklisted players",
+            "Show blacklisted players",
             gm.hasAccess(g, p.getUniqueId(),
                 PermissionType.getPermission("GROUPSTATS")));
         Clickable c;
@@ -696,7 +651,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         boolean canToggle = gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("GROUPSTATS"));
         ItemStack is = MenuUtils.toggleButton(showInheritedMembers,
-            ChatColor.GOLD + "Show inherited members", canToggle);
+            "Show inherited members", canToggle);
         Clickable c;
         if (canToggle) {
             c = new Clickable(is) {
@@ -715,8 +670,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
     }
 
     private Clickable createInviteToggle() {
-        ItemStack is = MenuUtils.toggleButton(showInvites, ChatColor.GOLD
-            + "Show invited players", true);
+        ItemStack is = MenuUtils.toggleButton(showInvites, "Show invited players", true);
         return new Clickable(is) {
 
             @Override
@@ -730,56 +684,35 @@ public class MainGroupGUI extends AbstractGroupGUI {
     private Clickable getAddBlackListClickable() {
         Clickable c;
         ItemStack is = blacklistStack();
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Add player to blacklist");
+        MenuUtils.name(is, Component.text("Add player to blacklist", CivText.VALUE));
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("BLACKLIST"))) {
             c = new Clickable(is) {
 
                 @Override
                 public void clicked(final Player p) {
-                    p.sendMessage(ChatColor.GOLD + "Enter the name of the player to blacklist or \"cancel\" to exit this prompt");
-                    ClickableInventory.forceCloseInventory(p);
-                    new Dialog(p, NameLayerPlugin.getInstance()) {
-
-                        @Override
-                        public List<String> onTabComplete(String word, String[] msg) {
-                            List<String> players = Bukkit.getOnlinePlayers().stream()
-                                .filter(p -> !g.isMember(p.getUniqueId()))
-                                .map(Player::getName)
-                                .collect(Collectors.toList());
-                            players.add("cancel");
-
-                            return StringUtil.copyPartialMatches(word, players, new ArrayList<>());
-                        }
-
-                        @Override
-                        public void onReply(String[] message) {
-                            if (message[0].equalsIgnoreCase("cancel")) {
-                                showScreen();
-                                return;
-                            }
+                    CivUI.prompt("Blacklist on ", NLText.group(g))
+                        .body("Separate several names with spaces to blacklist them all")
+                        .label("Players")
+                        .validate(names -> !names.isBlank(), "Type at least one name")
+                        .onSubmit((who, names) -> {
                             if (gm.hasAccess(g, p.getUniqueId(),
                                 PermissionType.getPermission("BLACKLIST"))) {
-                                for (String playerName : message) {
+                                for (String playerName : names.trim().split("\\s+")) {
                                     UUID blackUUID = NameLayerAPI
                                         .getUUID(playerName);
                                     if (blackUUID == null) {
-                                        p.sendMessage(ChatColor.RED
-                                            + playerName + " doesn't exist");
+                                        CivUI.error(p, "There's no player called ", CivText.subject(playerName));
                                         continue;
                                     }
                                     if (g.isMember(blackUUID)) {
-                                        p.sendMessage(ChatColor.RED
-                                            + NameLayerAPI.getCurrentName(blackUUID)
-                                            + " is currently a member of this group and can't be blacklisted");
+                                        CivUI.error(p, "You can't blacklist ", NLText.player(blackUUID), " - they're a member of ", NLText.group(g));
                                         continue;
                                     }
                                     BlackList bl = NameLayerPlugin
                                         .getBlackList();
                                     if (bl.isBlacklisted(g, blackUUID)) {
-                                        p.sendMessage(ChatColor.RED
-                                            + NameLayerAPI.getCurrentName(blackUUID)
-                                            + " is already blacklisted");
+                                        CivUI.error(p, NLText.player(blackUUID), " is already blacklisted on ", NLText.group(g));
                                         continue;
                                     }
                                     NameLayerPlugin
@@ -791,23 +724,19 @@ public class MainGroupGUI extends AbstractGroupGUI {
                                                 + g.getName()
                                                 + " via the gui");
                                     bl.addBlacklistMember(g, blackUUID, true);
-                                    p.sendMessage(ChatColor.GREEN
-                                        + NameLayerAPI.getCurrentName(blackUUID)
-                                        + " was successfully blacklisted");
+                                    CivUI.success(p, "Blacklisted ", NLText.player(blackUUID), " on ", NLText.group(g));
                                 }
                             } else {
-                                p.sendMessage(ChatColor.RED
-                                    + "You lost permission to do this");
+                                CivUI.error(p, "You no longer have permission to do that on ", NLText.group(g));
                             }
                             showScreen();
-                        }
-                    };
-
+                        })
+                        .onCancel(who -> showScreen())
+                        .open(p);
                 }
             };
         } else {
-            ItemUtils.addLore(is, ChatColor.RED
-                + "You don't have permission to do this");
+            MenuUtils.lore(is, Component.text("You don't have permission to do this", CivText.ERROR));
             c = new DecorationStack(is);
         }
         return c;
@@ -816,16 +745,14 @@ public class MainGroupGUI extends AbstractGroupGUI {
     private Clickable getPasswordClickable() {
         Clickable c;
         ItemStack is = new ItemStack(Material.OAK_SIGN);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Add or change password");
+        MenuUtils.name(is, Component.text("Add or change password", CivText.VALUE));
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("PASSWORD"))) {
             String pass = g.getPassword();
             if (pass == null) {
-                ItemUtils.addLore(is, ChatColor.AQUA
-                    + "This group doesn't have a password currently");
+                MenuUtils.lore(is, Component.text("This group doesn't have a password currently", CivText.INFO));
             } else {
-                ItemUtils.addLore(is, ChatColor.AQUA
-                    + "The current password is: " + ChatColor.YELLOW + pass);
+                MenuUtils.lore(is, Component.text().append(Component.text("The current password is: ", CivText.INFO)).append(Component.text(String.valueOf(pass), CivText.VALUE)).build());
             }
             c = new Clickable(is) {
 
@@ -833,41 +760,21 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 public void clicked(final Player p) {
                     if (gm.hasAccess(g, p.getUniqueId(),
                         PermissionType.getPermission("PASSWORD"))) {
-                        p.sendMessage(ChatColor.GOLD
-                            + "Enter the new password for "
-                            + g.getName()
-                            + ". Enter \" delete\" to remove an existing password or \"cancel\" to exit this prompt");
-                        ClickableInventory.forceCloseInventory(p);
-                        new Dialog(p, NameLayerPlugin.getInstance()) {
-
-                            @Override
-                            public List<String> onTabComplete(
-                                String wordCompleted, String[] fullMessage) {
-                                return Collections.emptyList();
-                            }
-
-                            @Override
-                            public void onReply(String[] message) {
-                                if (message.length == 0) {
-                                    p.sendMessage(ChatColor.RED
-                                        + "You entered nothing, no password was set");
-                                    return;
-                                }
-                                if (message.length > 1) {
-                                    p.sendMessage(ChatColor.RED
-                                        + "Your password may not contain spaces");
-                                    return;
-                                }
-                                String newPassword = message[0];
-                                if (newPassword.equals("cancel")) {
-                                    p.sendMessage(ChatColor.GREEN
-                                        + "Left password unchanged");
-                                    return;
-                                }
-                                if (newPassword.equals("delete")) {
+                        CivUI.prompt("Password of ", NLText.group(g))
+                            .body("Leave it empty to remove the password")
+                            .label("Password")
+                            .initial(g.getPassword())
+                            .validate(password -> !password.trim().contains(" "), "Passwords can't contain spaces")
+                            .onSubmit((who, input) -> {
+                                String newPassword = input.trim();
+                                if (newPassword.isEmpty()) {
+                                    if (g.getPassword() == null) {
+                                        CivUI.info(p, "Left the password unchanged");
+                                        showScreen();
+                                        return;
+                                    }
                                     g.setPassword(null);
-                                    p.sendMessage(ChatColor.GREEN
-                                        + "Removed the password from the group");
+                                    CivUI.success(p, "Removed the password of ", NLText.group(g));
                                     NameLayerPlugin.log(Level.INFO, p.getName()
                                         + " removed password "
                                         + " for group " + g.getName()
@@ -878,23 +785,20 @@ public class MainGroupGUI extends AbstractGroupGUI {
                                         + " for group " + g.getName()
                                         + " via the gui");
                                     g.setPassword(newPassword);
-                                    p.sendMessage(ChatColor.GREEN
-                                        + "Set new password: "
-                                        + ChatColor.YELLOW + newPassword);
+                                    CivUI.success(p, "Set the password of ", NLText.group(g), " to ", CivText.value(String.valueOf(newPassword)));
                                 }
                                 showScreen();
-                            }
-                        };
+                            })
+                            .onCancel(who -> showScreen())
+                            .open(p);
                     } else {
-                        p.sendMessage(ChatColor.RED
-                            + "You lost permission to do this");
+                        CivUI.error(p, "You no longer have permission to do that on ", NLText.group(g));
                         showScreen();
                     }
                 }
             };
         } else {
-            ItemUtils.addLore(is, ChatColor.RED
-                + "You don't have permission to do this");
+            MenuUtils.lore(is, Component.text("You don't have permission to do this", CivText.ERROR));
             c = new DecorationStack(is);
         }
         return c;
@@ -902,8 +806,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
 
     private Clickable getPermOptionClickable() {
         ItemStack permStack = permsStack();
-        ItemUtils.setDisplayName(permStack, ChatColor.GOLD
-            + "View and manage group permissions");
+        MenuUtils.name(permStack, Component.text("View and manage group permissions", CivText.VALUE));
         Clickable permClickable;
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("LIST_PERMS"))) {
@@ -916,8 +819,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 }
             };
         } else {
-            ItemUtils.addLore(permStack, ChatColor.RED
-                + "You don't have permission", ChatColor.RED + "to do this");
+            MenuUtils.lore(permStack, Component.text("You don't have permission", CivText.ERROR), Component.text("to do this", CivText.ERROR));
             permClickable = new DecorationStack(permStack);
         }
         return permClickable;
@@ -925,7 +827,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
 
     private Clickable getInvitePlayerClickable() {
         ItemStack inviteStack = new ItemStack(Material.COOKIE);
-        ItemUtils.setDisplayName(inviteStack, ChatColor.GOLD + "Invite new member");
+        MenuUtils.name(inviteStack, Component.text("Invite new member", CivText.VALUE));
         return new Clickable(inviteStack) {
 
             @Override
@@ -938,18 +840,15 @@ public class MainGroupGUI extends AbstractGroupGUI {
     private Clickable getDefaultGroupStack() {
         Clickable c;
         ItemStack is = defaultStack();
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Default group");
+        MenuUtils.name(is, Component.text("Default group", CivText.VALUE));
         final String defGroup = gm.getDefaultGroup(p.getUniqueId());
         if (defGroup != null && defGroup.equals(g.getName())) {
-            ItemUtils.addLore(is, ChatColor.AQUA
-                + "This group is your current default group");
+            MenuUtils.lore(is, Component.text("This group is your current default group", CivText.INFO));
             c = new DecorationStack(is);
         } else {
-            ItemUtils.addLore(is, ChatColor.AQUA
-                + "Click to make this group your default group");
+            MenuUtils.lore(is, MenuUtils.hint("Click to make this group your default group"));
             if (defGroup != null) {
-                ItemUtils.addLore(is, ChatColor.BLUE
-                    + "Your current default group is : " + defGroup);
+                MenuUtils.lore(is, Component.text().append(CivText.info("Your default group is ")).append(CivText.group(defGroup)).build());
             }
             c = new Clickable(is) {
 
@@ -960,14 +859,10 @@ public class MainGroupGUI extends AbstractGroupGUI {
                         + " via the gui");
                     if (defGroup == null) {
                         g.setDefaultGroup(p.getUniqueId());
-                        p.sendMessage(ChatColor.GREEN
-                            + "You have set your default group to "
-                            + g.getName());
+                        CivUI.success(p, "Your default group is now ", NLText.group(g));
                     } else {
                         g.changeDefaultGroup(p.getUniqueId());
-                        p.sendMessage(ChatColor.GREEN
-                            + "You changed your default group from "
-                            + defGroup + " to " + g.getName());
+                        CivUI.success(p, "Changed your default group from ", NLText.group(defGroup), " to ", NLText.group(g));
                     }
                     showScreen();
                 }
@@ -978,7 +873,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
 
     private Clickable getSuperMenuClickable() {
         ItemStack is = new ItemStack(Material.DIAMOND);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Return to overview for all your groups");
+        MenuUtils.name(is, Component.text("Return to overview for all your groups", CivText.VALUE));
         return new Clickable(is) {
 
             @Override
@@ -991,7 +886,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
 
     private Clickable getAdminStuffClickable() {
         ItemStack is = new ItemStack(Material.DIAMOND);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Admin/Owner functions");
+        MenuUtils.name(is, Component.text("Admin/Owner functions", CivText.VALUE));
         return new Clickable(is) {
 
             @Override
@@ -1009,61 +904,37 @@ public class MainGroupGUI extends AbstractGroupGUI {
     private Clickable getLeaveGroupClickable() {
         Clickable c;
         ItemStack is = new ItemStack(Material.IRON_DOOR);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Leave group");
+        MenuUtils.name(is, Component.text("Leave group", CivText.VALUE));
         if (g.isOwner(p.getUniqueId())) {
-            ItemUtils.addLore(is, ChatColor.RED + "You cant leave this group,",
-                ChatColor.RED + "because you own it");
+            MenuUtils.lore(is, Component.text("You can't leave this group,", CivText.ERROR), Component.text("because you own it", CivText.ERROR));
             c = new DecorationStack(is);
         } else {
             c = new Clickable(is) {
 
                 @Override
                 public void clicked(Player p) {
-                    ClickableInventory confirmInv = new ClickableInventory(27,
-                        g.getName());
-                    ItemStack info = new ItemStack(Material.PAPER);
-                    ItemUtils.setDisplayName(info, ChatColor.GOLD + "Leave group");
-                    ItemUtils.addLore(info, ChatColor.RED
-                        + "Are you sure that you want to", ChatColor.RED
-                        + "leave this group? You can not undo this!");
-                    ItemStack yes = yesStack();
-                    ItemUtils.setDisplayName(yes,
-                        ChatColor.GOLD + "Yes, leave " + g.getName());
-                    ItemStack no = noStack();
-                    ItemUtils.setDisplayName(no,
-                        ChatColor.GOLD + "No, stay in " + g.getName());
-                    confirmInv.setSlot(new Clickable(yes) {
-
-                        @Override
-                        public void clicked(Player p) {
-                            if (!g.isMember(p.getUniqueId())) {
-                                p.sendMessage(ChatColor.RED
-                                    + "You are not a member of this group.");
+                    CivUI.confirm("Leave ", NLText.group(g))
+                        .warning("You can't undo this")
+                        .yesLabel("Leave")
+                        .noLabel("Stay")
+                        .onYes(who -> {
+                            if (!g.isMember(who.getUniqueId())) {
+                                CivUI.error(who, "You're not a member of ", NLText.group(g));
                                 showScreen();
                                 return;
                             }
                             if (g.isDisciplined()) {
-                                p.sendMessage(ChatColor.RED
-                                    + "This group is disciplined.");
+                                CivUI.error(who, NLText.group(g), " is disciplined");
                                 showScreen();
                                 return;
                             }
-                            NameLayerPlugin.log(Level.INFO, p.getName()
+                            NameLayerPlugin.log(Level.INFO, who.getName()
                                 + " left " + g.getName() + " via the gui");
-                            g.removeMember(p.getUniqueId());
-                            p.sendMessage(ChatColor.GREEN + "You have left "
-                                + g.getName());
-                        }
-                    }, 11);
-                    confirmInv.setSlot(new Clickable(no) {
-
-                        @Override
-                        public void clicked(Player p) {
-                            showScreen();
-                        }
-                    }, 15);
-                    confirmInv.setSlot(new DecorationStack(info), 4);
-                    confirmInv.showInventory(p);
+                            g.removeMember(who.getUniqueId());
+                            CivUI.success(who, "Left the group ", NLText.group(g));
+                        })
+                        .onNo(who -> showScreen())
+                        .open(p);
                 }
             };
         }
@@ -1073,57 +944,33 @@ public class MainGroupGUI extends AbstractGroupGUI {
     private Clickable getInfoStack() {
         Clickable c;
         ItemStack is = new ItemStack(Material.PAPER);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Stats for " + g.getName());
-        ItemUtils.addLore(is,
-            ChatColor.DARK_AQUA + "Your current rank: " + ChatColor.YELLOW
-                + PlayerType.getNiceRankName(g.getPlayerType(p.getUniqueId())));
+        MenuUtils.name(is, Component.text("Stats for " + g.getName(), CivText.VALUE));
+        MenuUtils.lore(is, Component.text().append(Component.text("Your current rank: ", CivText.INFO)).append(Component.text(String.valueOf(PlayerType.getNiceRankName(g.getPlayerType(p.getUniqueId()))), CivText.VALUE)).build());
         boolean hasGroupStatsPerm = gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("GROUPSTATS"));
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("MEMBERS"))
             || hasGroupStatsPerm) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.AQUA
-                    + String.valueOf(g
-                    .getAllMembers(PlayerType.MEMBERS).size())
-                    + " members");
+            MenuUtils.lore(is, Component.text(String.valueOf(g .getAllMembers(PlayerType.MEMBERS).size()) + " members", CivText.INFO));
         }
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("MODS"))
             || hasGroupStatsPerm) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.AQUA
-                    + String.valueOf(g.getAllMembers(PlayerType.MODS)
-                    .size()) + " mods");
+            MenuUtils.lore(is, Component.text(String.valueOf(g.getAllMembers(PlayerType.MODS) .size()) + " mods", CivText.INFO));
         }
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("ADMINS"))
             || hasGroupStatsPerm) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.AQUA
-                    + String.valueOf(g.getAllMembers(PlayerType.ADMINS)
-                    .size()) + " admins");
+            MenuUtils.lore(is, Component.text(String.valueOf(g.getAllMembers(PlayerType.ADMINS) .size()) + " admins", CivText.INFO));
         }
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("OWNER"))
             || hasGroupStatsPerm) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.AQUA
-                    + String.valueOf(g.getAllMembers(PlayerType.OWNER)
-                    .size()) + " owner");
+            MenuUtils.lore(is, Component.text(String.valueOf(g.getAllMembers(PlayerType.OWNER) .size()) + " owner", CivText.INFO));
         }
         if (hasGroupStatsPerm) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.DARK_AQUA
-                    + String.valueOf(g.getAllMembers().size())
-                    + " total group members");
-            ItemUtils.addLore(is, ChatColor.DARK_AQUA + "Group owner: "
-                + ChatColor.YELLOW + NameLayerAPI.getCurrentName(g.getOwner()));
+            MenuUtils.lore(is, Component.text(String.valueOf(g.getAllMembers().size()) + " total group members", CivText.INFO));
+            MenuUtils.lore(is, Component.text().append(Component.text("Group owner: ", CivText.INFO)).append(Component.text(String.valueOf(NameLayerAPI.getCurrentName(g.getOwner())), CivText.VALUE)).build());
         }
         c = new DecorationStack(is);
         return c;
@@ -1206,9 +1053,8 @@ public class MainGroupGUI extends AbstractGroupGUI {
                 default:
                     continue;
             }
-            ItemUtils.setDisplayName(is, NameLayerAPI.getCurrentName(uuid));
-            ItemUtils.addLore(is, ChatColor.AQUA + "Inherited "
-                + getRankName(uuid) + " from " + g.getName());
+            MenuUtils.name(is, Component.text(String.valueOf(NameLayerAPI.getCurrentName(uuid)), CivText.VALUE));
+            MenuUtils.lore(is, Component.text("Inherited " + getRankName(uuid) + " from " + g.getName(), CivText.INFO));
             clicks.add(new DecorationStack(is));
         }
         return clicks;

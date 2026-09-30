@@ -5,13 +5,15 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class RemoveMember extends BaseCommandMiddle {
@@ -22,7 +24,7 @@ public class RemoveMember extends BaseCommandMiddle {
     @CommandCompletion("@NL_Groups @allplayers")
     public void execute(CommandSender sender, String groupName, String targetPlayer) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "I'm sorry baby, please run this as a player :)");
+            CivUI.error(sender, "Only players can remove members");
             return;
         }
         Player p = (Player) sender;
@@ -31,14 +33,14 @@ public class RemoveMember extends BaseCommandMiddle {
             return;
         }
         if (group.isDisciplined()) {
-            p.sendMessage(ChatColor.RED + "This group is disiplined.");
+            CivUI.error(p, NLText.group(group), " is disciplined");
             return;
         }
         UUID executor = NameLayerAPI.getUUID(p.getName());
         UUID uuid = NameLayerAPI.getUUID(targetPlayer);
 
         if (uuid == null) {
-            p.sendMessage(ChatColor.RED + "The player has never played before.");
+            CivUI.error(p, CivText.subject(targetPlayer), " has never played here");
             return;
         }
 
@@ -65,22 +67,21 @@ public class RemoveMember extends BaseCommandMiddle {
         }
 
         if (!allowed && !(p.isOp() || p.hasPermission("namelayer.admin"))) {
-            p.sendMessage(ChatColor.RED + "You do not have permissions to modify this group.");
+            CivUI.error(p, "You don't have permission to remove ", NLText.rank(toBeRemoved), " from ", NLText.group(group));
             return;
         }
 
         if (!group.isMember(uuid)) {
-            p.sendMessage(ChatColor.RED + "That player is not on the group.");
+            CivUI.error(p, NLText.player(uuid), " isn't on ", NLText.group(group));
             return;
         }
 
         if (group.isOwner(uuid)) {
-            p.sendMessage(ChatColor.RED + "That player owns the group, you cannot "
-                + "remove the player.");
+            CivUI.error(p, NLText.player(uuid), " owns ", NLText.group(group), ", so you can't remove them");
             return;
         }
 
-        p.sendMessage(ChatColor.GREEN + playerName + " has been removed from the group.");
+        CivUI.success(p, "Removed ", CivText.subject(playerName), " from ", NLText.group(group));
         group.removeMember(uuid);
     }
 }

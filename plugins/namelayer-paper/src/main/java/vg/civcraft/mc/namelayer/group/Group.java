@@ -579,7 +579,8 @@ public class Group {
      * @return true if the UUID belongs to the owner of the group, false otherwise.
      */
     public boolean isOwner(UUID uuid) {
-        return owner.equals(uuid);
+        // Deleted groups are merged into the special admin group, which has no owner
+        return owner != null && owner.equals(uuid);
     }
 
     public boolean isDisciplined() {

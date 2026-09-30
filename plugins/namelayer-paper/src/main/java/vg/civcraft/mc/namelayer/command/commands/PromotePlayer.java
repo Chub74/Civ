@@ -6,16 +6,18 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.events.PromotePlayerEvent;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class PromotePlayer extends BaseCommandMiddle {
@@ -31,12 +33,12 @@ public class PromotePlayer extends BaseCommandMiddle {
         UUID promotee = NameLayerAPI.getUUID(playerName);
 
         if (promotee == null) {
-            sender.sendMessage(ChatColor.RED + "That player does not exist");
+            CivUI.error(sender, "There's no player called ", CivText.subject(playerName));
             return;
         }
 
         if (promotee.equals(executor)) {
-            sender.sendMessage(ChatColor.RED + "You cannot promote yourself");
+            CivUI.error(sender, "You can't change your own rank");
             return;
         }
 
@@ -45,7 +47,7 @@ public class PromotePlayer extends BaseCommandMiddle {
             return;
         }
         if (group.isDisciplined()) {
-            sender.sendMessage(ChatColor.RED + "This group is disiplined.");
+            CivUI.error(sender, NLText.group(group), " is disciplined");
             return;
         }
 
@@ -56,7 +58,7 @@ public class PromotePlayer extends BaseCommandMiddle {
             return;
         }
         if (promoteeType == PlayerType.NOT_BLACKLISTED) {
-            sender.sendMessage(ChatColor.RED + "Nice try");
+            CivUI.error(sender, "You can't give anyone the rank ", NLText.rank(promoteeType));
             return;
         }
 
@@ -65,7 +67,7 @@ public class PromotePlayer extends BaseCommandMiddle {
             PlayerType t = group.getPlayerType(executor); // playertype for the player running the command.
 
             if (t == null) {
-                sender.sendMessage(ChatColor.RED + "You are not on that group.");
+                CivUI.error(sender, "You're not on ", NLText.group(group));
                 return;
             }
 
@@ -88,7 +90,7 @@ public class PromotePlayer extends BaseCommandMiddle {
             }
 
             if (!allowed) {
-                sender.sendMessage(ChatColor.RED + "You do not have permissions to promote to this rank");
+                CivUI.error(sender, "You don't have permission to give out ", NLText.rank(promoteeType), " on ", NLText.group(group));
                 return;
             }
 
@@ -118,13 +120,12 @@ public class PromotePlayer extends BaseCommandMiddle {
         }
 
         if (!allowed || !group.isMember(promotee)) { //can't edit a player who isn't in the group
-            sender.sendMessage(ChatColor.RED + NameLayerAPI.getCurrentName(promotee) + " is not a member of this group or you do not have permission to edit their rank");
+            CivUI.error(sender, NLText.player(promotee), " isn't on ", NLText.group(group), ", or you can't change their rank");
             return;
         }
 
         if (group.isOwner(promotee)) {
-            sender.sendMessage(ChatColor.RED + "That player owns the group, you cannot "
-                + "demote the player.");
+            CivUI.error(sender, NLText.player(promotee), " owns ", NLText.group(group), ", so you can't change their rank");
             return;
         }
 
@@ -138,16 +139,13 @@ public class PromotePlayer extends BaseCommandMiddle {
             }
             group.removeMember(promotee);
             group.addMember(promotee, promoteeType);
-            sender.sendMessage(ChatColor.GREEN + NameLayerAPI.getCurrentName(promotee) + " has been added as (PlayerType) " +
-                promoteeType.toString() + " in (Group) " + group.getName());
-            oProm.sendMessage(ChatColor.GREEN + "You have been promoted to (PlayerType) " +
-                promoteeType.toString() + " in (Group) " + group.getName());
+            CivUI.success(sender, NLText.player(promotee), " is now ", NLText.rank(promoteeType), " on ", NLText.group(group));
+            CivUI.info(oProm, "You're now ", NLText.rank(promoteeType), " on ", NLText.group(group));
         } else {
             //player is offline change their perms
             group.removeMember(promotee);
             group.addMember(promotee, promoteeType);
-            sender.sendMessage(ChatColor.GREEN + NameLayerAPI.getCurrentName(promotee) + " has been added as (PlayerType) " +
-                promoteeType.toString() + " in (Group) " + group.getName());
+            CivUI.success(sender, NLText.player(promotee), " is now ", NLText.rank(promoteeType), " on ", NLText.group(group));
         }
     }
 }

@@ -7,16 +7,16 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.List;
 import java.util.UUID;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.commands.TabComplete;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.command.TabCompleters.InviteTabCompleter;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.listeners.PlayerListener;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class AcceptInvite extends BaseCommandMiddle {
 
@@ -33,22 +33,22 @@ public class AcceptInvite extends BaseCommandMiddle {
         UUID uuid = NameLayerAPI.getUUID(p.getName());
         PlayerType type = group.getInvite(uuid);
         if (type == null) {
-            p.sendMessage(Component.text("You were not invited to that group.").color(NamedTextColor.RED));
+            CivUI.error(p, "You weren't invited to ", NLText.group(group));
             return;
         }
         if (group.isDisciplined()) {
-            p.sendMessage(Component.text("That group is disiplined.").color(NamedTextColor.RED));
+            CivUI.error(p, NLText.group(group), " is disciplined");
             return;
         }
         if (group.isMember(uuid)) {
-            p.sendMessage(Component.text("You are already a member you cannot join again.").color(NamedTextColor.RED));
+            CivUI.error(p, "You're already a member of ", NLText.group(group));
             group.removeInvite(uuid, true);
             return;
         }
         group.addMember(uuid, type);
         group.removeInvite(uuid, true);
         PlayerListener.removeNotification(uuid, group);
-        p.sendMessage(Component.text("You have successfully been added to the group as a " + type.name() + ".").color(NamedTextColor.GREEN));
+        CivUI.success(p, "Joined the group ", NLText.group(group), " as ", NLText.rank(type));
     }
 
     @TabComplete("NL_Invites")

@@ -7,15 +7,16 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.commands.TabComplete;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.command.TabCompleters.InviteTabCompleter;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.listeners.PlayerListener;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class RejectInvite extends BaseCommandMiddle {
 
@@ -35,17 +36,17 @@ public class RejectInvite extends BaseCommandMiddle {
         // but this is checked for in the above groupIsNull() call.
         GroupManager.PlayerType type = group.getInvite(uuid);
         if (type == null) {
-            player.sendMessage(ChatColor.RED + "You were not invited to that group.");
+            CivUI.error(player, "You weren't invited to ", NLText.group(group));
             return;
         }
         if (group.isMember(uuid)) {
-            player.sendMessage(ChatColor.RED + "You cannot reject an invite to a group that you're already a member of.");
+            CivUI.error(player, "You're already a member of ", NLText.group(group));
             group.removeInvite(uuid, true);
             return;
         }
         group.removeInvite(uuid, true);
         PlayerListener.removeNotification(uuid, group);
-        player.sendMessage(ChatColor.GREEN + "You've successfully declined that group invitation.");
+        CivUI.success(player, "Declined the invite to the group ", NLText.group(group));
     }
 
     @TabComplete("NL_Invites")

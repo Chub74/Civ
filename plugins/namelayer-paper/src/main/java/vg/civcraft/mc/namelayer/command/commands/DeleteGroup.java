@@ -9,14 +9,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class DeleteGroup extends BaseCommandMiddle {
 
@@ -42,7 +43,7 @@ public class DeleteGroup extends BaseCommandMiddle {
 
                     //player could have lost delete permission in the mean time
                     if (!NameLayerAPI.getGroupManager().hasAccess(gD, uuid, PermissionType.getPermission("DELETE"))) {
-                        p.sendMessage(Component.text("You do not have permission to run that command.").color(NamedTextColor.RED));
+                        CivUI.error(p, "You don't have permission to delete ", NLText.group(gD));
                         return;
                     }
                     Date now = new Date(System.currentTimeMillis() - 15000);
@@ -50,14 +51,14 @@ public class DeleteGroup extends BaseCommandMiddle {
                     if (now.getTime() < Long.parseLong(entry[1])) {
                         //good to go delete the group
                         if (gm.deleteGroup(gD.getName()))
-                            p.sendMessage(Component.text("Group was successfully deleted.").color(NamedTextColor.GREEN));
+                            CivUI.success(p, "Deleted the group ", NLText.group(gD));
                         else
-                            p.sendMessage(Component.text("Group is now disciplined. Check back later to see if group is deleted.").color(NamedTextColor.GREEN));
+                            CivUI.warn(p, NLText.group(gD), " is disciplined while it's deleted. Check back later");
 
                         confirmDeleteGroup.remove(uuid);
                         return;
                     } else {
-                        p.sendMessage(Component.text("You did not do '/nldg %s %s' fast enough, you will need to start over".formatted(confirm, gD.getName())).color(NamedTextColor.RED));
+                        CivUI.error(p, "You didn't confirm within 15 seconds. Run ", NLText.command("/nldg " + gD.getName()), " to start over");
                         confirmDeleteGroup.remove(uuid);
                         return;
                     }
@@ -71,23 +72,27 @@ public class DeleteGroup extends BaseCommandMiddle {
             return;
         }
         if (!NameLayerAPI.getGroupManager().hasAccess(g, uuid, PermissionType.getPermission("DELETE"))) {
-            p.sendMessage(Component.text("You do not have permission to run that command.").color(NamedTextColor.RED));
+            CivUI.error(p, "You don't have permission to delete ", NLText.group(g));
             return;
         }
         PlayerType pType = g.getPlayerType(uuid);
         if (pType == null && !p.hasPermission("namelayer.admin")) {
-            p.sendMessage(Component.text("You are not on that group.").color(NamedTextColor.RED));
+            CivUI.error(p, "You're not on ", NLText.group(g));
             return;
         }
         if (g.isDisciplined() && !p.hasPermission("namelayer.admin")) {
-            p.sendMessage(Component.text("Group is disiplined.").color(NamedTextColor.RED));
+            CivUI.error(p, NLText.group(g), " is disciplined");
             return;
         }
         //set that user can confirm group in 15 seconds
         Date date = new Date();
         Long dateString = date.getTime();
         String[] groupDate = new String[]{g.getName(), dateString.toString()};
-        p.sendMessage(Component.text("To confirm the IRREVERSIBLE deletion of the group '%s' along with ALL reinforcements, bastions and snitches on it:\nType '/nldg %s %s' within 15 seconds.".formatted(g.getName(), confirm, g.getName())).color(NamedTextColor.RED));
+        CivUI.notice(Kind.WARN, "This deletes ", NLText.group(g), " and every reinforcement, bastion and snitch on it. Run ",
+            NLText.command("/nldg %s %s".formatted(confirm, g.getName())), " within 15 seconds to confirm")
+            .icon()
+            .to(p)
+            .send();
         confirmDeleteGroup.put(uuid, groupDate);
         return;
     }

@@ -13,6 +13,6 @@ public class ListCurrentInvites extends BaseCommandMiddle {
     @Description("List your current invites.")
     public void execute(Player sender) {
         Player p = (Player) sender;
-        p.sendMessage(PlayerListener.getNotificationsInStringForm(NameLayerAPI.getUUID(p.getName())));
+        PlayerListener.sendInvites(p);
     }
 }

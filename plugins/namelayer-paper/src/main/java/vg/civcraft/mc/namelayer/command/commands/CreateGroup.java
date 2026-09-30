@@ -9,14 +9,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.RunnableOnGroup;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class CreateGroup extends BaseCommandMiddle {
 
@@ -29,13 +32,14 @@ public class CreateGroup extends BaseCommandMiddle {
         int currentGroupCount = gm.countGroups(p.getUniqueId());
 
         if (NameLayerPlugin.getInstance().getGroupLimit() < currentGroupCount + 1 && !(p.isOp() || p.hasPermission("namelayer.admin"))) {
-            p.sendMessage(ChatColor.RED + "You cannot create any more groups! Please delete an un-needed group before making more.");
+            CivUI.error(p, "You're at the limit of ", CivText.value(String.valueOf(NameLayerPlugin.getInstance().getGroupLimit())),
+                " groups. Delete one before making another");
             return;
         }
 
         //enforce regulations on the name
         if (name.length() > 32) {
-            p.sendMessage(ChatColor.RED + "The group name is not allowed to contain more than 32 characters");
+            CivUI.error(p, "Group names can be at most ", CivText.value("32"), " characters");
             return;
         }
         Charset latin1 = StandardCharsets.ISO_8859_1;
@@ -55,12 +59,12 @@ public class CreateGroup extends BaseCommandMiddle {
         }
 
         if (invalidChars) {
-            p.sendMessage(ChatColor.RED + "You used characters, which are not allowed");
+            CivUI.error(p, "Group names can't contain that character");
             return;
         }
 
         if (GroupManager.getGroup(name) != null) {
-            p.sendMessage(ChatColor.RED + "That group is already taken. Try another unique group name.");
+            CivUI.error(p, NLText.group(name), " is already taken. Try another name");
             return;
         }
         String password = "";
@@ -79,9 +83,13 @@ public class CreateGroup extends BaseCommandMiddle {
                 Group g = getGroup();
                 if (p != null) {
                     if (g.getGroupId() == -1) { // failure
-                        p.sendMessage(ChatColor.RED + "That group is already taken or creation failed.");
+                        CivUI.error(p, "Couldn't create ", NLText.group(g), ". The name may already be taken");
+                        return;
                     }
-                    p.sendMessage(ChatColor.GREEN + "The group " + g.getName() + " was successfully created.");
+                    CivUI.notice(Kind.SUCCESS, "Created the group ", NLText.group(g), ". Open it with ", NLText.open(g))
+                        .hover(CivText.info("Invite people with /nlip " + g.getName() + " <player>"))
+                        .to(p)
+                        .send();
                 } else {
                     NameLayerPlugin.getInstance().getLogger().log(Level.INFO, "Group {0} creation complete resulting in group id: {1}",
                         new Object[]{g.getName(), g.getGroupId()});
@@ -89,8 +97,8 @@ public class CreateGroup extends BaseCommandMiddle {
             }
         }, false);
         if (NameLayerPlugin.getInstance().getGroupLimit() == (currentGroupCount + 1)) {
-            p.sendMessage(ChatColor.YELLOW + "You have reached the group limit with " + NameLayerPlugin.getInstance().getGroupLimit() + " groups! Please delete un-needed groups if you wish to create more.");
+            CivUI.warn(p, "That's your last group - you've reached the limit of ",
+                CivText.value(String.valueOf(NameLayerPlugin.getInstance().getGroupLimit())));
         }
-        p.sendMessage(ChatColor.GREEN + "Group creation request is in process.");
     }
 }

@@ -12,11 +12,6 @@ public class ListPlayerTypes extends BaseCommandMiddle {
     @CommandAlias("nllpt|ranks")
     @Description("List PlayerTypes.")
     public void execute(CommandSender sender) {
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("wereyjukqswedfrgyjukl.");
-            return;
-        }
-        Player p = (Player) sender;
-        PlayerType.displayPlayerTypesnllpt(p);
+        PlayerType.displayPlayerTypesnllpt(sender);
     }
 }

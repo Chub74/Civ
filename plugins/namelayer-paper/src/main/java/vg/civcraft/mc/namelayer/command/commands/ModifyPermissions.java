@@ -5,14 +5,18 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.namelayer.GroupManager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
+import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -24,7 +28,7 @@ public class ModifyPermissions extends BaseCommandMiddle {
     @CommandCompletion("@NL_Groups add|remove @NL_Ranks @NL_Perms")
     public void execute(CommandSender sender, String groupName, String adding, String playerRank, String permissionName) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage(ChatColor.RED + "You must be a player. Nuf said.");
+            CivUI.error(sender, "Only players can change group permissions");
             return;
         }
         Player p = (Player) sender;
@@ -35,15 +39,15 @@ public class ModifyPermissions extends BaseCommandMiddle {
         UUID uuid = NameLayerAPI.getUUID(p.getName());
         PlayerType type = g.getPlayerType(uuid);
         if (type == null) {
-            p.sendMessage(ChatColor.RED + "You are not on this group.");
+            CivUI.error(p, "You're not on ", NLText.group(g));
             return;
         }
         if (g.isDisciplined()) {
-            p.sendMessage(ChatColor.RED + "This group is currently disiplined.");
+            CivUI.error(p, NLText.group(g), " is disciplined");
             return;
         }
         if (!gm.hasAccess(g, uuid, PermissionType.getPermission("PERMS")) && !g.isOwner(uuid) && !(p.isOp() || p.hasPermission("namelayer.admin"))) {
-            p.sendMessage(ChatColor.RED + "You do not have permission for this command.");
+            CivUI.error(p, "You don't have permission to change permissions on ", NLText.group(g));
             return;
         }
         String info = adding;
@@ -54,45 +58,38 @@ public class ModifyPermissions extends BaseCommandMiddle {
         }
         PermissionType pType = PermissionType.getPermission(permissionName);
         if (pType == null) {
-            StringBuilder sb = new StringBuilder();
-            for (PermissionType perm : PermissionType.getAllPermissions()) {
-                sb.append(perm.getName());
-                sb.append(" ");
-            }
-            p.sendMessage(ChatColor.RED
-                + "That PermissionType does not exist.\n"
-                + "The current types are: " + sb.toString());
+            CivUI.notice(Kind.ERROR, "There's no permission called ", CivText.value(permissionName))
+                .hover(Component.text().append(CivText.info("Permissions: ")).append(NLText.permissions()).build())
+                .to(p)
+                .send();
             return;
         }
         GroupPermission gPerm = gm.getPermissionforGroup(g);
 
         if (playerType == PlayerType.NOT_BLACKLISTED && !pType.getCanBeBlacklisted()) {
-            sender.sendMessage(ChatColor.RED + "You can not change this permission for non-blacklisted players.");
+            CivUI.error(sender, "You can't change ", CivText.value(pType.getName()), " for ", NLText.rank(playerType));
             return;
         }
 
         if (info.equalsIgnoreCase("add")) {
             if (gPerm.hasPermission(playerType, pType))
-                sender.sendMessage(ChatColor.RED + "This PlayerType already has the PermissionType: " + pType.getName());
+                CivUI.error(sender, NLText.rank(playerType), " already has ", CivText.value(pType.getName()));
             else {
                 if (playerType == PlayerType.NOT_BLACKLISTED && pType == PermissionType.getPermission("JOIN_PASSWORD")) {
                     //we need to prevent players from explicitly adding people to this permission group
-                    sender.sendMessage(ChatColor.RED + "You can't explicitly add players to this group. Per default any non blacklisted person will"
-                        + "be included in this permission group");
+                    CivUI.error(sender, NLText.rank(playerType), " already covers everyone who isn't blacklisted");
                 }
                 gPerm.addPermission(playerType, pType);
-                sender.sendMessage(ChatColor.GREEN + "The PermissionType: " + pType.getName() + " was successfully added to the PlayerType: " +
-                    playerType.name());
+                CivUI.success(sender, "Gave ", NLText.rank(playerType), " ", CivText.value(pType.getName()), " on ", NLText.group(g));
             }
         } else if (info.equalsIgnoreCase("remove")) {
             if (gPerm.hasPermission(playerType, pType)) {
                 gPerm.removePermission(playerType, pType);
-                sender.sendMessage(ChatColor.GREEN + "The PermissionType: " + pType.getName() + " was successfully removed from" +
-                    " the PlayerType: " + playerType.name());
+                CivUI.success(sender, "Took ", CivText.value(pType.getName()), " from ", NLText.rank(playerType), " on ", NLText.group(g));
             } else
-                sender.sendMessage(ChatColor.RED + "This PlayerType does not have the PermissionType: " + pType.getName());
+                CivUI.error(sender, NLText.rank(playerType), " doesn't have ", CivText.value(pType.getName()));
         } else {
-            p.sendMessage(ChatColor.RED + "Specify if you want to add or remove.");
+            CivUI.error(p, "Say whether to ", CivText.value("add"), " or ", CivText.value("remove"), " the permission");
         }
     }
 }

@@ -8,11 +8,14 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.misc.NameFetcher;
 
 public class UpdateName extends BaseCommandMiddle {
@@ -28,7 +31,7 @@ public class UpdateName extends BaseCommandMiddle {
         final String oldName = NameLayerAPI.getCurrentName(uuid);
 
         if (NameLayerPlugin.getGroupManagerDao().hasChangedNameBefore(uuid)) {
-            p.sendMessage(ChatColor.RED + "You already changed your name");
+            CivUI.error(p, "You've already changed your name");
             return;
         }
 
@@ -45,28 +48,24 @@ public class UpdateName extends BaseCommandMiddle {
                             e.printStackTrace();
                         }
                         if (fetchedNames == null) {
-                            p.sendMessage(ChatColor.RED
-                                + "An error occured. Try again later");
+                            CivUI.error(p, "Couldn't look up your account name. Try again later");
                             return;
                         }
                         String newName = fetchedNames.get(uuid);
                         if (newName == null) {
-                            p.sendMessage(ChatColor.RED
-                                + "An error occured. Try again later");
+                            CivUI.error(p, "Couldn't look up your account name. Try again later");
                             return;
                         }
                         UUID existingNameUUID = NameLayerAPI.getUUID(newName);
                         if (existingNameUUID != null) {
                             if (!uuid.equals(existingNameUUID)) {
                                 // different person has the name
-                                p.sendMessage(ChatColor.RED
-                                    + "Someone already has the new name of your minecraft account on this server. Because of that you may not update your name");
+                                CivUI.error(p, "Someone here already uses the name ", CivText.subject(newName), ", so you can't take it");
                                 return;
                             }
                             if (oldName.equals(newName)) {
                                 // name hasnt changed
-                                p.sendMessage(ChatColor.RED
-                                    + "The name of your minecraft account is the same one as on this server");
+                                CivUI.error(p, "Your account name is already ", CivText.subject(newName));
                                 return;
                             }
                             // Player wants to change name to one which is
@@ -74,10 +73,11 @@ public class UpdateName extends BaseCommandMiddle {
                             // different capitalization. We'll allow it
                         }
 
-                        p.sendMessage(ChatColor.GREEN
-                            + "The current name of your minecraft account is \""
-                            + newName
-                            + "\". Run \"/nlun CONFIRM\" to update your name on the server to this name. Be careful though as this change can not be reverted!");
+                        CivUI.notice(Kind.WARN, "Your account is now called ", CivText.subject(newName),
+                                ". Run ", NLText.command("/nlun CONFIRM"), " to take that name here - you can't undo it")
+                            .icon()
+                            .to(p)
+                            .send();
                         newNames.put(uuid, newName);
                     }
                 });
@@ -85,14 +85,11 @@ public class UpdateName extends BaseCommandMiddle {
         } else {
             String newName = newNames.get(uuid);
             if (newName == null) {
-                sender.sendMessage(ChatColor.RED
-                    + "Run \"/nlun\" first to initiate the name changes process");
+                CivUI.error(sender, "Run ", NLText.command("/nlun"), " first to start a name change");
                 return;
             }
             if (!newNameOrConfirm.equals("CONFIRM")) {
-                sender.sendMessage(ChatColor.RED
-                    + "Run \"/nlun CONFIRM\" to confirm your name change to \""
-                    + newName + "\"");
+                CivUI.error(sender, "Run ", NLText.command("/nlun CONFIRM"), " to confirm your name change to ", CivText.subject(newName));
                 return;
             }
             NameLayerPlugin.getGroupManagerDao().logNameChange(uuid, oldName,
@@ -100,10 +97,7 @@ public class UpdateName extends BaseCommandMiddle {
             // uncomment following to directly change name
             // NameAPI.getAssociationList().changePlayer(newName, uuid);
             // NameAPI.resetCache(uuid);
-            sender.sendMessage(ChatColor.GREEN
-                + "Your name was changed to \""
-                + newName
-                + "\". This change will be applied together with all other name changes at a previously announced date.");
+            CivUI.success(sender, "Your name will change to ", CivText.subject(newName), " with the next scheduled batch of name changes");
         }
     }
 }

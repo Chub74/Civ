@@ -6,21 +6,22 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.namelayer.GroupManager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
+import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.listeners.PlayerListener;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class InvitePlayer extends BaseCommandMiddle {
@@ -41,25 +42,21 @@ public class InvitePlayer extends BaseCommandMiddle {
             return;
         }
         if (!isAdmin && group.isDisciplined()) {
-            s.sendMessage(ChatColor.RED + "This group is disiplined.");
+            CivUI.error(s, NLText.group(group), " is disciplined");
             return;
         }
         final UUID targetAccount = NameLayerAPI.getUUID(targetPlayer);
         if (targetAccount == null) {
-            s.sendMessage(ChatColor.RED + "The player has never played before.");
+            CivUI.error(s, CivText.subject(targetPlayer), " has never played here");
             return;
         }
         final PlayerType pType = targetType != null ? PlayerType.getPlayerType(targetType) : PlayerType.MEMBERS;
         if (pType == null) {
-            if (p != null) {
-                PlayerType.displayPlayerTypes(p);
-            } else {
-                s.sendMessage("Invalid player type");
-            }
+            PlayerType.displayPlayerTypes(s);
             return;
         }
         if (pType == PlayerType.NOT_BLACKLISTED) {
-            p.sendMessage(ChatColor.RED + "I think we both know that this shouldn't be possible.");
+            CivUI.error(s, "You can't invite someone as ", NLText.rank(pType));
             return;
         }
         if (!isAdmin) {
@@ -67,7 +64,7 @@ public class InvitePlayer extends BaseCommandMiddle {
             final UUID executor = p.getUniqueId();
             final PlayerType t = group.getPlayerType(executor); // playertype for the player running the command.
             if (t == null) {
-                s.sendMessage(ChatColor.RED + "You are not on that group.");
+                CivUI.error(s, "You're not on ", NLText.group(group));
                 return;
             }
             boolean allowed = false;
@@ -89,18 +86,19 @@ public class InvitePlayer extends BaseCommandMiddle {
                     break;
             }
             if (!allowed) {
-                s.sendMessage(ChatColor.RED + "You do not have permissions to modify this group.");
+                CivUI.error(s, "You don't have permission to invite ", NLText.rank(pType), " to ", NLText.group(group));
                 return;
             }
         }
 
         if (group.isCurrentMember(targetAccount)) { // So a player can't demote someone who is above them.
-            s.sendMessage(ChatColor.RED + "Player is already a member. "
-                + "Use /promoteplayer to change their PlayerType.");
+            CivUI.error(s, NLText.player(targetAccount), " is already a member. Change their rank with ",
+                NLText.command("/nlpp " + group.getName() + " " + NameLayerAPI.getCurrentName(targetAccount) + " "));
             return;
         }
         if (NameLayerPlugin.getBlackList().isBlacklisted(group, targetAccount)) {
-            s.sendMessage(ChatColor.RED + "This player is currently blacklisted, you have to unblacklist him with /removeblacklist before inviting him to the group");
+            CivUI.error(s, NLText.player(targetAccount), " is blacklisted. Unblacklist them first with ",
+                NLText.command("/nlubl " + group.getName() + " " + NameLayerAPI.getCurrentName(targetAccount)));
             return;
         }
         if (!isAdmin) {
@@ -109,7 +107,10 @@ public class InvitePlayer extends BaseCommandMiddle {
             sendInvitation(group, pType, targetAccount, null, true);
         }
 
-        s.sendMessage(ChatColor.GREEN + "The invitation has been sent." + "\n Use /revoke to Revoke an invite.");
+        CivUI.notice(Kind.SUCCESS, "Invited ", NLText.player(targetAccount), " to the group ", NLText.group(group), " as ", NLText.rank(pType))
+            .hover(CivText.info("Undo with /nlri " + group.getName() + " " + NameLayerAPI.getCurrentName(targetAccount)))
+            .to(s)
+            .send();
     }
 
     public static void sendInvitation(Group group, PlayerType pType, UUID invitedPlayer, UUID inviter, boolean saveToDB) {
@@ -124,25 +125,19 @@ public class InvitePlayer extends BaseCommandMiddle {
                 } else {
                     group.addMember(invitedPlayer, pType, false);
                 }
-                invitee.sendMessage(
-                    ChatColor.GREEN + " You have auto-accepted invite to the group: " + group.getName());
+                CivUI.success(invitee, "You auto-accepted an invite to the group ", NLText.group(group));
             } else {
                 group.addInvite(invitedPlayer, pType, saveToDB);
                 PlayerListener.addNotification(invitedPlayer, group);
-                String msg;
-                if (inviter != null) {
-                    String inviterName = NameLayerAPI.getCurrentName(inviter);
-                    msg = "You have been invited to the group " + group.getName()
-                        + " by " + inviterName + ".\n";
-                } else {
-                    msg = "You have been invited to the group " + group.getName() + ".\n";
-                }
-                TextComponent message = new TextComponent(msg + "Click this message to accept. If you wish to toggle invites "
-                    + "so they always are accepted please run /autoaccept");
-                message.setColor(net.md_5.bungee.api.ChatColor.GREEN);
-                message.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/nlag " + group.getName()));
-                message.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder("  ---  Click to accept").create()));
-                invitee.spigot().sendMessage(message);
+                Component by = inviter == null
+                    ? Component.empty()
+                    : Component.text().append(Component.text(" by ")).append(NLText.player(inviter)).build();
+                CivUI.notice(Kind.INFO, "You're invited to the group ", NLText.group(group), " as ", NLText.rank(pType), by,
+                        ". Click to accept")
+                    .hover(CivText.info("Accept the invite. /autoaccept accepts every invite for you"))
+                    .click(ClickEvent.runCommand("/nlag " + group.getName()))
+                    .to(invitee)
+                    .send();
             }
         } else {
             // invitee is offline or on a different shard

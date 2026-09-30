@@ -1,32 +1,25 @@
 package vg.civcraft.mc.namelayer.gui;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.logging.Level;
-import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.StringUtil;
-import vg.civcraft.mc.civmodcore.chat.dialog.Dialog;
-import vg.civcraft.mc.civmodcore.chat.dialog.DialogManager;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
-import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.LClickable;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.commands.TransferGroup;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class AdminFunctionsGUI extends AbstractGroupGUI {
@@ -39,24 +32,22 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
     }
 
     public void showScreen() {
-        ClickableInventory ci = new ClickableInventory(27, g.getName());
+        ClickableInventory ci = new ClickableInventory(27, MenuUtils.title(g.getName()));
         // linking
         ItemStack linkStack = new ItemStack(Material.GOLD_INGOT);
-        ItemUtils.setDisplayName(linkStack, ChatColor.GOLD + "Link group");
+        MenuUtils.name(linkStack, Component.text("Link group", CivText.VALUE));
         Clickable linkClick;
 
-        ItemUtils.addLore(linkStack, ChatColor.RED
-            + "Sorry, group linking is not a currently supported feature.");
+        MenuUtils.lore(linkStack, Component.text("Group linking isn't supported yet", CivText.ERROR));
         linkClick = new DecorationStack(linkStack);
 
 //        ci.setSlot(linkClick, 10);
         // merging
         ItemStack mergeStack = new ItemStack(Material.SPONGE);
-        ItemUtils.setDisplayName(mergeStack, ChatColor.GOLD + "Merge group");
+        MenuUtils.name(mergeStack, Component.text("Merge group", CivText.VALUE));
         Clickable mergeClick;
 
-        ItemUtils.addLore(mergeStack, ChatColor.RED
-            + "Sorry, group merging is not a currently supported feature.");
+        MenuUtils.lore(mergeStack, Component.text("Group merging isn't supported yet", CivText.ERROR));
         mergeClick = new DecorationStack(mergeStack);
 
 //		if (gm.hasAccess(g, p.getUniqueId(),
@@ -68,26 +59,23 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
 //				}
 //			};
 //		} else {
-//			ItemUtils.addLore(mergeStack, ChatColor.RED
-//					+ "You don't have permission to do this");
+//			MenuUtils.lore(mergeStack, Component.text("You don't have permission to do this", CivText.ERROR));
 //			mergeClick = new DecorationStack(mergeStack);
 //		}
 //        ci.setSlot(mergeClick, 12);
         ItemStack colorChangeStack = new ItemStack(Material.WHITE_DYE);
-        ItemUtils.setComponentDisplayName(colorChangeStack,
-            Component.text("Change group color of ", NamedTextColor.GOLD).append(g.getGroupNameColored()));
+        MenuUtils.name(colorChangeStack, Component.text("Change the colour of ", CivText.VALUE).append(g.getGroupNameColored()));
         Clickable colorChangeClick;
         if (gm.hasAccess(g, p.getUniqueId(), PermissionType.getPermission("EDIT_COLOR"))) {
             colorChangeClick = getGroupColorChangeButton();
         } else {
-            ItemUtils.setComponentLore(colorChangeStack, Component.text("You don't have permission to do this", NamedTextColor.RED));
+            MenuUtils.lore(colorChangeStack, Component.text("You don't have permission to change the colour", CivText.ERROR));
             colorChangeClick = new DecorationStack(colorChangeStack);
         }
         ci.setSlot(colorChangeClick, 11);
         // transferring group
         ItemStack transferStack = new ItemStack(Material.PACKED_ICE);
-        ItemUtils.setDisplayName(transferStack, ChatColor.GOLD
-            + "Transfer group to new primary owner");
+        MenuUtils.name(transferStack, Component.text("Transfer group to new primary owner", CivText.VALUE));
         Clickable transferClick;
         if (g.isOwner(p.getUniqueId())) {
             transferClick = new Clickable(transferStack) {
@@ -97,14 +85,13 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
                 }
             };
         } else {
-            ItemUtils.addLore(transferStack, ChatColor.RED
-                + "You don't have permission to do this");
+            MenuUtils.lore(transferStack, Component.text("You don't have permission to do this", CivText.ERROR));
             transferClick = new DecorationStack(transferStack);
         }
         ci.setSlot(transferClick, 13);
         // deleting group
         ItemStack deletionStack = new ItemStack(Material.BARRIER);
-        ItemUtils.setDisplayName(deletionStack, ChatColor.GOLD + "Delete group");
+        MenuUtils.name(deletionStack, Component.text("Delete group", CivText.VALUE));
         Clickable deletionClick;
         if (gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("DELETE"))) {
@@ -115,15 +102,14 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
                 }
             };
         } else {
-            ItemUtils.addLore(deletionStack, ChatColor.RED
-                + "You don't have permission to do this");
+            MenuUtils.lore(deletionStack, Component.text("You don't have permission to do this", CivText.ERROR));
             deletionClick = new DecorationStack(deletionStack);
         }
         ci.setSlot(deletionClick, 15);
 
         // back button
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Back to overview");
+        MenuUtils.name(backToOverview, Component.text("Back to overview", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -140,187 +126,99 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
     }
 
     private void showTransferingMenu() {
-        p.sendMessage(ChatColor.GOLD
-            + "Enter the name of the new primary owner or \"cancel\" to exit this prompt");
-        ClickableInventory.forceCloseInventory(p);
-        new Dialog(p, NameLayerPlugin.getInstance()) {
+        CivUI.prompt("Transfer ", NLText.group(g))
+            .body("Who should become the new primary owner?")
+            .label("Player")
+            .maxLength(16)
+            .validate(name -> NameLayerAPI.getUUID(name.trim()) != null, "There's no player with that name")
+            .onSubmit((p, name) -> confirmTransfer(p, NameLayerAPI.getUUID(name.trim())))
+            .onCancel(p -> showScreen())
+            .open(p);
+    }
 
-            @Override
-            public List<String> onTabComplete(String word, String[] arg1) {
-                List<String> players = Bukkit.getOnlinePlayers().stream()
-                    .filter(p -> g.isMember(p.getUniqueId()))
-                    .map(Player::getName)
-                    .collect(Collectors.toList());
-                players.add("cancel");
-
-                return StringUtil.copyPartialMatches(word, players, new ArrayList<>());
-            }
-
-            @Override
-            public void onReply(String[] arg0) {
-                if (arg0.length > 1) {
-                    p.sendMessage(ChatColor.RED
-                        + "You may only enter one player to transfer to");
+    private void confirmTransfer(Player p, UUID transferUUID) {
+        CivUI.confirm("Transfer ", NLText.group(g), " to ", NLText.player(transferUUID))
+            .warning("You can't undo this")
+            .yesLabel("Transfer")
+            .noLabel("Don't transfer")
+            .onYes(who -> {
+                if (TransferGroup.attemptTransfer(g, who, transferUUID)) {
+                    NameLayerPlugin.log(
+                        Level.INFO,
+                        who.getName()
+                            + " transferred group to "
+                            + NameLayerAPI.getCurrentName(transferUUID)
+                            + " for group " + g.getName()
+                            + " via the gui");
+                } else {
                     showScreen();
-                    return;
                 }
-                if (arg0[0].equals("cancel")) {
-                    showScreen();
-                    return;
-                }
-                final UUID transferUUID = NameLayerAPI.getUUID(arg0[0]);
-                if (transferUUID == null) {
-                    p.sendMessage(ChatColor.RED + "This player doesn't exist");
-                    showScreen();
-                    return;
-                }
-                final String playerName = NameLayerAPI.getCurrentName(transferUUID);
-                ClickableInventory confirmInv = new ClickableInventory(27,
-                    g.getName());
-                ItemStack info = new ItemStack(Material.PAPER);
-                ItemUtils.setDisplayName(info, ChatColor.GOLD + "Transfer group to "
-                    + playerName);
-                ItemUtils.addLore(info, ChatColor.RED
-                    + "Are you sure that you want to", ChatColor.RED
-                    + "transfer this group? You can not undo this!");
-                ItemStack yes = yesStack();
-                ItemUtils.setDisplayName(yes,
-                    ChatColor.GOLD + "Yes, transfer " + g.getName()
-                        + " to " + playerName);
-                ItemStack no = noStack();
-                ItemUtils.setDisplayName(no,
-                    ChatColor.GOLD + "No, don't transfer " + g.getName());
-                confirmInv.setSlot(new Clickable(yes) {
-
-                    @Override
-                    public void clicked(Player p) {
-                        if (TransferGroup.attemptTransfer(g, p, transferUUID)) {
-                            NameLayerPlugin.log(
-                                Level.INFO,
-                                p.getName()
-                                    + " transferred group to "
-                                    + NameLayerAPI
-                                    .getCurrentName(transferUUID)
-                                    + " for group " + g.getName()
-                                    + " via the gui");
-                        } else {
-                            showScreen();
-                        }
-                    }
-                }, 11);
-                confirmInv.setSlot(new Clickable(no) {
-
-                    @Override
-                    public void clicked(Player p) {
-                        showScreen();
-                    }
-                }, 15);
-                confirmInv.setSlot(new DecorationStack(info), 4);
-                confirmInv.showInventory(p);
-
-            }
-        };
+            })
+            .onNo(who -> showScreen())
+            .open(p);
     }
 
     private void showDeletionMenu() {
-        ClickableInventory confirmInv = new ClickableInventory(27, g.getName());
-        ItemStack info = new ItemStack(Material.PAPER);
-        ItemUtils.setDisplayName(info, ChatColor.GOLD + "Delete group");
-        ItemUtils.addLore(info, ChatColor.RED + "Are you sure that you want to",
-            ChatColor.RED + "delete this group? You can not undo this!");
-
-        ItemStack yes = yesStack();
-        ItemUtils.setDisplayName(yes, ChatColor.GOLD + "Yes, delete " + g.getName());
-        ItemStack no = noStack();
-        ItemUtils.setDisplayName(no, ChatColor.GOLD + "No, keep " + g.getName());
-        confirmInv.setSlot(new Clickable(yes) {
-
-            @Override
-            public void clicked(Player p) {
+        CivUI.confirm("Delete ", NLText.group(g))
+            .warning("You can't undo this")
+            .yesLabel("Delete")
+            .noLabel("Keep it")
+            .onYes(p -> {
                 if (!gm.hasAccess(g, p.getUniqueId(),
                     PermissionType.getPermission("DELETE"))) {
-                    p.sendMessage(ChatColor.RED
-                        + "You don't have permission to delete this group");
+                    CivUI.error(p, "You don't have permission to delete ", NLText.group(g));
                     showScreen();
                     return;
                 }
                 if (g.isDisciplined()) {
-                    p.sendMessage(ChatColor.RED + "This group is disciplined.");
+                    CivUI.error(p, NLText.group(g), " is disciplined");
                     showScreen();
                     return;
                 }
                 NameLayerPlugin.log(Level.INFO,
                     p.getName() + " deleted " + g.getName() + " via the gui");
                 if (gm.deleteGroup(g.getName())) {
-                    p.sendMessage(ChatColor.GREEN + g.getName()
-                        + " was successfully deleted.");
+                    CivUI.success(p, "Deleted the group ", NLText.group(g));
                 } else {
-                    p.sendMessage(ChatColor.GREEN + "Group is now disciplined."
-                        + " Check back later to see if group is deleted.");
+                    CivUI.warn(p, NLText.group(g), " is disciplined while it's deleted. Check back later");
                 }
-            }
-        }, 11);
-        confirmInv.setSlot(new Clickable(no) {
-
-            @Override
-            public void clicked(Player p) {
-                showScreen();
-            }
-        }, 15);
-        confirmInv.setSlot(new DecorationStack(info), 4);
-        confirmInv.showInventory(p);
+            })
+            .onNo(p -> showScreen())
+            .open(p);
     }
 
     private LClickable getGroupColorChangeButton() {
         return new LClickable(Material.WHITE_DYE,
-            Component.text("Change group color of ", NamedTextColor.GOLD).append(g.getGroupNameColored()), p -> {
-            ClickableInventory.forceCloseInventory(p);
-            p.sendMessage(Component.text("Enter the color you wish to change ", NamedTextColor.GREEN).append(g.getGroupNameColored())
-                .append(Component.text(" to or type \"cancel\" to leave this prompt", NamedTextColor.GREEN)));
-            new Dialog(p, NameLayerPlugin.getInstance()) {
+            Component.text("Change the colour of ", CivText.VALUE).append(g.getGroupNameColored()), p ->
+            CivUI.prompt("Colour of ", NLText.group(g))
+                .body("A colour name like ", CivText.value("gold"), " or a hex value like ", CivText.value("#ff8800"))
+                .label("Colour")
+                .initial(colourName(g.getGroupColor()))
+                .maxLength(16)
+                .validate(input -> parseColour(input) != null, "That isn't a colour name or hex value")
+                .onSubmit((who, input) -> {
+                    g.setGroupColor(parseColour(input));
+                    CivUI.success(who, "Changed the colour of ", NLText.group(g), " to ", g.getGroupNameColored());
+                })
+                .onCancel(who -> {
+                    CivUI.info(who, "Left the colour unchanged");
+                    showScreen();
+                })
+                .open(p));
+    }
 
-                @Override
-                public List<String> onTabComplete(String wordCompleted, String[] fullMessage) {
-                    return Collections.emptyList();
-                }
+    private static TextColor parseColour(String input) {
+        String trimmed = input.trim();
+        TextColor color = NamedTextColor.NAMES.value(trimmed.toLowerCase(Locale.ROOT));
+        return color != null ? color : TextColor.fromHexString(trimmed);
+    }
 
-                @Override
-                public void onReply(String[] message) {
-                    if (message.length > 1) {
-                        p.sendRichMessage("<red>Colors cannot have spaces</red>");
-                        showScreen();
-                        this.end();
-                        //For some reason if we don't force end the dialog after each this.end then
-                        //tab completion for other commands will be broken? (/nl, /g etc.)
-                        DialogManager.forceEndDialog(p.getUniqueId());
-                        return;
-                    }
-                    String cancel = message[0];
-                    if (cancel.equals("cancel")) {
-                        p.sendRichMessage("<red>Cancelled changing group color</red>");
-                        showScreen();
-                        this.end();
-                        DialogManager.forceEndDialog(p.getUniqueId());
-                        return;
-                    }
-                    TextColor color = NamedTextColor.NAMES.value(cancel);
-                    if (color == null) {
-                        color = TextColor.fromHexString(cancel);
-                    }
-                    if (color == null) {
-                        player.sendRichMessage("<red>The value you entered was not a valid hex value or color.</red>");
-                        showScreen();
-                        this.end();
-                        DialogManager.forceEndDialog(p.getUniqueId());
-                        return;
-                    }
-                    g.setGroupColor(color);
-                    p.sendMessage(Component.text("The color of " + g.getName() + " was changed to ", NamedTextColor.GREEN).append(g.getGroupNameColored()));
-                    this.end();
-                    DialogManager.forceEndDialog(p.getUniqueId());
-                }
-            };
-        });
+    private static String colourName(TextColor color) {
+        if (color == null) {
+            return "";
+        }
+        String name = color instanceof NamedTextColor named ? NamedTextColor.NAMES.key(named) : null;
+        return name != null ? name : color.asHexString();
     }
 
 }

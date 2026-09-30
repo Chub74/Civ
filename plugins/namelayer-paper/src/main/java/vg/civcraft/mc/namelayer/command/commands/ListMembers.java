@@ -6,15 +6,19 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import com.google.common.collect.Lists;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.namelayer.GroupManager;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
+import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class ListMembers extends BaseCommandMiddle {
@@ -35,13 +39,12 @@ public class ListMembers extends BaseCommandMiddle {
 
         if (!p.hasPermission("namelayer.admin")) {
             if (!group.isMember(uuid)) {
-                p.sendMessage(ChatColor.RED + "You're not on this group.");
+                CivUI.error(p, "You're not on ", NLText.group(group));
                 return;
             }
 
             if (!gm.hasAccess(group, uuid, PermissionType.getPermission("GROUPSTATS"))) {
-                p.sendMessage(ChatColor.RED
-                    + "You don't have permission to run that command.");
+                CivUI.error(p, "You don't have permission to see the members of ", NLText.group(group));
                 return;
             }
         }
@@ -75,16 +78,13 @@ public class ListMembers extends BaseCommandMiddle {
             uuids = group.getAllMembers();
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GREEN);
-        sb.append("Members are as follows:\n");
+        List<Component> lines = new ArrayList<>();
         for (UUID uu : uuids) {
-            sb.append(NameLayerAPI.getCurrentName(uu));
-            sb.append(" (");
-            sb.append(group.getPlayerType(uu));
-            sb.append(")\n");
+            lines.add(Component.text()
+                .append(NLText.player(uu))
+                .append(Component.text(" " + group.getPlayerType(uu).name(), CivText.MUTED))
+                .build());
         }
-
-        p.sendMessage(sb.toString());
+        p.sendMessage(NLText.list(CivText.heading("Members of " + group.getName()), lines));
     }
 }

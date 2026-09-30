@@ -6,7 +6,6 @@ import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
 import com.google.common.collect.Lists;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
@@ -17,6 +16,11 @@ import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 import java.util.List;
 import java.util.UUID;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.namelayer.misc.NLText;
+import net.kyori.adventure.text.Component;
+import java.util.ArrayList;
 
 public class ListInvites extends BaseCommandMiddle {
 
@@ -35,12 +39,12 @@ public class ListInvites extends BaseCommandMiddle {
         assert group != null;
         if (!sender.hasPermission("namelayer.admin")) {
             if (!group.isMember(uuid)) {
-                sender.sendMessage(ChatColor.RED + "You're not on this group.");
+                CivUI.error(sender, "You're not on ", NLText.group(group));
                 return;
             }
 
             if (!gm.hasAccess(group, uuid, PermissionType.getPermission("GROUPSTATS"))) {
-                sender.sendMessage(ChatColor.RED + "You don't have permission to run that command.");
+                CivUI.error(sender, "You don't have permission to see the invites of ", NLText.group(group));
                 return;
             }
         }
@@ -70,19 +74,17 @@ public class ListInvites extends BaseCommandMiddle {
             uuids = group.getAllInvites();
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GREEN);
-
-        if (!uuids.isEmpty()) {
-            sb.append("Invites are as follows:\n");
-            for (UUID uu : uuids) {
-                sb.append(NameLayerAPI.getCurrentName(uu));
-                sb.append(" (");
-                sb.append(group.getPlayerInviteType(uu));
-                sb.append(")\n");
-            }
-        } else sb.append("No invites found");
-
-        sender.sendMessage(sb.toString());
+        if (uuids.isEmpty()) {
+            CivUI.info(sender, NLText.group(group), " has no open invites");
+            return;
+        }
+        List<Component> lines = new ArrayList<>();
+        for (UUID uu : uuids) {
+            lines.add(Component.text()
+                .append(NLText.player(uu))
+                .append(Component.text(" " + group.getPlayerInviteType(uu).name(), CivText.MUTED))
+                .build());
+        }
+        sender.sendMessage(NLText.list(CivText.heading("Invites to " + group.getName()), lines));
     }
 }

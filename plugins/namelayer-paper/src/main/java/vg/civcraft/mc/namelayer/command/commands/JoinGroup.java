@@ -4,13 +4,14 @@ import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -26,34 +27,34 @@ public class JoinGroup extends BaseCommandMiddle {
             return;
         }
         if (g.isDisciplined()) {
-            p.sendMessage(ChatColor.RED + "This group is disiplined.");
+            CivUI.error(p, NLText.group(g), " is disciplined");
             return;
         }
         if (g.getPassword() == null) {
-            p.sendMessage(ChatColor.GREEN + "This group does not have a password, so you can't join it.");
+            CivUI.error(p, NLText.group(g), " has no password, so you can't join it that way");
             return;
         }
         if (!g.getPassword().equals(attemptedPassword)) {
-            p.sendMessage(ChatColor.RED + "That password is incorrect");
+            CivUI.error(p, "That password is wrong");
             return;
         }
         UUID uuid = NameLayerAPI.getUUID(p.getName());
         GroupPermission groupPerm = gm.getPermissionforGroup(g);
         PlayerType pType = groupPerm.getFirstWithPerm(PermissionType.getPermission("JOIN_PASSWORD"));
         if (pType == null) {
-            p.sendMessage(ChatColor.RED + "Someone derped. This group does not have the specified permission to let you join, sorry.");
+            CivUI.error(p, NLText.group(g), " doesn't let anyone join with its password");
             return;
         }
         if (g.isCurrentMember(uuid)) {
-            p.sendMessage(ChatColor.RED + "You are already a member.");
+            CivUI.error(p, "You're already a member of ", NLText.group(g));
             return;
         }
         if (NameLayerPlugin.getBlackList().isBlacklisted(g, uuid)) {
-            p.sendMessage(ChatColor.RED + "You can not join a group you have been blacklisted from");
+            CivUI.error(p, "You're blacklisted from ", NLText.group(g));
             return;
         }
 
         g.addMember(uuid, pType);
-        p.sendMessage(ChatColor.GREEN + "You have successfully been added to this group.");
+        CivUI.success(p, "Joined the group ", NLText.group(g), " as ", NLText.rank(pType));
     }
 }

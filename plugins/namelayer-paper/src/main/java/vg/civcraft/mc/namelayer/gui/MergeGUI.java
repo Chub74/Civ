@@ -2,17 +2,19 @@ package vg.civcraft.mc.namelayer.gui;
 
 import java.util.List;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
-import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class MergeGUI extends AbstractGroupGUI {
@@ -28,17 +30,13 @@ public class MergeGUI extends AbstractGroupGUI {
     }
 
     public void showScreen() {
-        ClickableInventory ci = new ClickableInventory(27, g.getName());
+        ClickableInventory ci = new ClickableInventory(27, MenuUtils.title(g.getName()));
         ItemStack mergeThisIntoOtherStack = new ItemStack(Material.MINECART);
-        ItemUtils.setDisplayName(mergeThisIntoOtherStack, ChatColor.GOLD + "Merge this group into a different one");
-        ItemUtils.addLore(mergeThisIntoOtherStack, ChatColor.AQUA
-            + "This action will transfer all members, reinforcements, snitches of this group to the one you chose next. "
-            + "This group will be deleted in the process");
+        MenuUtils.name(mergeThisIntoOtherStack, Component.text("Merge this group into a different one", CivText.VALUE));
+        MenuUtils.lore(mergeThisIntoOtherStack, Component.text("This action will transfer all members, reinforcements, snitches of this group to the one you chose next. " + "This group will be deleted in the process", CivText.INFO));
         ItemStack mergeOtherIntoThisStack = mergeStack();
-        ItemUtils.setDisplayName(mergeOtherIntoThisStack, ChatColor.GOLD + "Merge a different group into this one");
-        ItemUtils.addLore(mergeOtherIntoThisStack, ChatColor.AQUA
-            + "This action will transfer all members, reinforcements and snitches of the group you chose next to this group. "
-            + "The group chosen will be deleted in the process");
+        MenuUtils.name(mergeOtherIntoThisStack, Component.text("Merge a different group into this one", CivText.VALUE));
+        MenuUtils.lore(mergeOtherIntoThisStack, Component.text("This action will transfer all members, reinforcements and snitches of the group you chose next to this group. " + "The group chosen will be deleted in the process", CivText.INFO));
         ci.setSlot(new Clickable(mergeOtherIntoThisStack) {
 
             @Override
@@ -57,7 +55,7 @@ public class MergeGUI extends AbstractGroupGUI {
         }, 15);
         // exit button
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Go back to previous menu");
+        MenuUtils.name(backToOverview, Component.text("Go back to previous menu", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -69,7 +67,7 @@ public class MergeGUI extends AbstractGroupGUI {
     }
 
     private void showMergeGroupSelector() {
-        ClickableInventory ci = new ClickableInventory(54, g.getName());
+        ClickableInventory ci = new ClickableInventory(54, MenuUtils.title(g.getName()));
         final List<String> gName = gm.getAllGroupNames(p.getUniqueId());
         if (gName.size() < 45 * currentPage) {
             // would show an empty page, so go to previous
@@ -87,7 +85,7 @@ public class MergeGUI extends AbstractGroupGUI {
                 continue;
             }
             ItemStack is = new ItemStack(Material.MAGMA_CREAM);
-            ItemUtils.setDisplayName(is, ChatColor.GOLD + currentName);
+            MenuUtils.name(is, Component.text(String.valueOf(currentName), CivText.VALUE));
             ci.setSlot(new Clickable(is) {
 
                 @Override
@@ -99,7 +97,7 @@ public class MergeGUI extends AbstractGroupGUI {
         // back button
         if (currentPage > 0) {
             ItemStack back = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(back, ChatColor.GOLD + "Go to previous page");
+            MenuUtils.name(back, Component.text("Go to previous page", CivText.VALUE));
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -115,7 +113,7 @@ public class MergeGUI extends AbstractGroupGUI {
         // next button
         if ((45 * (currentPage + 1)) <= gName.size()) {
             ItemStack forward = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(forward, ChatColor.GOLD + "Go to next page");
+            MenuUtils.name(forward, Component.text("Go to next page", CivText.VALUE));
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -131,7 +129,7 @@ public class MergeGUI extends AbstractGroupGUI {
 
         // exit button
         ItemStack backToOverview = goBackStack();
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Exit selection");
+        MenuUtils.name(backToOverview, Component.text("Exit selection", CivText.VALUE));
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -143,61 +141,43 @@ public class MergeGUI extends AbstractGroupGUI {
     }
 
     private void requestConfirmation(final String groupName) {
-        ClickableInventory confirmInv = new ClickableInventory(27, g.getName());
         String fromGroup = mergeIntoThisGroup ? groupName : g.getName();
         String targetGroup = mergeIntoThisGroup ? g.getName() : groupName;
-        ItemStack info = new ItemStack(Material.PAPER);
-        ItemUtils.setDisplayName(info, ChatColor.GOLD + "Merge group");
-        ItemUtils.addLore(info, ChatColor.RED + "Are you sure that you want to merge " + fromGroup + " into "
-            + targetGroup + "? You can not undo this!");
-        ItemUtils.addLore(info, ChatColor.AQUA + "This will transfer all members, reinforcements, snitches etc. from "
-            + fromGroup + " to " + targetGroup + ". " + fromGroup + " will be deleted in the process");
-        ItemStack yes = yesStack();
-        ItemUtils.setDisplayName(yes, ChatColor.GOLD + "Yes, merge " + fromGroup + " into " + targetGroup);
-        ItemStack no = noStack();
-        ItemUtils.setDisplayName(no, ChatColor.GOLD + "No, don't merge " + g.getName());
-        confirmInv.setSlot(new Clickable(yes) {
-
-            @Override
-            public void clicked(Player p) {
-                requestMerge(groupName);
-            }
-        }, 11);
-        confirmInv.setSlot(new Clickable(no) {
-
-            @Override
-            public void clicked(Player p) {
-                showScreen();
-            }
-        }, 15);
-        confirmInv.setSlot(new DecorationStack(info), 4);
-        confirmInv.showInventory(p);
+        CivUI.confirm("Merge ", NLText.group(fromGroup), " into ", NLText.group(targetGroup))
+            .body("This will transfer all members, reinforcements, snitches etc. from ", NLText.group(fromGroup),
+                " to ", NLText.group(targetGroup), ". ", NLText.group(fromGroup), " will be deleted in the process")
+            .warning("You can't undo this")
+            .yesLabel("Merge")
+            .noLabel("Don't merge")
+            .onYes(who -> requestMerge(groupName))
+            .onNo(who -> showScreen())
+            .open(p);
     }
 
     private void requestMerge(String mergeGroupName) {
         final Group otherGroup = GroupManager.getGroup(mergeGroupName);
         if (otherGroup == null) {
-            p.sendMessage(ChatColor.RED + "Something went wrong, please try again");
+            CivUI.error(p, "Couldn't start the merge. Try again");
             showScreen();
             return;
         }
         if (!gm.hasAccess(otherGroup, p.getUniqueId(), PermissionType.getPermission("MERGE"))) {
-            p.sendMessage(ChatColor.RED + "You dont have permission to merge " + otherGroup.getName());
+            CivUI.error(p, "You don't have permission to merge ", NLText.group(otherGroup));
             showScreen();
             return;
         }
         if (!gm.hasAccess(g, p.getUniqueId(), PermissionType.getPermission("MERGE"))) {
-            p.sendMessage(ChatColor.RED + "You dont have permission to merge " + g.getName());
+            CivUI.error(p, "You don't have permission to merge ", NLText.group(g));
             showScreen();
             return;
         }
         if (g.isDisciplined() || otherGroup.isDisciplined()) {
-            p.sendMessage(ChatColor.RED + "One of the groups is disciplined, merging them failed");
+            CivUI.error(p, "You can't merge a disciplined group");
             showScreen();
             return;
         }
         if (mergeGroupName.equals(g.getName())) {
-            p.sendMessage(ChatColor.RED + "You cant merge a group with itself");
+            CivUI.error(p, "You can't merge a group into itself");
             showScreen();
             return;
         }
@@ -206,17 +186,16 @@ public class MergeGUI extends AbstractGroupGUI {
         try {
             if (mergeIntoThisGroup) {
                 gm.mergeGroup(g, otherGroup);
-                p.sendMessage(ChatColor.GREEN + "Successfully merged " + otherGroup.getName() + " into " + g.getName());
+                CivUI.success(p, "Merged the group ", NLText.group(otherGroup), " into ", NLText.group(g));
                 parent.showScreen();
             } else {
                 gm.mergeGroup(otherGroup, g);
-                p.sendMessage(ChatColor.GREEN + "Successfully merged " + g.getName() + " into " + otherGroup.getName());
+                CivUI.success(p, "Merged the group ", NLText.group(g), " into ", NLText.group(otherGroup));
             }
         } catch (Exception e) {
             NameLayerPlugin.getInstance().getLogger().log(Level.SEVERE, "Group merging failed", e);
-            p.sendMessage(ChatColor.GREEN + "Group merging may have failed.");
+            CivUI.error(p, "The merge may have failed. Ask an admin to check");
         }
-        p.sendMessage(ChatColor.GREEN + "Group is under going merge.");
     }
 
 }

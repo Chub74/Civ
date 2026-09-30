@@ -5,13 +5,14 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class SetDefaultGroup extends BaseCommandMiddle {
 
@@ -21,7 +22,7 @@ public class SetDefaultGroup extends BaseCommandMiddle {
     @CommandCompletion("@NL_Groups")
     public void execute(CommandSender sender, String groupName) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("I don't think you need to do that.");
+            CivUI.error(sender, "Only players have a default group");
             return;
         }
         Player p = (Player) sender;
@@ -33,17 +34,17 @@ public class SetDefaultGroup extends BaseCommandMiddle {
 
         PlayerType pType = g.getPlayerType(uuid);
         if (pType == null) {
-            p.sendMessage(ChatColor.RED + "You do not have access to that group.");
+            CivUI.error(p, "You're not on ", NLText.group(g));
             return;
         }
 
         String x = gm.getDefaultGroup(uuid);
         if (x == null) {
             g.setDefaultGroup(uuid);
-            p.sendMessage(ChatColor.GREEN + "You have set your default group to " + g.getName());
+            CivUI.success(p, "Your default group is now ", NLText.group(g));
         } else {
             g.changeDefaultGroup(uuid);
-            p.sendMessage(ChatColor.GREEN + "You changed your default group from " + x + " to " + gm.getDefaultGroup(uuid));
+            CivUI.success(p, "Changed your default group from ", NLText.group(x), " to ", NLText.group(gm.getDefaultGroup(uuid)));
         }
     }
 }

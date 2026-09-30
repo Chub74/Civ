@@ -10,15 +10,16 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.database.GroupManagerDao;
 import vg.civcraft.mc.namelayer.events.GroupCreateEvent;
 import vg.civcraft.mc.namelayer.events.GroupDeleteEvent;
 import vg.civcraft.mc.namelayer.events.GroupMergeEvent;
 import vg.civcraft.mc.namelayer.events.GroupTransferEvent;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.GroupPermission;
 import vg.civcraft.mc.namelayer.permission.PermissionHandler;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
@@ -599,15 +600,11 @@ public class GroupManager {
         }
 
         public static void displayPlayerTypes(CommandSender p) {
-            p.sendMessage(ChatColor.RED
-                + "That PlayerType does not exist.\n"
-                + "The current types are: " + getStringOfTypes());
+            CivUI.error(p, "That rank doesn't exist. Ranks are ", NLText.ranks());
         }
 
-        public static void displayPlayerTypesnllpt(Player p) {
-            p.sendMessage(ChatColor.GREEN
-                + "The current types are: " + getStringOfTypes());
-            //dont yell at player for nllpt
+        public static void displayPlayerTypesnllpt(CommandSender p) {
+            CivUI.info(p, "Ranks are ", NLText.ranks());
         }
 
         public static PlayerType getByID(int id) {

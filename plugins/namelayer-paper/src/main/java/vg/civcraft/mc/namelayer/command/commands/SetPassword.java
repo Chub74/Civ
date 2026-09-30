@@ -5,13 +5,15 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager.PlayerType;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class SetPassword extends BaseCommandMiddle {
@@ -22,7 +24,7 @@ public class SetPassword extends BaseCommandMiddle {
     @CommandCompletion("@NL_Groups")
     public void execute(CommandSender sender, String groupName, String userPassword) {
         if (!(sender instanceof Player)) {
-            sender.sendMessage("You may not use this command, must be a pluer.");
+            CivUI.error(sender, "Only players can set group passwords");
             return;
         }
         Player p = (Player) sender;
@@ -34,12 +36,12 @@ public class SetPassword extends BaseCommandMiddle {
 
         PlayerType pType = g.getPlayerType(uuid);
         if (pType == null) {
-            p.sendMessage(ChatColor.RED + "You do not have access to that group.");
+            CivUI.error(p, "You're not on ", NLText.group(g));
             return;
         }
 
         if (!gm.hasAccess(g, uuid, PermissionType.getPermission("PASSWORD"))) {
-            p.sendMessage(ChatColor.RED + "You do not have permission to modify that group.");
+            CivUI.error(p, "You don't have permission to set the password of ", NLText.group(g));
             return;
         }
 
@@ -47,6 +49,6 @@ public class SetPassword extends BaseCommandMiddle {
         if (userPassword != null)
             password = userPassword;
         g.setPassword(password);
-        p.sendMessage(ChatColor.GREEN + "Password has been successfully set to: " + g.getPassword());
+        CivUI.success(p, "Set the password of ", NLText.group(g), " to ", CivText.value(g.getPassword()));
     }
 }

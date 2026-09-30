@@ -4,15 +4,19 @@ import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Optional;
 import co.aikar.commands.annotation.Syntax;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class ListGroups extends BaseCommandMiddle {
 
@@ -32,7 +36,7 @@ public class ListGroups extends BaseCommandMiddle {
             }
 
             if (uuid == null) {
-                sender.sendMessage(ChatColor.RED + "UUID is NULL, OP Usage is /nllg <playername>");
+                CivUI.error(sender, "You have no account to list groups for");
                 return;
             }
             autopages = true;
@@ -57,7 +61,7 @@ public class ListGroups extends BaseCommandMiddle {
             try {
                 target = Integer.parseInt(pageNumber);
             } catch (NumberFormatException e) {
-                sender.sendMessage(ChatColor.RED + pageNumber + " is not a number");
+                CivUI.error(sender, CivText.value(pageNumber), " isn't a page number");
                 return;
             }
         }
@@ -70,22 +74,21 @@ public class ListGroups extends BaseCommandMiddle {
             pages = target;
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GREEN);
         for (int page = target; page <= pages; page++) {
-            sb.append("Page ");
-            sb.append(page);
-            sb.append(" of ");
-            sb.append(actualPages);
-            sb.append(".\n");
-
+            List<Component> lines = new ArrayList<>();
             int first = (page - 1) * 10;
             for (int x = first; x < first + 10 && x < groups.size(); x++) {
                 Group g = GroupManager.getGroup(groups.get(x));
-                sb.append(String.format("%s : (%s)\n",
-                    g.getName(), g.getPlayerType(uuid).toString()));
+                lines.add(Component.text()
+                    .append(NLText.group(g))
+                    .append(Component.text(" " + g.getPlayerType(uuid).name(), CivText.MUTED))
+                    .build());
             }
+            Component heading = Component.text()
+                .append(CivText.heading("Your Groups"))
+                .append(Component.text(" " + page + "/" + actualPages, CivText.MUTED))
+                .build();
+            sender.sendMessage(NLText.list(heading, lines));
         }
-        sender.sendMessage(sb.toString());
     }
 }

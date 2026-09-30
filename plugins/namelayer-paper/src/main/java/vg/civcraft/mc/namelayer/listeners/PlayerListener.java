@@ -1,22 +1,29 @@
 package vg.civcraft.mc.namelayer.listeners;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.RunnableOnGroup;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class PlayerListener implements Listener {
 
@@ -34,21 +41,13 @@ public class PlayerListener implements Listener {
         if (!notifications.containsKey(uuid) || notifications.get(uuid).isEmpty())
             return;
 
-        String x = null;
-
         boolean shouldAutoAccept = NameLayerPlugin.getAutoAcceptHandler().getAutoAccept(uuid);
         if (shouldAutoAccept) {
-            x = "You have auto-accepted invitation from the following groups while you were away: ";
+            CivUI.info(p, "While you were away you auto-accepted invites to ", groupList(getNotifications(uuid), false));
         } else {
-            x = "You have been invited to the following groups while you were away. You can accept each invitation by using the command: /nlag [groupname].  ";
+            CivUI.info(p, "While you were away you were invited to ", groupList(getNotifications(uuid), true),
+                ". Click one to accept");
         }
-
-        for (Group g : getNotifications(uuid)) {
-            x += g.getName() + ", ";
-        }
-        x = x.substring(0, x.length() - 2);
-        x += ".";
-        p.sendMessage(ChatColor.YELLOW + x);
     }
 
     public static void addNotification(UUID u, Group g) {
@@ -63,15 +62,31 @@ public class PlayerListener implements Listener {
         getNotifications(u).remove(g);
     }
 
-    public static String getNotificationsInStringForm(UUID u) {
-        String groups = "";
-        for (Group g : getNotifications(u))
-            groups += g.getName() + ", ";
-        if (groups.length() == 0)
-            return ChatColor.GREEN + "You have no notifications.";
-        groups = groups.substring(0, groups.length() - 2);
-        groups = ChatColor.GREEN + "Your current groups are: " + groups + ".";
-        return groups;
+    /** The player's open invites; each group runs the accept command when clicked */
+    public static void sendInvites(Player player) {
+        Set<Group> invites = getNotifications(player.getUniqueId());
+        if (invites.isEmpty()) {
+            CivUI.info(player, "You have no open invites");
+            return;
+        }
+        CivUI.info(player, "You're invited to ", groupList(invites, true), ". Click one to accept");
+    }
+
+    /** Clickable groups run the accept command */
+    private static Component groupList(Set<Group> groups, boolean clickToAccept) {
+        List<Component> names = new ArrayList<>();
+        for (Group g : groups) {
+            Component name = NLText.group(g);
+            if (clickToAccept) {
+                name = name.clickEvent(ClickEvent.runCommand("/nlag " + g.getName()))
+                    .hoverEvent(HoverEvent.showText(Component.text("Click to accept", CivText.MUTED)));
+            }
+            names.add(name);
+        }
+        return Component.text()
+            .append(Component.text(groups.size() == 1 ? "the group " : "the groups "))
+            .append(NLText.join(names))
+            .build();
     }
 
     private void handleFirstJoin(Player p) {

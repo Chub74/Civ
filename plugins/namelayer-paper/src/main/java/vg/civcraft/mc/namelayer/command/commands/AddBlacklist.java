@@ -5,14 +5,16 @@ import co.aikar.commands.annotation.CommandCompletion;
 import co.aikar.commands.annotation.Description;
 import co.aikar.commands.annotation.Syntax;
 import java.util.UUID;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.BaseCommandMiddle;
 import vg.civcraft.mc.namelayer.group.BlackList;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.namelayer.misc.NLText;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class AddBlacklist extends BaseCommandMiddle {
@@ -25,30 +27,30 @@ public class AddBlacklist extends BaseCommandMiddle {
         Player p = (Player) sender;
         Group g = GroupManager.getGroup(groupName);
         if (g == null) {
-            p.sendMessage(ChatColor.RED + "This group does not exist");
+            CivUI.error(p, "There's no group called ", NLText.group(groupName));
             return;
         }
         if (!gm.hasAccess(g, p.getUniqueId(),
             PermissionType.getPermission("BLACKLIST"))
             && !(p.isOp() || p.hasPermission("namelayer.admin"))) {
-            p.sendMessage(ChatColor.RED + "You do not have the required permissions to do this");
+            CivUI.error(p, "You don't have permission to blacklist on ", NLText.group(g));
             return;
         }
         UUID targetUUID = NameLayerAPI.getUUID(playerName);
         if (targetUUID == null) {
-            p.sendMessage(ChatColor.RED + "This player does not exist");
+            CivUI.error(p, "There's no player called ", CivText.subject(playerName));
             return;
         }
         if (g.isMember(targetUUID)) {
-            p.sendMessage(ChatColor.RED + "You can't blacklist members of a group");
+            CivUI.error(p, "You can't blacklist a member of ", NLText.group(g), ". Remove them first");
             return;
         }
         BlackList bl = NameLayerPlugin.getBlackList();
         if (bl.isBlacklisted(g, targetUUID)) {
-            p.sendMessage(ChatColor.RED + "This player is already blacklisted");
+            CivUI.error(p, NLText.player(targetUUID), " is already blacklisted on ", NLText.group(g));
             return;
         }
         bl.addBlacklistMember(g, targetUUID, true);
-        p.sendMessage(ChatColor.GREEN + NameLayerAPI.getCurrentName(targetUUID) + " was successfully blacklisted on the group " + g.getName());
+        CivUI.success(p, "Blacklisted ", NLText.player(targetUUID), " on ", NLText.group(g));
     }
 }
