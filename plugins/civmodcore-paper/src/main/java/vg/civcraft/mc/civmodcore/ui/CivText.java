@@ -1,8 +1,15 @@
 package vg.civcraft.mc.civmodcore.ui;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import net.kyori.adventure.key.Key;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
@@ -11,6 +18,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.object.ObjectContents;
+import net.kyori.adventure.text.object.PlayerHeadObjectContents;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -22,7 +30,6 @@ public final class CivText {
 
     public static final TextColor SUCCESS = NamedTextColor.GREEN;
 
-    /** &c, the light red - not &4. */
     public static final TextColor ERROR = NamedTextColor.RED;
 
     public static final TextColor WARN = NamedTextColor.YELLOW;
@@ -71,10 +78,42 @@ public final class CivText {
         Map.entry(Material.BAMBOO, "item/bamboo"),
         Map.entry(Material.NETHER_WART, "item/nether_wart"),
         Map.entry(Material.AZALEA, "block/azalea_top"),
-        Map.entry(Material.FLOWERING_AZALEA, "block/flowering_azalea_top"));
+        Map.entry(Material.FLOWERING_AZALEA, "block/flowering_azalea_top"),
+        Map.entry(Material.HOPPER, "item/hopper"),
+        Map.entry(Material.PISTON, "block/piston_side"),
+        Map.entry(Material.STICKY_PISTON, "block/piston_top_sticky"),
+        Map.entry(Material.OBSERVER, "block/observer_front"),
+        Map.entry(Material.DISPENSER, "block/dispenser_front"),
+        Map.entry(Material.DROPPER, "block/dropper_front"),
+        Map.entry(Material.COMPARATOR, "item/comparator"),
+        Map.entry(Material.REPEATER, "item/repeater"),
+        Map.entry(Material.FURNACE, "block/furnace_front"),
+        Map.entry(Material.BLAST_FURNACE, "block/blast_furnace_front"),
+        Map.entry(Material.SMOKER, "block/smoker_front"),
+        Map.entry(Material.BREWING_STAND, "item/brewing_stand"),
+        Map.entry(Material.CAULDRON, "item/cauldron"),
+        Map.entry(Material.COMPASS, "item/compass_16"),
+        Map.entry(Material.RECOVERY_COMPASS, "item/recovery_compass_16"),
+        Map.entry(Material.CLOCK, "item/clock_00"),
+        Map.entry(Material.MAGMA_BLOCK, "block/magma"),
+        Map.entry(Material.SMOOTH_QUARTZ, "block/quartz_block_bottom"),
+        Map.entry(Material.SMOOTH_SANDSTONE, "block/sandstone_top"),
+        Map.entry(Material.SMOOTH_RED_SANDSTONE, "block/red_sandstone_top"),
+        Map.entry(Material.BIG_DRIPLEAF, "block/big_dripleaf_top"),
+        Map.entry(Material.SMALL_DRIPLEAF, "block/small_dripleaf_top"));
+
+    /** Faces tried, in order, for a block with no plain block/<name> sprite. */
+    private static final List<String> FACE_SUFFIXES = List.of("_front", "_side", "_top");
 
     /** Rendered from a 3D model, with no flat texture to show. */
     private static final Set<Material> NO_ICON = Set.of(Material.SHIELD);
+
+    /**
+     * Every block/ and item/ texture in the client, from sprites.txt. A sprite the client lacks renders as the
+     * missing texture, so icon() only names sprites listed here. Regenerate the file on a Minecraft update:
+     * list assets/minecraft/textures/{block,item}/*.png in the client jar, without the prefix and extension.
+     */
+    private static final Set<String> KNOWN_SPRITES = loadKnownSprites();
 
     private CivText() {
     }
@@ -140,9 +179,15 @@ public final class CivText {
     }
 
     /**
-     * An item's texture, coloured the way the game colours it. Dyeable items (leather armour, leather
-     * horse armour) ship a grey texture the client tints, so drawn plain they'd pass for iron.
-     * The client multiplies a sprite by its text colour, which does the same tint here.
+     * A player's head from a skin the server already holds
+     */
+    @NotNull
+    public static Component head(@NotNull final PlayerHeadObjectContents.SkinSource skin) {
+        return untinted(Component.object(ObjectContents.playerHead(skin)));
+    }
+
+    /**
+     * An item's texture, coloured the way the game colours it
      */
     @Nullable
     public static Component icon(@NotNull final ItemStack item) {
@@ -167,9 +212,64 @@ public final class CivText {
                 : sprite(Key.key(override));
         }
         final String name = material.getKey().getKey();
-        return material.isBlock()
-            ? sprite(Key.key("block/" + name))
-            : sprite(ITEM_ATLAS, Key.key("item/" + name));
+        if (KNOWN_SPRITES.isEmpty()) {
+            return material.isBlock()
+                ? sprite(Key.key("block/" + name))
+                : sprite(ITEM_ATLAS, Key.key("item/" + name));
+        }
+        final String sprite = findSprite(name);
+        if (sprite == null) {
+            return null;
+        }
+        return sprite.startsWith("item/") ? sprite(ITEM_ATLAS, Key.key(sprite)) : sprite(Key.key(sprite));
+    }
+
+    /** The sprite that best shows a material, or null if the client has none for it. */
+    @Nullable
+    private static String findSprite(@NotNull final String name) {
+        // Waxing doesn't change the texture
+        if (name.startsWith("waxed_")) {
+            return findSprite(name.substring("waxed_".length()));
+        }
+        // The flat item texture reads best; blocks whose item is the block model only have block/
+        if (KNOWN_SPRITES.contains("item/" + name)) {
+            return "item/" + name;
+        }
+        if (KNOWN_SPRITES.contains("block/" + name)) {
+            return "block/" + name;
+        }
+        for (final String face : FACE_SUFFIXES) {
+            if (KNOWN_SPRITES.contains("block/" + name + face)) {
+                return "block/" + name + face;
+            }
+        }
+        // Fences and gates are drawn from the planks or bricks they're made of
+        for (final String suffix : List.of("_fence_gate", "_fence")) {
+            if (name.endsWith(suffix)) {
+                final String base = name.substring(0, name.length() - suffix.length());
+                for (final String material : List.of(base + "_planks", base + "s", base)) {
+                    if (KNOWN_SPRITES.contains("block/" + material)) {
+                        return "block/" + material;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    @NotNull
+    private static Set<String> loadKnownSprites() {
+        try (InputStream in = CivText.class.getResourceAsStream("/sprites.txt")) {
+            if (in == null) {
+                return Set.of();
+            }
+            return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).lines()
+                .map(String::strip)
+                .filter(line -> !line.isEmpty())
+                .collect(Collectors.toUnmodifiableSet());
+        } catch (final IOException e) {
+            return Set.of();
+        }
     }
 
     /** A potion effect's icon, as shown in the inventory. */

@@ -8,6 +8,10 @@ plugins {
 
 version = "3.1.0"
 
+repositories {
+    maven("https://repo.opencollab.dev/main/")
+}
+
 dependencies {
     paperweight {
         paperDevBundle(libs.versions.paper)
@@ -21,6 +25,7 @@ dependencies {
     api(libs.commons.collections4)
 
     compileOnly(libs.fastutil)
+    compileOnly("org.geysermc.floodgate:api:2.2.5-SNAPSHOT")
 
     testImplementation(libs.bundles.junit)
     testImplementation(libs.mockbukkit)

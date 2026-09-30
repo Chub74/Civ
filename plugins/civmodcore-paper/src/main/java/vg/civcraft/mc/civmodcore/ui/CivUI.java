@@ -15,6 +15,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.ComponentLike;
 import net.kyori.adventure.text.TextComponent;
 import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.entity.Player;
@@ -91,12 +92,33 @@ public final class CivUI {
         return new Notice(kind, parts);
     }
 
+    /** A dialog asking for a line of text; nothing is shown until open(). Parts are String or ComponentLike. */
+    @NotNull
+    public static Prompt prompt(@NotNull final Object... title) {
+        return new Prompt(title);
+    }
+
+    /** A yes/no dialog; nothing is shown until open(). Parts are String or ComponentLike. */
+    @NotNull
+    public static Confirm confirm(@NotNull final Object... title) {
+        return new Confirm(title);
+    }
+
     /** Renders without sending. forPlayer picks glyphs over their ASCII stand-ins. */
     @NotNull
     public static Component render(@NotNull final Kind kind,
                                    final boolean forPlayer,
                                    final boolean withIcon,
                                    @NotNull final Object... parts) {
+        return Component.text().append(prefix).append(body(kind, forPlayer, withIcon, parts)).build();
+    }
+
+    /** The message without the brand: archetype colour, optional icon, parts */
+    @NotNull
+    private static Component body(@NotNull final Kind kind,
+                                  final boolean forPlayer,
+                                  final boolean withIcon,
+                                  @NotNull final Object... parts) {
         final TextComponent.Builder body = Component.text().color(kind.colour());
         if (withIcon) {
             final String mark = forPlayer ? kind.glyph() : kind.ascii();
@@ -107,7 +129,17 @@ public final class CivUI {
         for (final Object part : parts) {
             body.append(toComponent(part));
         }
-        return Component.text().append(prefix).append(body.build()).build();
+        return body.build();
+    }
+
+    /** Joins parts into one component. Bare strings take the colour, or stay uncoloured if it's null. */
+    @NotNull
+    static Component compose(@Nullable final TextColor colour, @NotNull final Object... parts) {
+        final TextComponent.Builder builder = Component.text().color(colour);
+        for (final Object part : parts) {
+            builder.append(toComponent(part));
+        }
+        return builder.build();
     }
 
     @NotNull
@@ -132,12 +164,23 @@ public final class CivUI {
                 continue;
             }
             final boolean isPlayer = recipient instanceof Player;
+            if (notice.channel() == Channel.ACTION_BAR) {
+                if (recipient instanceof final Player player) {
+                    ActionBarNotices.show(player, notice.priority(), body(notice.kind(), true, notice.hasIcon(), notice.parts()));
+                    playSound(notice, recipient, true);
+                }
+                // Console and other non-player audiences have no action bar
+                continue;
+            }
             Component message = render(notice.kind(), isPlayer, notice.hasIcon(), notice.parts());
             if (notice.hoverText() != null) {
                 message = message.hoverEvent(HoverEvent.showText(notice.hoverText()));
             }
             if (notice.clickEvent() != null) {
                 message = message.clickEvent(notice.clickEvent());
+            }
+            if (isPlayer) {
+                message = Bedrock.adapt(recipient, message);
             }
             recipient.sendMessage(message);
             playSound(notice, recipient, isPlayer);

@@ -15,7 +15,8 @@ import vg.civcraft.mc.civmodcore.CivModCorePlugin;
 public final class BottomLineAPI {
 
     private static Set<BottomLine> lines = new TreeSet<>();
-    private static final String SEPARATOR = ChatColor.BOLD + "  " + ChatColor.BLACK + "||  " + ChatColor.RESET;
+
+    private static final String SEPARATOR = ChatColor.DARK_GRAY + "  |  " + ChatColor.RESET;
 
     public static void init() {
         BukkitRunnable run = new BukkitRunnable() {

@@ -245,4 +245,22 @@ public class CivUITests {
         Assertions.assertEquals("&ax", LEGACY.serialize(Component.text("x", CivText.SUCCESS)));
     }
 
+
+    /** Materials with no texture named after them still find the one the client shows. */
+    @Test
+    public void testIconFallbacks() {
+        assertIcon("minecraft:item/compass_16", org.bukkit.Material.COMPASS);
+        assertIcon("minecraft:item/clock_00", org.bukkit.Material.CLOCK);
+        assertIcon("minecraft:item/copper_door", org.bukkit.Material.WAXED_COPPER_DOOR);
+        assertIcon("minecraft:block/oak_planks", org.bukkit.Material.OAK_FENCE);
+        assertIcon("minecraft:block/nether_bricks", org.bukkit.Material.NETHER_BRICK_FENCE);
+        assertIcon("minecraft:block/barrel_side", org.bukkit.Material.BARREL);
+        Assertions.assertNull(CivText.icon(org.bukkit.Material.ENDER_CHEST), "an entity-rendered block has no flat texture");
+    }
+
+    private static void assertIcon(final String expected, final org.bukkit.Material material) {
+        final ObjectComponent c = (ObjectComponent) CivText.icon(material);
+        Assertions.assertNotNull(c, material + " must have an icon");
+        Assertions.assertEquals(Key.key(expected), ((SpriteObjectContents) c.contents()).sprite());
+    }
 }

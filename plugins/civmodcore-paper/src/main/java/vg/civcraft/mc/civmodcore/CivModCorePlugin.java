@@ -6,6 +6,7 @@ import org.bukkit.entity.HumanEntity;
 import vg.civcraft.mc.civmodcore.chat.dialog.DialogManager;
 import vg.civcraft.mc.civmodcore.commands.ChunkMetaCommand;
 import vg.civcraft.mc.civmodcore.commands.CommandManager;
+import vg.civcraft.mc.civmodcore.commands.UnknownCommandListener;
 import vg.civcraft.mc.civmodcore.commands.StatCommand;
 import vg.civcraft.mc.civmodcore.dao.DatabaseCredentials;
 import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
@@ -74,6 +75,7 @@ public class CivModCorePlugin extends ACivMod {
         registerListener(DialogManager.INSTANCE);
         registerListener(new ScoreBoardListener());
         registerListener(new PlayerNames(this));
+        registerListener(new UnknownCommandListener());
         // Register commands
         this.commands = new CommandManager(this);
         this.commands.init();

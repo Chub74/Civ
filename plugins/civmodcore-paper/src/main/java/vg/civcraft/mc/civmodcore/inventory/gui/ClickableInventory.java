@@ -16,6 +16,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import vg.civcraft.mc.civmodcore.CivModCorePlugin;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 
 /**
  * Represents an inventory filled with Clickables. Whenever one of those is
@@ -192,6 +193,9 @@ public class ClickableInventory {
      */
     public void showInventory(Player p, boolean eventSafe) {
         if (p != null) {
+            if (Bedrock.isBedrock(p)) {
+                stripSprites();
+            }
             if (eventSafe) {
                 Bukkit.getScheduler().runTask(CivModCorePlugin.getInstance(), () -> {
                     p.openInventory(inventory);
@@ -202,6 +206,17 @@ public class ClickableInventory {
                 openInventories.put(p.getUniqueId(), this);
             }
             applyCooldown(p);
+        }
+    }
+
+    /** Bedrock can't render inline sprites or heads, so its players get the menu without them */
+    private void stripSprites() {
+        for (int i = 0; i < inventory.getSize(); i++) {
+            ItemStack item = inventory.getItem(i);
+            ItemStack stripped = Bedrock.strip(item);
+            if (stripped != item) {
+                inventory.setItem(i, stripped);
+            }
         }
     }
 

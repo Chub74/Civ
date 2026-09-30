@@ -1,19 +1,20 @@
 package vg.civcraft.mc.civmodcore.players.settings.gui;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSetting;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSettingAPI;
 
@@ -31,8 +32,8 @@ public class MenuSection extends MenuItem {
         super(name, parent);
         this.content = new TreeMap<>();
         this.itemRepresentation = itemRepresentation;
-        ItemUtils.setDisplayName(itemRepresentation, ChatColor.AQUA + name);
-        ItemUtils.addLore(itemRepresentation, ChatColor.GOLD + description);
+        CivMenu.name(itemRepresentation, name);
+        CivMenu.lore(itemRepresentation, CivText.info(description), Component.empty(), CivMenu.hint("Click to open"));
     }
 
     public void addItem(MenuItem item) {
@@ -72,7 +73,7 @@ public class MenuSection extends MenuItem {
         MultiPageView pageView = new MultiPageView(player, clickables, getName(), true);
         if (parent != null) {
             ItemStack parentItem = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(parentItem, ChatColor.AQUA + "Go back to " + parent.getName());
+            CivMenu.name(parentItem, "Back to " + parent.getName());
             pageView.setMenuSlot(new Clickable(parentItem) {
 
                 @Override

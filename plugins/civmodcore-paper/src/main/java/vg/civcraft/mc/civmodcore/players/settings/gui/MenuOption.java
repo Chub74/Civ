@@ -1,5 +1,7 @@
 package vg.civcraft.mc.civmodcore.players.settings.gui;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
@@ -18,6 +20,7 @@ public class MenuOption extends MenuItem {
     @Override
     public IClickable getMenuRepresentation(Player player) {
         ItemStack item = setting.getGuiRepresentation(player.getUniqueId());
+        CivMenu.lore(item, Component.empty(), CivMenu.hint("Click to change"));
         return new Clickable(item) {
 
             @Override

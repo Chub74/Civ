@@ -1,5 +1,7 @@
 package vg.civcraft.mc.civmodcore.players.settings.impl;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -46,6 +48,11 @@ public class BooleanSetting extends PlayerSetting<Boolean> {
         }
         applyInfoToItemStack(item, player);
         return item;
+    }
+
+    @Override
+    protected Component valueComponent(Boolean value) {
+        return CivText.toggle(value);
     }
 
     @Override

@@ -1,9 +1,11 @@
 package vg.civcraft.mc.civmodcore.players.settings.impl;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +13,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.LClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.players.settings.gui.MenuSection;
 
 public class DisplayLocationSetting extends LimitedStringSetting {
@@ -43,13 +44,13 @@ public class DisplayLocationSetting extends LimitedStringSetting {
     @Override
     public void handleMenuClick(Player player, MenuSection menu) {
         DisplayLocation currentValue = DisplayLocation.fromString(getValue(player));
-        IClickable sideClick = genLocationClick(Material.YELLOW_BANNER, "%sShow %s only on side bar",
+        IClickable sideClick = genLocationClick(Material.YELLOW_BANNER, "Show %s only on the sidebar",
             DisplayLocation.SIDEBAR, menu, currentValue);
-        IClickable actionClick = genLocationClick(Material.STONE_PRESSURE_PLATE, "%sShow %s only on action bar",
+        IClickable actionClick = genLocationClick(Material.STONE_PRESSURE_PLATE, "Show %s only on the action bar",
             DisplayLocation.ACTIONBAR, menu, currentValue);
-        IClickable bothClick = genLocationClick(Material.PAINTING, "%sShow %s both on action and side bar",
+        IClickable bothClick = genLocationClick(Material.PAINTING, "Show %s on the sidebar and action bar",
             DisplayLocation.BOTH, menu, currentValue);
-        IClickable noneClick = genLocationClick(Material.BARRIER, "%sShow %s neither on side bar, nor action bar",
+        IClickable noneClick = genLocationClick(Material.BARRIER, "Don't show %s",
             DisplayLocation.NONE, menu, currentValue);
         MultiPageView selector = new MultiPageView(player, Arrays.asList(sideClick, actionClick, bothClick, noneClick),
             "Select where to show " + displayName, true);
@@ -58,9 +59,12 @@ public class DisplayLocationSetting extends LimitedStringSetting {
 
     private IClickable genLocationClick(Material mat, String infoText, DisplayLocation location, MenuSection menu, DisplayLocation currentlySelect) {
         ItemStack sideStack = new ItemStack(mat);
-        ItemUtils.setDisplayName(sideStack, String.format(infoText, ChatColor.GOLD, displayName));
+        CivMenu.name(sideStack, String.format(infoText, displayName));
         if (location == currentlySelect) {
             sideStack.editMeta(itemMeta -> itemMeta.setEnchantmentGlintOverride(true));
+            CivMenu.lore(sideStack, Component.text("Selected", CivText.SUCCESS));
+        } else {
+            CivMenu.lore(sideStack, CivMenu.hint("Click to select"));
         }
         return new LClickable(sideStack, p -> {
             setValue(p, location.toString());

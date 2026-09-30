@@ -1,24 +1,25 @@
 package vg.civcraft.mc.civmodcore.players.settings.impl.collection;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import vg.civcraft.mc.civmodcore.chat.dialog.Dialog;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSetting;
 import vg.civcraft.mc.civmodcore.players.settings.SettingTypeManager;
 import vg.civcraft.mc.civmodcore.players.settings.gui.MenuSection;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public abstract class AbstractCollectionSetting<C extends Collection<T>, T> extends PlayerSetting<C> {
 
@@ -166,21 +167,22 @@ public abstract class AbstractCollectionSetting<C extends Collection<T>, T> exte
         for (T element : value) {
             elementSetting.setValue(player, element);
             ItemStack is = elementSetting.getGuiRepresentation(player.getUniqueId());
-            ItemUtils.setDisplayName(is, ChatColor.GOLD + elementSetting.toText(element));
+            CivMenu.name(is, elementSetting.toText(element));
+            CivMenu.lore(is, Component.empty(), CivMenu.hint("Click to remove"));
             clickables.add(new Clickable(is) {
 
                 @Override
                 public void clicked(Player p) {
                     removeElement(player.getUniqueId(), element);
-                    player.sendMessage(String.format("%sRemoved %s from %s", ChatColor.GREEN,
-                        elementSetting.toText(element), getNiceName()));
+                    CivUI.success(player, "Removed ", CivText.value(elementSetting.toText(element)), " from ",
+                        CivText.subject(getNiceName()));
                     handleMenuClick(player, menu);
                 }
             });
         }
         MultiPageView pageView = new MultiPageView(player, clickables, getNiceName(), true);
         ItemStack parentItem = new ItemStack(Material.ARROW);
-        ItemUtils.setDisplayName(parentItem, ChatColor.AQUA + "Go back to " + menu.getName());
+        CivMenu.name(parentItem, "Back to " + menu.getName());
         pageView.setMenuSlot(new Clickable(parentItem) {
 
             @Override
@@ -189,30 +191,22 @@ public abstract class AbstractCollectionSetting<C extends Collection<T>, T> exte
             }
         }, 0);
         ItemStack addItemStack = new ItemStack(Material.GREEN_CONCRETE);
-        ItemUtils.setDisplayName(addItemStack, ChatColor.GOLD + "Add new entry");
+        CivMenu.name(addItemStack, "Add entry");
+        CivMenu.lore(addItemStack, CivMenu.hint("Click to add"));
         pageView.setMenuSlot(new Clickable(addItemStack) {
 
             @Override
             public void clicked(Player p) {
-                new Dialog(p, getOwningPlugin(), ChatColor.GOLD + "Enter the name of the entry to add") {
-
-                    @Override
-                    public List<String> onTabComplete(String wordCompleted, String[] fullMessage) {
-                        return null;
-                    }
-
-                    @Override
-                    public void onReply(String[] message) {
-                        String full = String.join(" ", message);
-                        if (!elementSetting.isValidValue(full)) {
-                            p.sendMessage(ChatColor.RED + "You entered an invalid value");
-                        } else {
-                            p.sendMessage(ChatColor.GREEN + "Added " + full);
-                            addElement(p.getUniqueId(), elementSetting.deserialize(full));
-                        }
-                        handleMenuClick(player, menu);
-                    }
-                };
+                CivUI.prompt("Add to ", getNiceName())
+                    .label("Entry")
+                    .validate(elementSetting::isValidValue, "That isn't a valid entry")
+                    .onSubmit((who, entry) -> {
+                        addElement(who.getUniqueId(), elementSetting.deserialize(entry));
+                        CivUI.success(who, "Added ", CivText.value(entry), " to ", CivText.subject(getNiceName()));
+                        handleMenuClick(who, menu);
+                    })
+                    .onCancel(who -> handleMenuClick(who, menu))
+                    .open(p);
             }
         }, 3);
         pageView.showScreen();

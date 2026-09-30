@@ -5,6 +5,9 @@ import co.aikar.commands.BukkitCommandCompletionContext;
 import co.aikar.commands.BukkitCommandExecutionContext;
 import co.aikar.commands.BukkitCommandManager;
 import co.aikar.commands.CommandCompletions;
+import co.aikar.commands.CommandIssuer;
+import co.aikar.commands.MessageType;
+import co.aikar.locales.MessageKeyProvider;
 import co.aikar.commands.CommandCompletions.CommandCompletionHandler;
 import co.aikar.commands.CommandContexts;
 import com.google.common.base.Strings;
@@ -122,6 +125,17 @@ public class CommandManager extends BukkitCommandManager {
         for (final TabComplete complete : getTabCompletions(command.getClass()).values()) {
             internal.remove(complete.value().toLowerCase(Locale.ENGLISH));
             this.logger.info("Command Completer [" + complete.value() + "] unregistered.");
+        }
+    }
+
+    /**
+     * ACF's usage, error and help output, in the design language rather than ACF's own colours.
+     */
+    @Override
+    public void sendMessage(final CommandIssuer issuer, final MessageType type, final MessageKeyProvider key,
+                            final String... replacements) {
+        if (!CommandMessages.send(this, issuer, type, key, replacements)) {
+            super.sendMessage(issuer, type, key, replacements);
         }
     }
 

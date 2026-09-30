@@ -1,5 +1,8 @@
 package vg.civcraft.mc.civmodcore.players.settings;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,11 +12,9 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 import org.apache.commons.lang3.text.WordUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.MaterialUtils;
 import vg.civcraft.mc.civmodcore.players.settings.gui.MenuSection;
 
@@ -47,11 +48,17 @@ public abstract class PlayerSetting<T> {
     }
 
     protected void applyInfoToItemStack(ItemStack item, UUID player) {
-        ItemUtils.setDisplayName(item, niceName);
-        ItemUtils.addLore(item, ChatColor.LIGHT_PURPLE + "Value: " + ChatColor.RESET + toText(getValue(player)));
+        CivMenu.name(item, niceName);
+        CivMenu.lore(item, CivMenu.stat("Value", valueComponent(getValue(player))));
         if (description != null) {
-            ItemUtils.addLore(item, Arrays.stream(WordUtils.wrap(description, 32, "@", false).split("@")).toList());
+            CivMenu.lore(item, Arrays.stream(WordUtils.wrap(description, 32, "@", false).split("@"))
+                .map(CivText::info).toArray(Component[]::new));
         }
+    }
+
+    /** How a value shows on the setting's menu item */
+    protected Component valueComponent(T value) {
+        return CivText.value(toText(value));
     }
 
     /**

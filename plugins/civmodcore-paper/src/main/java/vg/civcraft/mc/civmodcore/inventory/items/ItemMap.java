@@ -1,5 +1,7 @@
 package vg.civcraft.mc.civmodcore.inventory.items;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -16,7 +18,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectSet;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.keyvalue.UnmodifiableMapEntry;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
@@ -468,11 +469,11 @@ public class ItemMap {
         List<ItemStack> items = new ArrayList<>(entrySet.size());
         for (Entry<ItemStack, Integer> entry : entrySet) {
             ItemStack is = entry.getKey().clone();
-            ItemUtils.addLore(is, ChatColor.GOLD + "Total item count: " + entry.getValue());
+            CivMenu.lore(is, CivMenu.stat("Total", String.valueOf(entry.getValue())));
             if (entry.getValue() > entry.getKey().getType().getMaxStackSize()) {
                 int stacks = entry.getValue() / is.getType().getMaxStackSize();
                 int extra = entry.getValue() % is.getType().getMaxStackSize();
-                StringBuilder out = new StringBuilder(ChatColor.GOLD.toString());
+                StringBuilder out = new StringBuilder();
                 if (stacks != 0) {
                     out.append(stacks).append(" stack").append(stacks == 1 ? "" : "s");
                 }
@@ -480,7 +481,7 @@ public class ItemMap {
                     out.append(" and ").append(extra);
                     out.append(" item").append(extra == 1 ? "" : "s");
                 }
-                ItemUtils.addLore(is, out.toString());
+                CivMenu.lore(is, CivText.info(out.toString()));
             }
             items.add(is);
         }

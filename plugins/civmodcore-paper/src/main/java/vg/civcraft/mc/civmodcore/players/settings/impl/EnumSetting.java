@@ -1,10 +1,12 @@
 package vg.civcraft.mc.civmodcore.players.settings.impl;
 
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.EnumUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -12,7 +14,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSetting;
 import vg.civcraft.mc.civmodcore.players.settings.gui.MenuSection;
 
@@ -67,7 +68,10 @@ public class EnumSetting<T extends Enum<T>> extends PlayerSetting<T> {
                 .sorted(Comparator.comparing(Enum::name))
                 .map(value -> {
                     final var item = new ItemStack(value == currentValue ? Material.GREEN_DYE : Material.RED_DYE);
-                    ItemUtils.setDisplayName(item, ChatColor.GOLD + toText(value));
+                    CivMenu.name(item, toText(value));
+                    CivMenu.lore(item, value == currentValue
+                        ? Component.text("Selected", CivText.SUCCESS)
+                        : CivMenu.hint("Click to select"));
                     return new Clickable(item) {
                         @Override
                         protected void clicked(final Player ignored) {
@@ -81,7 +85,7 @@ public class EnumSetting<T extends Enum<T>> extends PlayerSetting<T> {
             true);
 
         final var backButtonItem = new ItemStack(Material.ARROW);
-        ItemUtils.setDisplayName(backButtonItem, ChatColor.AQUA + "Go back to " + menu.getName());
+        CivMenu.name(backButtonItem, "Back to " + menu.getName());
         view.setMenuSlot(new Clickable(backButtonItem) {
             @Override
             public void clicked(final Player clicker) {
