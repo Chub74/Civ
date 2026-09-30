@@ -4,8 +4,9 @@ import com.untamedears.jukealert.events.PlayerLogoutSnitchEvent;
 import com.untamedears.jukealert.model.Snitch;
 import com.untamedears.jukealert.model.actions.abstr.LoggablePlayerAction;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 
 public class LogoutAction extends LoggablePlayerAction {
@@ -33,6 +34,11 @@ public class LogoutAction extends LoggablePlayerAction {
 
     @Override
     public String getChatRepresentationIdentifier() {
-        return ChatColor.BOLD + "Logout";
+        return "Logout";
+    }
+
+    @Override
+    protected Component getChatIdentifier() {
+        return super.getChatIdentifier().decorate(TextDecoration.BOLD);
     }
 }

@@ -12,8 +12,8 @@ import com.untamedears.jukealert.util.JukeAlertPermissionHandler;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class GUICommand extends BaseCommand {
 
@@ -38,8 +38,7 @@ public class GUICommand extends BaseCommand {
             }
         }
         if (snitches.isEmpty()) {
-            player.sendMessage(
-                ChatColor.RED + "You do not own any snitches nearby or lack permission to view their logs!");
+            CivUI.error(player, "There's no snitch near you whose logs you can read");
             return;
         }
         if (snitches.size() == 1) {
@@ -47,7 +46,7 @@ public class GUICommand extends BaseCommand {
             gui.showScreen();
             return;
         }
-        SnitchOverviewGUI gui = new SnitchOverviewGUI(player, new ArrayList<>(snitches), "Nearby snitches", true);
+        SnitchOverviewGUI gui = new SnitchOverviewGUI(player, new ArrayList<>(snitches), "Nearby Snitches", true);
         gui.showScreen();
     }
 }

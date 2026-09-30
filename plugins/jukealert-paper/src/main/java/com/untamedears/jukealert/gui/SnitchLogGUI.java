@@ -1,11 +1,11 @@
 package com.untamedears.jukealert.gui;
 
-import com.untamedears.jukealert.JukeAlert;
-import com.untamedears.jukealert.SnitchManager;
 import com.untamedears.jukealert.model.Snitch;
 import com.untamedears.jukealert.model.actions.abstr.LoggableAction;
 import com.untamedears.jukealert.model.appender.LeverToggleAppender;
 import com.untamedears.jukealert.model.appender.SnitchLogAppender;
+import com.untamedears.jukealert.util.JAText;
+import com.untamedears.jukealert.util.JAUtility;
 import com.untamedears.jukealert.util.JukeAlertPermissionHandler;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,23 +13,19 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
-import vg.civcraft.mc.civmodcore.chat.Componentify;
-import vg.civcraft.mc.civmodcore.chat.dialog.Dialog;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
-import vg.civcraft.mc.civmodcore.inventory.items.MetaUtils;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.utilities.MoreCollectionUtils;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
@@ -38,7 +34,6 @@ public class SnitchLogGUI {
     private final Player player;
     private final Snitch snitch;
     private final SnitchLogAppender logAppender;
-    private final SnitchManager snitchManager;
     private List<IClickable> buttonCache;
 
     public SnitchLogGUI(@NotNull final Player player,
@@ -46,31 +41,28 @@ public class SnitchLogGUI {
         this.player = Objects.requireNonNull(player);
         this.snitch = Objects.requireNonNull(snitch);
         this.logAppender = snitch.getAppender(SnitchLogAppender.class);
-        this.snitchManager = JukeAlert.getInstance().getSnitchManager();
     }
 
     private boolean INTERNAL_hasPermission(@NotNull final PermissionType permission) {
         return this.snitch.hasPermission(this.player.getUniqueId(), permission);
     }
 
+    private static Component noPermission() {
+        return Component.text("You don't have permission to do this", CivText.ERROR);
+    }
+
     private List<IClickable> INTERNAL_constructContent() {
         if (this.logAppender == null) {
             final var item = new ItemStack(Material.BARRIER);
-            ItemUtils.setComponentDisplayName(item, Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.RED)
-                .content("This snitch can not create logs")
-                .build());
+            CivMenu.name(item, "No logs");
+            CivMenu.lore(item, Component.text("This snitch doesn't keep logs"));
             return MoreCollectionUtils.asLazyList(Collections.singletonList(() -> new DecorationStack(item)));
         }
         final var actions = this.logAppender.getFullLogs();
         if (actions.isEmpty()) {
             final var item = new ItemStack(Material.BARRIER);
-            ItemUtils.setComponentDisplayName(item, Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.RED)
-                .content("This snitch has no logs currently")
-                .build());
+            CivMenu.name(item, "No logs");
+            CivMenu.lore(item, Component.text("Nothing has happened near this snitch yet"));
             return MoreCollectionUtils.asLazyList(Collections.singletonList(() -> new DecorationStack(item)));
         }
         final var buttons = new ArrayList<Supplier<IClickable>>(actions.size());
@@ -82,153 +74,97 @@ public class SnitchLogGUI {
 
     private IClickable INTERNAL_constructClearClick() {
         final var item = new ItemStack(Material.TNT);
-        ItemUtils.setComponentDisplayName(item, Component.text()
-            .decoration(TextDecoration.ITALIC, false)
-            .color(NamedTextColor.GOLD)
-            .content("Clear all logs")
-            .build());
-        if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getClearLogs())) {
-            return new Clickable(item) {
-                @Override
-                public void clicked(@NotNull final Player _player) {
-                    if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getClearLogs())) {
-                        SnitchLogGUI.this.logAppender.deleteLogs();
-                        if (SnitchLogGUI.this.buttonCache != null) {
-                            SnitchLogGUI.this.buttonCache.clear();
-                            SnitchLogGUI.this.buttonCache = null;
-                        }
-                        SnitchLogGUI.this.player.sendMessage(Component.text()
-                            .color(NamedTextColor.GREEN)
-                            .content("That snitch's logs have been cleared!")
-                            .build());
-                        showScreen();
-                    }
-                }
-            };
+        CivMenu.name(item, "Clear logs");
+        if (!INTERNAL_hasPermission(JukeAlertPermissionHandler.getClearLogs())) {
+            CivMenu.lore(item, noPermission());
+            return new DecorationStack(item);
         }
-        ItemUtils.addComponentLore(item, Component.text()
-            .color(NamedTextColor.RED)
-            .content("You do not have permission to do this")
-            .build());
-        return new DecorationStack(item);
+        CivMenu.lore(item, Component.text("✖ Click to delete every log", CivText.ERROR));
+        return new Clickable(item) {
+            @Override
+            public void clicked(@NotNull final Player clicker) {
+                CivUI.confirm("Clear the logs of ", JAText.snitch(SnitchLogGUI.this.snitch), "?")
+                    .warning("You can't undo this")
+                    .yesLabel("Clear")
+                    .noLabel("Keep them")
+                    .onYes(who -> {
+                        // Checked again: permissions may have changed while the dialog was open
+                        if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getClearLogs())) {
+                            SnitchLogGUI.this.logAppender.deleteLogs();
+                            if (SnitchLogGUI.this.buttonCache != null) {
+                                SnitchLogGUI.this.buttonCache.clear();
+                                SnitchLogGUI.this.buttonCache = null;
+                            }
+                            CivUI.success(who, "Cleared the logs of ", JAText.snitch(SnitchLogGUI.this.snitch));
+                        }
+                        showScreen();
+                    })
+                    .onNo(who -> showScreen())
+                    .open(clicker);
+            }
+        };
     }
 
     private IClickable INTERNAL_constructNameChangeClick() {
         final var item = new ItemStack(Material.OAK_SIGN);
-        ItemUtils.setComponentDisplayName(item, Component.text()
-            .decoration(TextDecoration.ITALIC, false)
-            .color(NamedTextColor.GOLD)
-            .content("Rename this snitch")
-            .build());
+        CivMenu.name(item, "Rename");
+        if (!INTERNAL_hasPermission(JukeAlertPermissionHandler.getRenameSnitch())) {
+            CivMenu.lore(item, noPermission());
+            return new DecorationStack(item);
+        }
+        CivMenu.lore(item, CivMenu.hint("Click to rename this snitch"));
         return new Clickable(item) {
             @Override
             public void clicked(@NotNull final Player clicker) {
-                clicker.sendMessage(Component.text()
-                    .color(NamedTextColor.YELLOW)
-                    .content("Please enter a new name for the snitch:")
-                    .build());
-                ClickableInventory.forceCloseInventory(clicker);
-                new Dialog(clicker, JukeAlert.getInstance()) {
-                    @Override
-                    public void onReply(String[] message) {
-                        StringBuilder builder = new StringBuilder();
-                        for (String s : message) {
-                            builder.append(s).append(" ");
+                CivUI.prompt("Rename ", JAText.snitch(SnitchLogGUI.this.snitch))
+                    .label("Name")
+                    .initial(SnitchLogGUI.this.snitch.getName())
+                    .maxLength(JAUtility.MAX_NAME_LENGTH)
+                    .onSubmit((who, name) -> {
+                        if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getRenameSnitch())) {
+                            JAUtility.renameSnitch(who, SnitchLogGUI.this.snitch, name);
                         }
-                        String newName = "";
-                        if (builder.toString().length() > 40) {
-                            newName = builder.substring(0, 40);
-                        } else {
-                            newName = builder.toString();
-                        }
-                        snitchManager.renameSnitch(SnitchLogGUI.this.snitch, newName);
-                        clicker.sendMessage(Component.text()
-                            .color(NamedTextColor.AQUA)
-                            .content("Changed snitch name to " + newName)
-                            .build());
                         showScreen();
-                    }
-
-                    @Override
-                    public List<String> onTabComplete(String wordCompleted, String[] fullMessage) {
-                        return null;
-                    }
-                };
+                    })
+                    .onCancel(who -> showScreen())
+                    .open(clicker);
             }
         };
     }
 
     private IClickable INTERNAL_constructInfoStack() {
         final var item = new ItemStack(Material.PAPER);
-        ItemUtils.handleItemMeta(item, (final ItemMeta meta) -> {
-            meta.displayName(Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.GOLD)
-                .content("Logs for ")
-                .append(Component.text(this.snitch.getName()))
-                .build());
-            MetaUtils.setComponentLore(meta,
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.AQUA)
-                    .content("Location: ")
-                    .append(Componentify.blockLocation(this.snitch.getLocation()))
-                    .build(),
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.YELLOW)
-                    .content("Group: ")
-                    .append(Component.text(this.snitch.getGroup().getName()))
-                    .build(),
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.YELLOW)
-                    .content("Type: ")
-                    .append(Component.text(this.snitch.getType().getName()))
-                    .build());
-            return true;
-        });
+        CivMenu.name(item, JAText.name(this.snitch));
+        CivMenu.lore(item,
+            CivMenu.stat("Location", JAUtility.formatLocation(this.snitch.getLocation(), true)),
+            CivMenu.stat("Group", JAText.group(this.snitch.getGroup())),
+            CivMenu.stat("Type", this.snitch.getType().getName()));
         return new DecorationStack(item);
     }
 
     private IClickable INTERNAL_constructLeverToggleClick() {
         final var leverAppender = this.snitch.getAppender(LeverToggleAppender.class);
         final var item = new ItemStack(Material.LEVER);
-        ItemUtils.handleItemMeta(item, (final ItemMeta meta) -> {
-            meta.displayName(Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.GOLD)
-                .content("Toggle lever activation by redstone")
-                .build());
-            MetaUtils.setComponentLore(meta,
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.AQUA)
-                    .content("Currently turned " + (leverAppender.shouldToggle() ? "on" : "off"))
-                    .build());
-            return true;
-        });
-        if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getToggleLevers())) {
-            return new Clickable(item) {
-                @Override
-                public void clicked(@NotNull final Player clicker) {
-                    if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getToggleLevers())) {
-                        leverAppender.switchState();
-                        SnitchLogGUI.this.player.sendMessage(Component.text()
-                            .color(NamedTextColor.GREEN)
-                            .content("Toggled lever activation " + (leverAppender.shouldToggle() ? "on" : "off"))
-                            .build());
-                        showScreen();
-                    }
-                }
-            };
+        CivMenu.name(item, "Lever toggling");
+        CivMenu.lore(item,
+            Component.text("Pulses levers on this snitch when it sees someone"),
+            CivMenu.stat("Currently", CivText.toggle(leverAppender.shouldToggle())));
+        if (!INTERNAL_hasPermission(JukeAlertPermissionHandler.getToggleLevers())) {
+            CivMenu.lore(item, Component.empty(), noPermission());
+            return new DecorationStack(item);
         }
-        ItemUtils.addComponentLore(item, Component.text()
-            .decoration(TextDecoration.ITALIC, false)
-            .color(NamedTextColor.RED)
-            .content("You do not have permission to do this")
-            .build());
-        return new DecorationStack(item);
+        CivMenu.lore(item, Component.empty(), CivMenu.hint("Click to toggle"));
+        return new Clickable(item) {
+            @Override
+            public void clicked(@NotNull final Player clicker) {
+                if (INTERNAL_hasPermission(JukeAlertPermissionHandler.getToggleLevers())) {
+                    leverAppender.switchState();
+                    CivUI.success(clicker, "Lever toggling is now ", CivText.toggle(leverAppender.shouldToggle()),
+                        " for ", JAText.snitch(SnitchLogGUI.this.snitch));
+                    showScreen();
+                }
+            }
+        };
     }
 
     public void showScreen() {
@@ -236,7 +172,7 @@ public class SnitchLogGUI {
             this.buttonCache = INTERNAL_constructContent();
         }
         final var view = new MultiPageView(this.player, this.buttonCache,
-            StringUtils.substring(this.snitch.getName(), 0, 32), true);
+            CivMenu.title(StringUtils.substring(JAText.name(this.snitch), 0, 32)), true);
         if (this.logAppender != null) {
             view.setMenuSlot(INTERNAL_constructClearClick(), 1);
         }
@@ -251,20 +187,8 @@ public class SnitchLogGUI {
 
     public static IClickable constructExitClick() {
         final var item = new ItemStack(Material.OAK_DOOR);
-        ItemUtils.handleItemMeta(item, (final ItemMeta meta) -> {
-            meta.displayName(Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.GOLD)
-                .content("Exit")
-                .build());
-            MetaUtils.setComponentLore(meta,
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.AQUA)
-                    .content("Click to exit GUI")
-                    .build());
-            return true;
-        });
+        CivMenu.name(item, "Exit");
+        CivMenu.lore(item, CivMenu.hint("Click to close"));
         return new Clickable(item) {
             @Override
             public void clicked(@NotNull final Player clicker) {

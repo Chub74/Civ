@@ -6,11 +6,11 @@ import com.untamedears.jukealert.model.SnitchFactoryType;
 import com.untamedears.jukealert.model.SnitchTypeManager;
 import com.untamedears.jukealert.model.actions.internal.DestroySnitchAction.Cause;
 import com.untamedears.jukealert.model.appender.AbstractSnitchAppender;
+import com.untamedears.jukealert.util.JAText;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -27,6 +27,8 @@ import vg.civcraft.mc.citadel.events.ReinforcementCreationEvent;
 import vg.civcraft.mc.citadel.events.ReinforcementDestructionEvent;
 import vg.civcraft.mc.citadel.events.ReinforcementGroupChangeEvent;
 import vg.civcraft.mc.citadel.model.Reinforcement;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class SnitchLifeCycleListener implements Listener {
 
@@ -96,9 +98,8 @@ public class SnitchLifeCycleListener implements Listener {
         logger.info(String.format("Created snitch of type %s at %s by %s", snitch.getType().getName(),
             snitch.getLocation().toString(), p != null ? p.getName() : "null"));
         if (p != null) {
-            p.sendMessage(String.format("%sCreated %s on group %s at [%d %d %d]", ChatColor.GREEN,
-                snitchConfig.getName(), e.getReinforcement().getGroup().getName(), location.getBlockX(), location.getBlockY(),
-                location.getBlockZ()));
+            CivUI.success(p, "Created a ", CivText.subject(snitchConfig.getName()), " on ",
+                JAText.group(e.getReinforcement().getGroup()), " at ", JAText.location(location, false));
         }
         snitchManager.addSnitch(snitch);
         snitch.applyToAppenders(AbstractSnitchAppender::postSetup);
@@ -146,9 +147,9 @@ public class SnitchLifeCycleListener implements Listener {
         logger.info(String.format("Group change for snitch of type %s at %s by %s", snitch.getType().getName(),
             snitch.getLocation(), p != null ? p.getName() : "null"));
         if (p != null) {
-            p.sendMessage(String.format("%sChanged from group %s to group %s at [%d %d %d]", ChatColor.GREEN,
-                e.getReinforcement().getGroup().getName(), e.getNewGroup().getName(), location.getBlockX(),
-                location.getBlockY(), location.getBlockZ()));
+            CivUI.success(p, "Moved the ", CivText.subject(snitch.getType().getName()), " at ",
+                JAText.location(location, false), " from ", JAText.group(e.getReinforcement().getGroup()), " to ",
+                JAText.group(e.getNewGroup()));
         }
         snitchManager.setSnitchGroup(snitch, e.getNewGroup());
     }

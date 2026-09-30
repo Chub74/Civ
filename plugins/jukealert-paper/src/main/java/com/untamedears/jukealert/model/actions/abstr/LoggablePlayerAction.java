@@ -4,12 +4,15 @@ import com.untamedears.jukealert.JukeAlert;
 import com.untamedears.jukealert.model.Snitch;
 import com.untamedears.jukealert.model.actions.ActionCacheState;
 import com.untamedears.jukealert.model.actions.LoggedActionPersistence;
+import com.untamedears.jukealert.util.JAText;
 import com.untamedears.jukealert.util.JAUtility;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.ChatColor;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
@@ -17,8 +20,8 @@ import vg.civcraft.mc.civmodcore.CivModCorePlugin;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
-import vg.civcraft.mc.namelayer.NameLayerAPI;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public abstract class LoggablePlayerAction extends PlayerAction implements LoggableAction {
 
@@ -63,25 +66,37 @@ public abstract class LoggablePlayerAction extends PlayerAction implements Logga
     }
 
     @Override
-    public TextComponent getChatRepresentation(Location reference, boolean live, boolean censor) {
+    public Component getChatRepresentation(Location reference, boolean live, boolean censor) {
         Location referenceLoc = getLocationForStringRepresentation();
         boolean sameWorld = JAUtility.isSameWorld(referenceLoc, reference);
-        String referenceLocText = censor ? "[*** *** ***]" : JAUtility.formatLocation(referenceLoc, !sameWorld);
+        Component referenceLocText = censor
+            ? CivText.value("[*** *** ***]")
+            : JAText.location(referenceLoc, !sameWorld);
 
-        TextComponent comp = new TextComponent(
-            String.format("%s%s  %s%s  ", ChatColor.GOLD, getChatRepresentationIdentifier(), ChatColor.GREEN, NameLayerAPI.getCurrentName(getPlayer())));
+        // Client mods parse these lines, so the plain text and its double spaces must stay as they are
+        TextComponent.Builder line = Component.text().color(CivText.INFO)
+            .append(getChatIdentifier())
+            .append(Component.text("  "))
+            .append(JAText.player(getPlayer()))
+            .append(Component.text("  "));
         if (live) {
-            comp.addExtra(JAUtility.genTextComponent(snitch));
-            comp.addExtra(String.format("  %s%s", ChatColor.YELLOW, referenceLocText));
+            line.append(JAText.snitch(snitch))
+                .append(Component.text("  "))
+                .append(referenceLocText);
         } else {
             //dont need to explicitly list location when retrieving logs and its the snitch location
             if (referenceLoc != snitch.getLocation()) {
-                comp.addExtra(String.format("%s%s ", ChatColor.YELLOW, referenceLocText));
+                line.append(referenceLocText).append(Component.space());
             }
             // Example: 2011-12-03T10:15:30
-            comp.addExtra(new TextComponent(ChatColor.AQUA + getFormattedTime(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
+            line.append(CivText.value(getFormattedTime(DateTimeFormatter.ISO_LOCAL_DATE_TIME)));
         }
-        return comp;
+        return line.build();
+    }
+
+    /** The action's name at the start of a chat line */
+    protected Component getChatIdentifier() {
+        return Component.text(getChatRepresentationIdentifier(), CivText.HEADING);
     }
 
     protected void enrichGUIItem(ItemStack item) {
@@ -89,10 +104,13 @@ public abstract class LoggablePlayerAction extends PlayerAction implements Logga
             JukeAlert.getInstance().getLogger().info("Tried to enrich air");
             item = new ItemStack(Material.STONE);
         }
-        ItemUtils.addLore(item, String.format("%sPlayer: %s", ChatColor.GOLD, getPlayerName()),
+        // A custom name, not ITEM_NAME: player heads and potions name themselves, and that beats ITEM_NAME
+        item.setData(DataComponentTypes.CUSTOM_NAME, Component.text(getGUIName(), CivText.VALUE)
+            .decoration(TextDecoration.ITALIC, false));
+        CivMenu.lore(item,
+            CivMenu.stat("Player", JAText.player(getPlayer())),
             // Example: Tue, 3 Jun 2008 11:05:30 GMT
-            String.format("%sTime: %s", ChatColor.LIGHT_PURPLE, getFormattedTime(DateTimeFormatter.RFC_1123_DATE_TIME)));
-        ItemUtils.setDisplayName(item, ChatColor.GOLD + getGUIName());
+            CivMenu.stat("Time", getFormattedTime(DateTimeFormatter.RFC_1123_DATE_TIME)));
     }
 
     protected String getGUIName() {

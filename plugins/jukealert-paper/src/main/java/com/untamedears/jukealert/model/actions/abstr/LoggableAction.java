@@ -2,7 +2,7 @@ package com.untamedears.jukealert.model.actions.abstr;
 
 import com.untamedears.jukealert.model.actions.ActionCacheState;
 import com.untamedears.jukealert.model.actions.LoggedActionPersistence;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 
@@ -17,10 +17,10 @@ public interface LoggableAction {
      * @param live      Whether the action is happening right now or being retrieved
      *                  as a record
      * @param censor    If True then override location by [*** *** ***]
-     * @return TextComponent representing this instance ready for sending to a
+     * @return Component representing this instance ready for sending to a
      * player
      */
-    TextComponent getChatRepresentation(Location reference, boolean live, boolean censor);
+    Component getChatRepresentation(Location reference, boolean live, boolean censor);
 
     LoggedActionPersistence getPersistence();
 

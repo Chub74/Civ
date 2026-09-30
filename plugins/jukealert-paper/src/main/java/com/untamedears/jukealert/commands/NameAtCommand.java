@@ -11,12 +11,11 @@ import com.untamedears.jukealert.JukeAlert;
 import com.untamedears.jukealert.model.Snitch;
 import com.untamedears.jukealert.util.JAUtility;
 import com.untamedears.jukealert.util.JukeAlertPermissionHandler;
-import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class NameAtCommand extends BaseCommand {
@@ -94,21 +93,11 @@ public class NameAtCommand extends BaseCommand {
     private static void renameSnitch(Player player, String name, Location location) {
         Snitch snitch = JukeAlert.getInstance().getSnitchManager().getSnitchAt(location);
         if (snitch == null || !snitch.hasPermission(player, getPermission())) {
-            player.sendMessage(
-                ChatColor.RED + "You do not own a snitch at those coordinates or lack permission to rename it!");
+            CivUI.error(player, "There's no snitch at those coordinates that you can rename");
             return;
         }
 
-        String newName = name.length() > 40
-            ? name.substring(0, 40)
-            : name;
-
-        String prevName = snitch.getName();
-        JukeAlert.getInstance().getSnitchManager().renameSnitch(snitch, newName);
-        TextComponent lineText = new TextComponent(ChatColor.AQUA + " Changed snitch name to ");
-        lineText.addExtra(JAUtility.genTextComponent(snitch));
-        lineText.addExtra(ChatColor.AQUA + " from " + ChatColor.GOLD + prevName);
-        player.spigot().sendMessage(lineText);
+        JAUtility.renameSnitch(player, snitch, name);
     }
 
     private static PermissionType getPermission() {

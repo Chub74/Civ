@@ -6,15 +6,13 @@ import com.untamedears.jukealert.model.Snitch;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.UUID;
-import net.md_5.bungee.api.chat.HoverEvent;
-import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BlockIterator;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 // Static methods only
@@ -25,6 +23,8 @@ public final class JAUtility {
     }
 
     private static double tanPiDiv = Math.sqrt(2.0) - 1.0;
+
+    public static final int MAX_NAME_LENGTH = 40;
 
     public static Snitch findClosestSnitch(Location loc, PermissionType perm, UUID player) {
         Snitch closestSnitch = null;
@@ -64,18 +64,18 @@ public final class JAUtility {
         return null;
     }
 
-    public static TextComponent genTextComponent(Snitch snitch) {
-        String name = snitch.getName().isEmpty() ? snitch.getType().getName() : snitch.getName();
-        TextComponent textComponent = new TextComponent(ChatColor.AQUA + name);
-        addSnitchHoverText(textComponent, snitch);
-        return textComponent;
-    }
-
-    public static String genDirections(Snitch snitch, Player player) {
-        if (snitch.getLocation().getWorld().equals(player.getLocation().getWorld())) {
-            return String.format("%s[%sm %s%s%s]", ChatColor.GREEN, Math.round(player.getLocation().distance(snitch.getLocation())), ChatColor.RED, getCardinal(player.getLocation(), snitch.getLocation()), ChatColor.GREEN);
+    /** Renames the snitch, cut to the length limit, and tells the player */
+    public static void renameSnitch(Player player, Snitch snitch, String name) {
+        String newName = name.strip();
+        if (newName.length() > MAX_NAME_LENGTH) {
+            newName = newName.substring(0, MAX_NAME_LENGTH);
+        }
+        String prevName = snitch.getName();
+        JukeAlert.getInstance().getSnitchManager().renameSnitch(snitch, newName);
+        if (prevName.isEmpty()) {
+            CivUI.success(player, "Named this ", CivText.subject(snitch.getType().getName()), " ", JAText.snitch(snitch));
         } else {
-            return ""; // Can't get directions to another world
+            CivUI.success(player, "Renamed ", CivText.subject(prevName), " to ", JAText.snitch(snitch));
         }
     }
 
@@ -102,18 +102,6 @@ public final class JAUtility {
         } else {
             return "";
         }
-    }
-
-    public static void addSnitchHoverText(TextComponent text, Snitch snitch) {
-        StringBuilder sb = new StringBuilder();
-        Location loc = snitch.getLocation();
-        sb.append(String.format("%sLocation: %s(%s) [%d %d %d]%n", ChatColor.GOLD, ChatColor.AQUA,
-            loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-        if (!snitch.getName().isEmpty()) {
-            sb.append(String.format("%sName: %s%s%n", ChatColor.GOLD, ChatColor.AQUA, snitch.getName()));
-        }
-        sb.append(String.format("%sGroup: %s%s", ChatColor.GOLD, ChatColor.AQUA, snitch.getGroup().getName()));
-        text.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(sb.toString())));
     }
 
     public static Material parseMaterial(String id) {

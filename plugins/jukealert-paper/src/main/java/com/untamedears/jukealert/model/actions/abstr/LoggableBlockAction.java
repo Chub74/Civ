@@ -7,16 +7,14 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.logging.Logger;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
-import vg.civcraft.mc.civmodcore.inventory.items.MetaUtils;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.utilities.CivLogger;
 
 public abstract class LoggableBlockAction extends LoggablePlayerAction {
@@ -198,17 +196,9 @@ public abstract class LoggableBlockAction extends LoggablePlayerAction {
                 yield Material.STONE;
             }
         });
-        guiRepresentation.editMeta((meta) -> {
-            MetaUtils.addComponentLore(
-                meta,
-                Component.text().append(
-                    Component.text("Material: ", NamedTextColor.GOLD),
-                    Component.translatable(getMaterial(), NamedTextColor.AQUA)
-                ).build()
-            );
-        });
+        CivMenu.lore(guiRepresentation, CivMenu.stat("Material", Component.translatable(getMaterial(), CivText.VALUE)));
         super.enrichGUIItem(guiRepresentation);
-        ItemUtils.addLore(guiRepresentation, ChatColor.GOLD + JAUtility.formatLocation(getLocation(), false));
+        CivMenu.lore(guiRepresentation, CivMenu.stat("Location", JAUtility.formatLocation(getLocation(), false)));
         return new DecorationStack(guiRepresentation);
     }
 

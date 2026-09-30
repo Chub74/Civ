@@ -17,11 +17,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import net.md_5.bungee.api.ChatColor;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.command.TabCompleters.GroupTabCompleter;
@@ -46,26 +47,25 @@ public class ListCommand extends BaseCommand {
             final Group group = GroupManager.getGroup(groupName);
             if (group == null) {
                 if (playerProvidedGroups) {
-                    player.sendMessage(ChatColor.RED + "The group " + groupName + " does not exist");
+                    CivUI.error(player, "There's no group called ", CivText.group(groupName));
                 }
                 continue;
             }
             if (!NameLayerAPI.getGroupManager().hasAccess(group, player.getUniqueId(),
                 JukeAlertPermissionHandler.getListSnitches())) {
                 if (playerProvidedGroups) {
-                    player.sendMessage(ChatColor.RED + "You do not have permission to list snitches "
-                        + "for the group " + group.getName());
+                    CivUI.error(player, "You don't have permission to list the snitches on ", CivText.group(group.getName()));
                 }
                 continue;
             }
             groupIds.addAll(group.getGroupIds());
         }
         if (groupIds.isEmpty()) {
-            player.sendMessage(ChatColor.GREEN + "You do not have access to any group's snitches.");
+            CivUI.info(player, "You can't list the snitches of any group");
             return;
         }
-        player.sendMessage(ChatColor.GREEN + "Retrieving snitches for a total of " + groupNames.size()
-            + " group instances. This may take a moment.");
+        CivUI.info(player, "Loading snitches from ", CivText.value(String.valueOf(groupNames.size())),
+            groupNames.size() == 1 ? " group" : " groups", ", which may take a moment");
         JukeAlert.getInstance().getTaskChainFactory().newChain()
             .async((unused) -> JukeAlert.getInstance().getDAO().loadSnitchesByGroupID(groupIds).parallel()
                 .map((snitch) -> {
@@ -79,7 +79,7 @@ public class ListCommand extends BaseCommand {
                 .sorted(Comparator.comparingLong((entry) -> entry.timeUntilCulling))
                 .map((entry) -> entry.snitch)
                 .collect(Collectors.toList()))
-            .syncLast((snitches) -> new SnitchOverviewGUI(player, snitches, "Your snitches",
+            .syncLast((snitches) -> new SnitchOverviewGUI(player, snitches, "Your Snitches",
                 player.hasPermission("jukealert.admin")).showScreen())
             .execute();
     }

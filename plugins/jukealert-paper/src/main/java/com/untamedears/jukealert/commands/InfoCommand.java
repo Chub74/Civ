@@ -14,7 +14,7 @@ import com.untamedears.jukealert.model.actions.abstr.LoggableAction;
 import com.untamedears.jukealert.model.actions.abstr.PlayerAction;
 import com.untamedears.jukealert.model.actions.abstr.SnitchAction;
 import com.untamedears.jukealert.model.appender.SnitchLogAppender;
-import com.untamedears.jukealert.util.JAUtility;
+import com.untamedears.jukealert.util.JAText;
 import com.untamedears.jukealert.util.JukeAlertPermissionHandler;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -25,10 +25,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class InfoCommand extends BaseCommand {
 
@@ -90,27 +89,28 @@ public class InfoCommand extends BaseCommand {
 
         if (loweredOptionText.equals("censor")) {
             if (options.censor) {
-                player.sendMessage(Component.text("The option 'censor' is declared more than once", NamedTextColor.RED));
+                CivUI.error(player, "You gave ", CivText.value("censor"), " more than once");
                 return false;
             }
             options.censor = true;
         } else if (loweredOptionText.startsWith("action=")) {
             if (options.actionType != null) {
-                player.sendMessage(Component.text("The option 'action' is declared more than once", NamedTextColor.RED));
+                CivUI.error(player, "You gave ", CivText.value("action="), " more than once");
                 return false;
             }
             options.actionType = optionText.substring("action=".length());
         } else if (loweredOptionText.startsWith("player=")) {
             if (options.playerName != null) {
-                player.sendMessage(Component.text("The option 'player' is declared more than once", NamedTextColor.RED));
+                CivUI.error(player, "You gave ", CivText.value("player="), " more than once");
                 return false;
             }
             options.playerName = optionText.substring("player=".length());
         } else if (loweredOptionText.equals("next")) {
-            player.sendMessage(Component.text("The keyword 'next' cannot be used in this context", NamedTextColor.RED));
+            CivUI.error(player, CivText.value("next"), " can't be combined with other options");
             return false;
         } else {
-            player.sendMessage(Component.text("The unknown option: " + optionText, NamedTextColor.RED));
+            CivUI.error(player, "There's no option called ", CivText.value(optionText), ". Try ", CivText.value("censor"),
+                ", ", CivText.value("action="), " or ", CivText.value("player="));
             return false;
         }
 
@@ -143,14 +143,11 @@ public class InfoCommand extends BaseCommand {
     private void executeCommand(Player player, FilterOptions options) {
         Snitch snitch = findLookingAtOrClosestSnitch(player, JukeAlertPermissionHandler.getReadLogs());
         if (snitch == null) {
-            player.sendMessage(Component.text("You do not own any snitches nearby or lack permission to view their logs!",
-                NamedTextColor.RED));
+            CivUI.error(player, "There's no snitch near you whose logs you can read");
             return;
         }
         if (!snitch.hasAppender(SnitchLogAppender.class)) {
-            player.sendMessage(Component.text("This " + snitch.getType().getName() + " named " + snitch.getName()
-                    + " can not save logs",
-                NamedTextColor.RED));
+            CivUI.error(player, JAText.snitch(snitch), " doesn't keep logs");
             return;
         }
 
@@ -163,7 +160,7 @@ public class InfoCommand extends BaseCommand {
         if (options.pageNumber == null) {
             options.pageNumber = 0;
         } else if (options.pageNumber < 0) {
-            player.sendMessage(Component.text("You cannot input a negative number here").color(NamedTextColor.RED));
+            CivUI.error(player, "Page numbers can't be negative");
             return;
         }
 
@@ -210,19 +207,17 @@ public class InfoCommand extends BaseCommand {
         }
         int initialOffset = pageLength * offset;
         if (initialOffset >= logs.size()) {
-            TextComponent reply = JAUtility.genTextComponent(snitch);
-            reply.addExtra(ChatColor.GOLD + " has only " + logs.size() + " logs fitting your criteria");
-            player.spigot().sendMessage(reply);
+            CivUI.info(player, JAText.snitch(snitch), " only has ", CivText.value(String.valueOf(logs.size())),
+                logs.size() == 1 ? " log" : " logs", " matching your filters");
             return;
         }
         int currentPageSize = Math.min(pageLength, logs.size() - initialOffset);
         ListIterator<LoggableAction> iter = logs.listIterator(initialOffset);
         int currentSlot = 0;
-        TextComponent reply = new TextComponent(ChatColor.GOLD + "--- Page " + offset + " for ");
-        reply.addExtra(JAUtility.genTextComponent(snitch));
-        player.spigot().sendMessage(reply);
+        // The header and entries stay unbranded: client mods parse them from the start of the line
+        player.sendMessage(Component.text("--- Page " + offset + " for ", CivText.HEADING).append(JAText.snitch(snitch)));
         while (currentSlot++ < currentPageSize) {
-            player.spigot().sendMessage(iter.next().getChatRepresentation(player.getLocation(), false, censor));
+            player.sendMessage(iter.next().getChatRepresentation(player.getLocation(), false, censor));
         }
     }
 }

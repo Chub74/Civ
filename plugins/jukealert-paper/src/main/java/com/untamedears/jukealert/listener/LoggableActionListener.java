@@ -38,11 +38,15 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.DoubleChest;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Boat;
 import org.bukkit.entity.ChestBoat;
+import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Interaction;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Marker;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Vehicle;
 import org.bukkit.entity.minecart.HopperMinecart;
@@ -217,7 +221,8 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onMountEntity(EntityMountEvent event) {
-        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getMount())) {
+        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getMount())
+            || isPluginSeat(event.getMount())) {
             return;
         }
         String mountName = getEntityName(event.getMount());
@@ -227,7 +232,8 @@ public class LoggableActionListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onDismountEntity(EntityDismountEvent event) {
-        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getDismounted())) {
+        if (!(event.getEntity() instanceof Player player) || isVehicleRatherThanMount(event.getDismounted())
+            || isPluginSeat(event.getDismounted())) {
             return;
         }
         String mountName = getEntityName(event.getDismounted());
@@ -351,6 +357,15 @@ public class LoggableActionListener implements Listener {
      */
     private static boolean isVehicleRatherThanMount(Entity entity) {
         return entity instanceof Vehicle && !(entity instanceof LivingEntity);
+    }
+
+    /**
+     * Players can't ride these in vanilla, so riding one means a plugin seated them - GSit sits, lays and crawls
+     * players on an invisible armor stand, and other seat plugins use displays, interactions or markers.
+     */
+    private static boolean isPluginSeat(Entity entity) {
+        return entity instanceof ArmorStand || entity instanceof Display || entity instanceof Interaction
+            || entity instanceof Marker;
     }
 
     private String getEntityName(Entity entity) {
