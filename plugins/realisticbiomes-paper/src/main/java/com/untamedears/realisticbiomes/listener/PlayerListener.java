@@ -1,5 +1,6 @@
 package com.untamedears.realisticbiomes.listener;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.untamedears.realisticbiomes.AnimalConfigManager;
 import com.untamedears.realisticbiomes.GrowthConfigManager;
 import com.untamedears.realisticbiomes.PlantManager;
@@ -18,7 +19,6 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -226,8 +226,8 @@ public class PlayerListener implements Listener {
         } else {
             rate = animalConfig.getRate(entity.getLocation().getBlock().getBiome());
         }
-        event.getPlayer().sendMessage(ChatColor.GOLD + decimalFormat.format(rate * 100) + "% spawn chance for "
-            + entity.getType().toString());
+        CivUI.info(event.getPlayer(), CivText.value(decimalFormat.format(rate * 100) + "%"), " spawn chance for ",
+            Component.translatable(entity.getType(), CivText.SUBJECT));
     }
 
     // show growth rates when hitting floor with crop
@@ -244,8 +244,7 @@ public class PlayerListener implements Listener {
         if (plantConfig == null) {
             return;
         }
-        event.getPlayer()
-            .sendMessage(plantConfig.getInfoString(event.getClickedBlock().getRelative(event.getBlockFace())));
+        CivUI.info(event.getPlayer(), plantConfig.getInfo(event.getClickedBlock().getRelative(event.getBlockFace())));
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)

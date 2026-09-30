@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -22,7 +21,6 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
 import org.bukkit.event.Cancellable;
 import org.bukkit.inventory.ItemStack;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
@@ -86,41 +84,43 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
      * @param b Block to get growth information for
      * @return Info string ready for output to a player
      */
-    public String getInfoString(Block b) {
+    public Component getInfo(Block b) {
         double soilMultiplier = 1.0 + getSoilBonus(b);
         double lightMultiplier = getLightMultiplier(b);
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GOLD);
-        sb.append(ItemUtils.getItemName(item));
+        TextComponent.Builder info = Component.text();
+        Component icon = CivText.icon(item);
+        if (icon != null) {
+            info.append(icon).append(Component.space());
+        }
+        info.append(Component.translatable(item, CivText.SUBJECT));
         if (biomeGrowthConfig instanceof PersistentGrowthConfig) {
             long time = getPersistentGrowthTime(b);
             if (time == -1) {
-                sb.append(" does not grow here");
-                return sb.toString();
-            } else {
-                sb.append(" will grow here within " + TextUtil.formatDuration(time, TimeUnit.MILLISECONDS));
+                return info.append(CivText.info(" doesn't grow here")).build();
             }
+            info.append(CivText.info(" grows here in "))
+                .append(CivText.value(TextUtil.formatDuration(time, TimeUnit.MILLISECONDS)));
         } else {
             double baseMultiplier = biomeGrowthConfig.getNaturalProgressChance(b.getBiome());
             double totalMultiplier = baseMultiplier * soilMultiplier * lightMultiplier;
             if (totalMultiplier == 0) {
-                sb.append(" does not grow here");
-                return sb.toString();
-            } else {
-                sb.append(" has a ");
-                sb.append(decimalFormat.format(totalMultiplier * 100));
-                sb.append(" % chance to grow here");
+                return info.append(CivText.info(" doesn't grow here")).build();
             }
+            info.append(CivText.info(" has a "))
+                .append(CivText.value(decimalFormat.format(totalMultiplier * 100) + "%"))
+                .append(CivText.info(" chance to grow here"));
         }
-        sb.append("\n");
         if (soilMultiplier != 1.0) {
-            sb.append(ChatColor.AQUA + "Soil multiplier: " + soilMultiplier);
-            sb.append("\n");
+            info.append(Component.newline())
+                .append(CivText.info("Soil multiplier: "))
+                .append(CivText.value(decimalFormat.format(soilMultiplier)));
         }
         if (lightMultiplier != 1.0) {
-            sb.append(ChatColor.GOLD + "Light multiplier: " + lightMultiplier);
+            info.append(Component.newline())
+                .append(CivText.info("Light multiplier: "))
+                .append(CivText.value(decimalFormat.format(lightMultiplier)));
         }
-        return sb.toString();
+        return info.build();
     }
 
     public Component getPlantStatusComponent(Block block, Plant plant) {
@@ -280,57 +280,6 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
             }
         }
         return (long) baseTime;
-    }
-
-    /**
-     * Gets an info string regarding the growth progress of a single plant
-     *
-     * @param block Block at which the plant is
-     * @param plant Plant growing there, may be null for non-persistent growth
-     * @return Info string describing the plants growth progress
-     */
-    public String getPlantInfoString(Block block, Plant plant) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GOLD);
-        sb.append(this.name);
-        if (plant == null) {
-            // non-persistent growth
-            double progress = grower.getProgressGrowthStage(new Plant(block.getLocation(), this));
-            sb.append(" is ");
-            sb.append(decimalFormat.format(progress * 100));
-            sb.append(" % grown");
-        } else {
-            if (isFullyGrown(plant)) {
-                sb.append(" is fully grown ");
-                return sb.toString();
-            }
-            appendPlantProgress(block, plant, sb);
-        }
-        return sb.toString();
-    }
-
-    private void appendPlantProgress(Block block, Plant plant, StringBuilder sb) {
-        long totalTime = getPersistentGrowthTime(block);
-        long passedTime = System.currentTimeMillis() - plant.getCreationTime();
-        long timeRemaining = Math.max(0, totalTime - passedTime);
-
-        if (timeRemaining >= INFINITE_TIME || totalTime == -1) {
-            sb.append(" will never grow here");
-            return;
-        }
-
-        if (plant.getNextUpdate() == Long.MAX_VALUE) {
-            sb.append(" does not grow");
-            return;
-        }
-
-        sb.append(" will grow to full size ");
-        if (timeRemaining <= 0) {
-            sb.append("now");
-        } else {
-            sb.append("in ");
-            sb.append(TextUtil.formatDuration(timeRemaining, TimeUnit.MILLISECONDS));
-        }
     }
 
     /**

@@ -1,5 +1,9 @@
 package com.untamedears.realisticbiomes.utils;
 
+import net.kyori.adventure.text.TextComponent;
+import net.kyori.adventure.text.Component;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import com.untamedears.realisticbiomes.RealisticBiomes;
 import com.untamedears.realisticbiomes.growthconfig.PlantGrowthConfig;
 import com.untamedears.realisticbiomes.growthconfig.inner.BiomeGrowthConfig;
@@ -11,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
@@ -23,7 +26,6 @@ import vg.civcraft.mc.civmodcore.inventory.gui.components.ContentAligners;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.Scrollbar;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.SlotPredicates;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.StaticDisplaySection;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 public class RealisticBiomesGUI {
@@ -49,8 +51,8 @@ public class RealisticBiomesGUI {
         if (inventory == null) {
             String biomeText = currentBiome.getKey().value().replace("_", " ");
             biomeText = StringUtils.capitalize(biomeText);
-            biomeText = StringUtils.abbreviate(biomeText, 30);
-            inventory = new ComponableInventory(ChatColor.DARK_GRAY + biomeText, 6, player);
+            biomeText = StringUtils.abbreviate(biomeText, 24);
+            inventory = new ComponableInventory(CivMenu.title(biomeText), 6, player);
         } else {
             inventory.clear();
         }
@@ -74,58 +76,52 @@ public class RealisticBiomesGUI {
                 representation = Material.BARRIER;
             }
             ItemStack is = new ItemStack(representation);
-            ItemUtils.setDisplayName(is, ChatColor.DARK_GREEN + plant.getName());
-            List<String> lore = new ArrayList<>();
+            CivMenu.name(is, plant.getName());
+            List<Component> lore = new ArrayList<>();
             BiomeGrowthConfig config = plant.getBiomeGrowthConfig();
             double biomeMultiplier = config.getBiomeMultiplier(currentBiome);
             if (config instanceof PersistentGrowthConfig) {
                 long timeNeeded = ((PersistentGrowthConfig) config).getTotalGrowthTimeNeeded(currentBiome);
                 if (biomeMultiplier == 0) {
-                    lore.add(ChatColor.DARK_AQUA + "Time: " + ChatColor.RED + "∞");
+                    lore.add(CivMenu.stat("Growth time", Component.text("Never", CivText.ERROR)));
                 } else {
-                    lore.add(ChatColor.DARK_AQUA + "Time: "
-                        + ChatColor.GRAY + TextUtil.formatDuration(timeNeeded, TimeUnit.MILLISECONDS));
+                    lore.add(CivMenu.stat("Growth time", TextUtil.formatDuration(timeNeeded, TimeUnit.MILLISECONDS)));
                     is.editMeta(itemMeta -> itemMeta.setEnchantmentGlintOverride(true));
                 }
             } else {
                 double baseMultiplier = config.getNaturalProgressChance(currentBiome);
                 if (baseMultiplier == 0) {
-                    lore.add(ChatColor.DARK_AQUA + "% chance: " + ChatColor.RED + "0.0");
+                    lore.add(CivMenu.stat("Growth chance", Component.text("0%", CivText.ERROR)));
                 } else {
-                    lore.add(ChatColor.DARK_AQUA + "% chance: "
-                        + ChatColor.GRAY + decimalFormat.format(baseMultiplier * 100));
+                    lore.add(CivMenu.stat("Growth chance", decimalFormat.format(baseMultiplier * 100) + "%"));
                     is.editMeta(itemMeta -> itemMeta.setEnchantmentGlintOverride(true));
                 }
             }
-            lore.add(ChatColor.DARK_AQUA + "Biome Multiplier: " + ChatColor.GRAY + biomeMultiplier);
+            lore.add(CivMenu.stat("Biome multiplier", String.valueOf(biomeMultiplier)));
             if (plant.getAllowBoneMeal() || !plant.getNeedsLight()
                 || !plant.getSoilBoniPerLevel().isEmpty() || plant.getMaximumSoilLayers() != 0
                 || plant.getMaximumSoilBonus() != Integer.MAX_VALUE || !plant.getGreenHouseRates().isEmpty()) {
-                lore.add(ChatColor.DARK_GREEN + "---");
+                lore.add(Component.empty());
             }
             if (plant.getAllowBoneMeal()) {
-                lore.add(ChatColor.DARK_AQUA + "Allow Bone Meal: " + ChatColor.GRAY + "true");
+                lore.add(CivMenu.stat("Bone meal", "Allowed"));
             }
             if (!plant.getNeedsLight()) {
-                lore.add(ChatColor.DARK_AQUA + "Needs Light: " + ChatColor.GRAY + "false");
+                lore.add(CivMenu.stat("Needs light", "No"));
             }
             for (Map.Entry<Material, Double> entry : plant.getSoilBoniPerLevel().entrySet()) {
-                lore.add(String.format("%sSoil Bonus: %s%s (%.2f)", ChatColor.DARK_AQUA,
-                    ChatColor.GRAY, ItemUtils.getItemName(entry.getKey()), entry.getValue()));
+                lore.add(CivMenu.stat("Soil bonus", material(entry.getKey(), entry.getValue())));
             }
             if (plant.getMaximumSoilLayers() != 0) {
-                lore.add(String.format("%sMax Soil Layers: %s%d", ChatColor.DARK_AQUA,
-                    ChatColor.GRAY, plant.getMaximumSoilLayers()));
+                lore.add(CivMenu.stat("Max soil layers", String.valueOf(plant.getMaximumSoilLayers())));
             }
             if (plant.getMaximumSoilBonus() < Integer.MAX_VALUE) {
-                lore.add(String.format("%sMax Soil Bonus: %s%.2f", ChatColor.DARK_AQUA,
-                    ChatColor.GRAY, plant.getMaximumSoilBonus()));
+                lore.add(CivMenu.stat("Max soil bonus", decimalFormat.format(plant.getMaximumSoilBonus())));
             }
             for (Map.Entry<Material, Double> entry : plant.getGreenHouseRates().entrySet()) {
-                lore.add(String.format("%sGreen House Rate: %s%s (%.2f)", ChatColor.DARK_AQUA,
-                    ChatColor.GRAY, ItemUtils.getItemName(entry.getKey()), entry.getValue()));
+                lore.add(CivMenu.stat("Greenhouse rate", material(entry.getKey(), entry.getValue())));
             }
-            ItemUtils.addLore(is, lore);
+            CivMenu.lore(is, lore.toArray(new Component[0]));
             IClickable click = new DecorationStack(is);
             clicks.add(click);
         }
@@ -135,5 +131,16 @@ public class RealisticBiomesGUI {
         StaticDisplaySection bottomLine = new StaticDisplaySection(9);
         inventory.addComponent(bottomLine, SlotPredicates.rows(1));
         inventory.show();
+    }
+
+    private static Component material(Material material, double amount) {
+        TextComponent.Builder text = Component.text();
+        Component icon = CivText.icon(material);
+        if (icon != null) {
+            text.append(icon).append(Component.space());
+        }
+        return text.append(Component.translatable(material, CivText.VALUE))
+            .append(CivText.info(" (" + decimalFormat.format(amount) + ")"))
+            .build();
     }
 }
