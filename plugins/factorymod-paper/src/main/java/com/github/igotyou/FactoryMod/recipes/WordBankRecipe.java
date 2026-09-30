@@ -29,6 +29,12 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.JoinConfiguration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public class WordBankRecipe extends InputRecipe {
 
@@ -87,16 +93,15 @@ public class WordBankRecipe extends InputRecipe {
             inputInv.setItem(i, null);
         }
         //tell player what the recipe consumed
-        StringBuilder sb = new StringBuilder();
-        sb.append(ChatColor.GOLD);
-        sb.append("Wordbank recipe complete and turned ");
+        List<Component> consumed = new ArrayList<>();
         for (Entry<ItemStack, Integer> entry : input.getItems().entrySet()) {
-            sb.append(entry.getValue());
-            sb.append(" ");
-            sb.append(ItemUtils.getItemName(entry.getKey()));
-            sb.append(", ");
+            consumed.add(Component.text()
+                .append(CivText.value(String.valueOf(entry.getValue())))
+                .append(Component.space())
+                .append(FMText.item(entry.getKey()))
+                .build());
         }
-        String result = sb.substring(0, sb.length() - 2);
+        Component result = Component.join(JoinConfiguration.commas(true), consumed);
         String name = getHash(input);
         ItemMeta meta = toApply.getItemMeta();
         meta.setDisplayName(name);
@@ -105,7 +110,8 @@ public class WordBankRecipe extends InputRecipe {
         if (fccf.getActivator() != null) {
             Player player = Bukkit.getPlayer(fccf.getActivator());
             if (player != null) {
-                player.sendMessage(result + " into " + name);
+                FMText.bar(player, Kind.SUCCESS, "Wordbanked ", result, " into ",
+                    LegacyComponentSerializer.legacySection().deserialize(name));
             }
         }
         //always return false to turn the factory off
@@ -120,7 +126,7 @@ public class WordBankRecipe extends InputRecipe {
     @Override
     public List<ItemStack> getInputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         ItemStack is = new ItemStack(Material.RED_WOOL);
-        ItemUtils.addLore(is, ChatColor.GOLD + "A tool or piece of armor and any other random amount of items");
+        FMText.lore(is, Component.text("A tool or piece of armor and any other random amount of items", CivText.INFO));
         return Collections.singletonList(is);
     }
 

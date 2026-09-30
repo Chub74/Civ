@@ -7,7 +7,6 @@ import com.github.igotyou.FactoryMod.repairManager.NoRepairDestroyOnBreakManager
 import com.github.igotyou.FactoryMod.structures.MultiBlockStructure;
 import com.github.igotyou.FactoryMod.structures.PipeStructure;
 import java.util.List;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -16,6 +15,9 @@ import org.bukkit.event.block.BlockRedstoneEvent;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.model.Reinforcement;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class PipeInteractionManager implements IInteractionManager {
 
@@ -41,7 +43,7 @@ public class PipeInteractionManager implements IInteractionManager {
         if (manager.isCitadelEnabled()) {
             Reinforcement rein = ReinforcementLogic.getReinforcementProtecting(b);
             if (rein != null && !rein.hasPermission(p, FactoryMod.getInstance().getPermissionManager().getUseFactory())) {
-                p.sendMessage(ChatColor.RED + "You dont have permission to interact with this factory");
+                FMText.deny(p, "You don't have permission to use ", FMText.factory(pipe.getName()));
                 return;
             }
         }
@@ -50,23 +52,22 @@ public class PipeInteractionManager implements IInteractionManager {
                 //TODO
             } else {
                 if (pipe.isActive()) {
-                    p.sendMessage(
-                        ChatColor.RED + "You can not modify the allowed materials while the pipe is transferring");
+                    FMText.bar(p, Kind.ERROR, "You can't change what ", FMText.factory(pipe.getName()), " carries while it's running");
                     return;
                 }
                 List<Material> allowedMats = pipe.getAllowedMaterials();
                 if (allowedMats == null || !allowedMats.contains(hand.getType())) {
                     pipe.addAllowedMaterial(hand.getType());
-                    p.sendMessage(ChatColor.GREEN + "Added " + hand.getType().toString() + " as allowed material");
+                    FMText.bar(p, Kind.SUCCESS, FMText.factory(pipe.getName()), " now carries ", FMText.item(hand.getType()));
                 } else {
                     pipe.removeAllowedMaterial(hand.getType());
-                    p.sendMessage(ChatColor.GOLD + "Removed " + hand.getType().toString() + " as allowed material");
+                    FMText.bar(p, Kind.SUCCESS, FMText.factory(pipe.getName()), " no longer carries ", FMText.item(hand.getType()));
                 }
             }
         } else if (b.equals(((PipeStructure) (pipe.getMultiBlockStructure())).getFurnace())) {
             if (pipe.isActive()) {
                 pipe.deactivate();
-                p.sendMessage(ChatColor.GOLD + pipe.getName() + " has been deactivated");
+                FMText.bar(p, Kind.SUCCESS, "Stopped ", FMText.factory(pipe.getName()));
             } else {
                 pipe.attemptToActivate(p, false);
             }
@@ -97,7 +98,7 @@ public class PipeInteractionManager implements IInteractionManager {
     public void blockBreak(Player p, Block b) {
         ((NoRepairDestroyOnBreakManager) (pipe.getRepairManager())).breakIt();
         if (p != null) {
-            p.sendMessage(ChatColor.RED + "Pipe was destroyed");
+            CivUI.warn(p, "You destroyed ", FMText.factory(pipe.getName()));
         }
     }
 }

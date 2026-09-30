@@ -11,7 +11,6 @@ import com.github.igotyou.FactoryMod.utility.LoggingUtils;
 import java.util.LinkedList;
 import java.util.List;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -19,6 +18,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class Pipe extends Factory {
 
@@ -49,22 +51,22 @@ public class Pipe extends Factory {
                         return;
                     }
                     if (p != null) {
-                        p.sendMessage(ChatColor.GREEN + "Activated pipe transfer");
+                        FMText.bar(p, Kind.SUCCESS, "Started ", FMText.factory(name));
                     }
                     activate();
                 } else {
                     if (p != null) {
-                        p.sendMessage(ChatColor.RED + "Failed to activate pipe, there is no fuel in the furnace");
+                        FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no fuel in the furnace");
                     }
                 }
             } else {
                 if (p != null) {
-                    p.sendMessage(ChatColor.RED + "No items available to transfer");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " has nothing to transfer");
                 }
             }
         } else {
             rm.breakIt();
-            p.sendMessage(ChatColor.RED + "Failed to activate pipe, it is missing blocks");
+            FMText.bar(p, Kind.ERROR, FMText.factory(name), " is missing blocks");
         }
     }
 

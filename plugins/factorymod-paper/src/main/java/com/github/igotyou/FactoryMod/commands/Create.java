@@ -19,13 +19,14 @@ import com.github.igotyou.FactoryMod.structures.FurnCraftChestStructure;
 import com.github.igotyou.FactoryMod.structures.PipeStructure;
 import java.util.List;
 import java.util.Set;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.Furnace;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class Create extends BaseCommand {
 
@@ -38,7 +39,7 @@ public class Create extends BaseCommand {
         FactoryModManager manager = FactoryMod.getInstance().getManager();
         IFactoryEgg egg = manager.getEgg(factoryName);
         if (egg == null) {
-            sender.sendMessage(ChatColor.RED + "This factory does not exist");
+            CivUI.error(sender, "There's no factory type called ", FMText.factory(factoryName));
             return;
         }
         Set<Material> transparent = null;
@@ -52,8 +53,7 @@ public class Create extends BaseCommand {
             if (view.get(view.size() - 1).getType() == Material.CRAFTING_TABLE) {
                 FurnCraftChestStructure fccs = new FurnCraftChestStructure(view.get(view.size() - 1));
                 if (!fccs.isComplete()) {
-                    sender.sendMessage(
-                        ChatColor.RED + "The required block structure for this factory doesn't exist here");
+                    CivUI.error(sender, "The blocks here don't form a ", FMText.factory(egg.getName()));
                     return;
                 }
                 BlockState chestBS = fccs.getChest().getState();
@@ -69,9 +69,9 @@ public class Create extends BaseCommand {
                 Factory factory = fcce.hatch(fccs, sender);
                 ((FurnCraftChestFactory) factory).getTableIOSelector();
                 manager.addFactory(factory);
-                sender.sendMessage(ChatColor.GREEN + "Created " + egg.getName());
+                CivUI.success(sender, "Created a ", FMText.factory(egg.getName()));
             } else {
-                sender.sendMessage(ChatColor.RED + "You are not looking at the right block for this factory");
+                CivUI.error(sender, "You're not looking at the right block for a ", FMText.factory(egg.getName()));
             }
             return;
         }
@@ -80,14 +80,13 @@ public class Create extends BaseCommand {
             if (view.get(view.size() - 1).getType() == Material.DISPENSER) {
                 PipeStructure fccs = new PipeStructure(view.get(view.size() - 1));
                 if (!fccs.isComplete()) {
-                    sender.sendMessage(
-                        ChatColor.RED + "The required block structure for this factory doesn't exist here");
+                    CivUI.error(sender, "The blocks here don't form a ", FMText.factory(egg.getName()));
                     return;
                 }
                 manager.addFactory(fcce.hatch(fccs, (Player) sender));
-                sender.sendMessage(ChatColor.GREEN + "Created " + egg.getName());
+                CivUI.success(sender, "Created a ", FMText.factory(egg.getName()));
             } else {
-                sender.sendMessage(ChatColor.RED + "You are not looking at the right block for this factory");
+                CivUI.error(sender, "You're not looking at the right block for a ", FMText.factory(egg.getName()));
             }
             return;
         }
@@ -96,14 +95,13 @@ public class Create extends BaseCommand {
             if (view.get(view.size() - 1).getType() == Material.DROPPER) {
                 BlockFurnaceStructure fccs = new BlockFurnaceStructure(view.get(view.size() - 1));
                 if (!fccs.isComplete()) {
-                    sender.sendMessage(
-                        ChatColor.RED + "The required block structure for this factory doesn't exist here");
+                    CivUI.error(sender, "The blocks here don't form a ", FMText.factory(egg.getName()));
                     return;
                 }
                 manager.addFactory(fcce.hatch(fccs, (Player) sender));
-                sender.sendMessage(ChatColor.GREEN + "Created " + egg.getName());
+                CivUI.success(sender, "Created a ", FMText.factory(egg.getName()));
             } else {
-                sender.sendMessage(ChatColor.RED + "You are not looking at the right block for this factory");
+                CivUI.error(sender, "You're not looking at the right block for a ", FMText.factory(egg.getName()));
             }
         }
     }

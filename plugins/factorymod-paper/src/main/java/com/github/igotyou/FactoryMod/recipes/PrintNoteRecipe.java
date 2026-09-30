@@ -20,6 +20,9 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class PrintNoteRecipe extends PrintBookRecipe {
 
@@ -144,8 +147,7 @@ public class PrintNoteRecipe extends PrintBookRecipe {
         int possibleRuns = input.getMultiplesContainedIn(i);
 
         for (ItemStack is : stacks) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for "
-                + String.valueOf(possibleRuns) + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(possibleRuns)));
         }
 
         return stacks;

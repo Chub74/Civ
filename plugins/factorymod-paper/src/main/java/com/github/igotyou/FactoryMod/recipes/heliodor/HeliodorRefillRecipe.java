@@ -4,7 +4,6 @@ import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import com.github.igotyou.FactoryMod.recipes.InputRecipe;
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
 import net.civmc.heliodor.heliodor.HeliodorGem;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -14,6 +13,9 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class HeliodorRefillRecipe extends InputRecipe {
 
@@ -123,11 +125,11 @@ public class HeliodorRefillRecipe extends InputRecipe {
         }
         gem.setAmount(this.count);
         for (ItemStack is : new ItemMap(gem).getItemStackRepresentation()) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for " + (amount / this.count) + " runs");
+            FMText.lore(is, FMText.runs((amount / this.count)));
             result.add(is);
         }
         for (ItemStack is : input.getItemStackRepresentation()) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for " + possibleRuns.getAmount(is) + " runs");
+            FMText.lore(is, FMText.runs(possibleRuns.getAmount(is)));
             result.add(is);
         }
         return result;

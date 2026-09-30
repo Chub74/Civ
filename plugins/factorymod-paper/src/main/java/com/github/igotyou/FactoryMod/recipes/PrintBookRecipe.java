@@ -12,7 +12,6 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.ListTag;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.craftbukkit.inventory.CraftItemStack;
 import org.bukkit.enchantments.Enchantment;
@@ -23,6 +22,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class PrintBookRecipe extends PrintingPressRecipe {
 
@@ -144,8 +145,7 @@ public class PrintBookRecipe extends PrintingPressRecipe {
         int possibleRuns = input.getMultiplesContainedIn(i);
 
         for (ItemStack is : stacks) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for "
-                + String.valueOf(possibleRuns) + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(possibleRuns)));
         }
 
         return stacks;
@@ -166,30 +166,9 @@ public class PrintBookRecipe extends PrintingPressRecipe {
         }
         int have = getPrintingPlateItemStack(inputInv, this.printingPlate) != null ? 1 : 0;
         int needed = 1;
-        ChatColor color = have >= needed ? ChatColor.GREEN : ChatColor.RED;
-        String plain = ChatColor.GRAY + " - " + ChatColor.AQUA + "1 Printing Plate";
-        String repl = ChatColor.GRAY + " - " + color + have + "/" + needed + " " + PrintingPlateRecipe.itemName;
-        return replaceLoreLine(res, plain, repl);
-    }
-
-    private static ItemStack replaceLoreLine(ItemStack item, String target, String replacement) {
-        ItemMeta im = item.getItemMeta();
-        if (im == null) {
-            return item;
-        }
-        List<String> lore = im.getLore();
-        if (lore == null) {
-            return item;
-        }
-        for (int i = 0; i < lore.size(); i++) {
-            if (lore.get(i).equals(target)) {
-                lore.set(i, replacement);
-                break;
-            }
-        }
-        im.setLore(lore);
-        item.setItemMeta(im);
-        return item;
+        FMText.replaceLine(res, " - 1 Printing Plate",
+            FMText.entry(FMText.have(have, needed, FMText.legacy(PrintingPlateRecipe.itemName))));
+        return res;
     }
 
     @Override

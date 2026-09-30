@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -32,6 +31,9 @@ import vg.civcraft.mc.civmodcore.inventory.gui.history.HistoryItem;
 import vg.civcraft.mc.civmodcore.inventory.gui.history.HistoryTracker;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class FactoryModGUI {
 
@@ -67,7 +69,7 @@ public class FactoryModGUI {
 
     public void showFactoryOverview(boolean addToHistory) {
         if (inventory == null) {
-            inventory = new ComponableInventory(ChatColor.DARK_GREEN + "" + ChatColor.BOLD + "Factories", 6, player);
+            inventory = new ComponableInventory(FMText.title("Factories"), 6, player);
         } else {
             inventory.clear();
             topHalfComponent = null;
@@ -82,7 +84,7 @@ public class FactoryModGUI {
 
                 @Override
                 String toText() {
-                    return "Factory overview";
+                    return "the factory overview";
                 }
             });
         }
@@ -96,13 +98,15 @@ public class FactoryModGUI {
             FurnCraftChestEgg fccEgg = (FurnCraftChestEgg) egg;
             InputRecipe firstRec = (InputRecipe) fccEgg.getRecipes().get(0);
             ItemStack is = new ItemStack(firstRec.getRecipeRepresentationMaterial());
-            ItemUtils.setDisplayName(is, ChatColor.DARK_GREEN + fccEgg.getName());
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.DARK_AQUA + "Fuel: " + ChatColor.GRAY + ItemUtils.getItemName(fccEgg.getFuel().getType()));
-            lore.add("");
-            lore.add(ChatColor.GOLD + String.valueOf(fccEgg.getRecipes().size() + " recipes:"));
+            FMText.name(is, FMText.factory(fccEgg.getName()));
+            List<Component> lore = new ArrayList<>();
+            lore.add(Component.text().append(CivText.info("Runs on ")).append(FMText.item(fccEgg.getFuel().getType())).build());
+            lore.add(Component.empty());
+            lore.add(FMText.section(fccEgg.getRecipes().size() + " recipes"));
             lore.addAll(buildTruncatedList(fccEgg.getRecipes(), 15));
-            ItemUtils.addLore(is, lore);
+            lore.add(Component.empty());
+            lore.add(FMText.hint("Click to see its recipes"));
+            FMText.lore(is, lore.toArray(new Component[0]));
             clicks.add(new LClickable(is, p -> {
                 showForFactory(fccEgg);
             }));
@@ -135,29 +139,27 @@ public class FactoryModGUI {
 
     private IClickable getSetupClick(FurnCraftChestEgg factory) {
         ItemStack is = new ItemStack(Material.CRAFTING_TABLE);
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Show creation cost");
+        FMText.name(is, Component.text("Creation cost"));
         if (factory.getSetupCost() != null) {
-            ItemUtils.addLore(is, ChatColor.GREEN + factory.getName() + " can be created directly");
-            List<String> lore = new ArrayList<>();
-            lore.add(ChatColor.GOLD + "Required materials:");
+            FMText.lore(is, Component.text().append(FMText.factory(factory.getName())).append(CivText.info(" is built directly")).build(),
+                Component.empty(), FMText.section("Materials"));
             for (Entry<ItemStack, Integer> entry : factory.getSetupCost().getAllItems().entrySet()) {
-                lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + entry.getValue() + " "
-                    + ItemUtils.getItemName(entry.getKey()));
+                FMText.lore(is, FMText.entry(Component.text().append(FMText.icon(entry.getKey()))
+                    .append(FMText.amount(entry.getValue(), FMText.item(entry.getKey()))).build()));
             }
-            ItemUtils.addLore(is, lore);
         } else {
             FurnCraftChestEgg parent = getParent(factory);
             if (parent != null) {
-                ItemUtils.addLore(is, ChatColor.GREEN + factory.getName() + " is an upgrade of " + parent.getName());
+                FMText.lore(is, Component.text().append(FMText.factory(factory.getName())).append(CivText.info(" is an upgrade of "))
+                    .append(FMText.factory(parent.getName())).build());
                 Upgraderecipe upRec = getUpgradeRecipe(factory, parent);
                 if (upRec != null) {
-                    List<String> lore = new ArrayList<>();
-                    lore.add(ChatColor.GOLD + "Required materials for the upgrade:");
+                    FMText.lore(is, Component.empty(), FMText.section("Upgrade materials"));
                     for (Entry<ItemStack, Integer> entry : upRec.getInput().getAllItems().entrySet()) {
-                        lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + entry.getValue() + " "
-                            + ItemUtils.getItemName(entry.getKey()));
+                        FMText.lore(is, FMText.entry(Component.text().append(FMText.icon(entry.getKey()))
+                            .append(FMText.amount(entry.getValue(), FMText.item(entry.getKey()))).build()));
                     }
-                    ItemUtils.addLore(is, lore);
+                    FMText.lore(is, Component.empty(), FMText.hint("Click to see the upgrade recipe"));
                     return new LClickable(is, p -> showRecipeFor(factory, upRec, true));
                 }
             }
@@ -168,13 +170,13 @@ public class FactoryModGUI {
     private DecorationStack getFuelClick(FurnCraftChestEgg factory, InputRecipe recipe) {
         if (factory == null || recipe == null) {
             ItemStack is = new ItemStack(factory.getFuel().clone());
-            ItemUtils.setDisplayName(is, ChatColor.GOLD + "Fuel setup cost for this factory");
-            ItemUtils.addLore(is, ChatColor.AQUA + "No fuel setup cost");
+            FMText.name(is, Component.text("Fuel"));
+            FMText.lore(is, CivText.info("Creating it costs no fuel"));
             return new DecorationStack(is);
         }
         ItemStack is = factory.getFuel().clone();
-        ItemUtils.setDisplayName(is, ChatColor.GOLD + "Fuel cost for recipe");
-        ItemUtils.addLore(is, ChatColor.AQUA + "- " + recipe.getTotalFuelConsumed() + " " + ItemUtils.getItemName(is.getType()));
+        FMText.name(is, Component.text("Fuel"));
+        FMText.lore(is, Component.text().append(CivText.info("A run burns ")).append(FMText.amount(recipe.getTotalFuelConsumed(), FMText.item(is.getType()))).build());
         return new DecorationStack(is);
     }
 
@@ -183,11 +185,11 @@ public class FactoryModGUI {
             return null;
         }
         FMCHistoryItem previous = history.peekPrevious();
-        LClickable click = new LClickable(Material.SPECTRAL_ARROW, ChatColor.GOLD + "Show previous page", p -> {
+        LClickable click = new LClickable(Material.SPECTRAL_ARROW, FMText.label("Back"), p -> {
             FMCHistoryItem actualPrevious = history.goBack();
             actualPrevious.setStateTo();
         });
-        ItemUtils.addLore(click.getItemStack(), ChatColor.GREEN + previous.toText());
+        FMText.lore(click.getItemStack(), FMText.hint("Click to go back to " + previous.toText()));
         return click;
     }
 
@@ -212,7 +214,7 @@ public class FactoryModGUI {
 
     private void showRecipeFor(FurnCraftChestEgg factory, InputRecipe recipe, boolean addToHistory) {
         if (inventory == null) {
-            inventory = new ComponableInventory(ChatColor.DARK_GREEN + "Factories", 6, player);
+            inventory = new ComponableInventory(FMText.title("Factories"), 6, player);
         }
         if (addToHistory) {
             if (recipe == null) {
@@ -225,7 +227,7 @@ public class FactoryModGUI {
 
                     @Override
                     String toText() {
-                        return ChatColor.GREEN + "Setup for " + factory.getName();
+                        return "the setup of " + factory.getName();
                     }
                 });
             } else {
@@ -238,7 +240,7 @@ public class FactoryModGUI {
 
                     @Override
                     String toText() {
-                        return ChatColor.GREEN + "Recipe " + recipe.getName();
+                        return "the recipe " + recipe.getName();
                     }
                 });
             }
@@ -313,7 +315,7 @@ public class FactoryModGUI {
     }
 
     private IClickable getMainMenuClick() {
-        return new LClickable(Material.BOOK, ChatColor.GREEN + "Return to factory overview", p -> {
+        return new LClickable(Material.BOOK, FMText.label("All factories"), p -> {
             showFactoryOverview(true);
         });
     }
@@ -364,16 +366,16 @@ public class FactoryModGUI {
         return upgradeMapping.get(factory);
     }
 
-    private List<String> buildTruncatedList(List<IRecipe> input, int maxSize) {
+    private List<Component> buildTruncatedList(List<IRecipe> input, int maxSize) {
         int totalElements = input.size();
-        List<String> loreList = new ArrayList<>();
+        List<Component> loreList = new ArrayList<>();
 
         if (totalElements <= maxSize) {
             for (IRecipe item : input) {
                 if (item instanceof Upgraderecipe) {
-                    loreList.add(ChatColor.GRAY + " - " + ChatColor.GREEN + item.getName());
+                    loreList.add(FMText.entry(Component.text().append(FMText.recipe(item.getName())).append(Component.text(" (upgrade)", CivText.MUTED)).build()));
                 } else {
-                    loreList.add(ChatColor.GRAY + " - " + ChatColor.AQUA + item.getName());
+                    loreList.add(FMText.entry(FMText.recipe(item.getName())));
                 }
             }
         } else {
@@ -381,14 +383,14 @@ public class FactoryModGUI {
 
             for (IRecipe item : subListForDisplay) {
                 if (item instanceof Upgraderecipe) {
-                    loreList.add(ChatColor.GRAY + " - " + ChatColor.GREEN + item.getName());
+                    loreList.add(FMText.entry(Component.text().append(FMText.recipe(item.getName())).append(Component.text(" (upgrade)", CivText.MUTED)).build()));
                 } else {
-                    loreList.add(ChatColor.GRAY + " - " + ChatColor.AQUA + item.getName());
+                    loreList.add(FMText.entry(FMText.recipe(item.getName())));
                 }
             }
 
             int remainingCount = totalElements - maxSize;
-            loreList.add(ChatColor.GRAY + "... click for " + remainingCount + " other recipes");
+            loreList.add(Component.text().append(CivText.info("and ")).append(CivText.value(String.valueOf(remainingCount))).append(CivText.info(" more")).build());
         }
         return loreList;
     }

@@ -6,7 +6,6 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
@@ -14,6 +13,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class DeterministicEnchantingRecipe extends InputRecipe {
 
@@ -56,11 +58,7 @@ public class DeterministicEnchantingRecipe extends InputRecipe {
         im.addEnchant(enchant, level, true);
         is.setItemMeta(im);
         if (i != null) {
-            ItemUtils.addLore(is,
-                ChatColor.GREEN + "Enough materials for "
-                    + String.valueOf(
-                    Math.min(tool.getMultiplesContainedIn(i), input.getMultiplesContainedIn(i)))
-                    + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf( Math.min(tool.getMultiplesContainedIn(i), input.getMultiplesContainedIn(i)))));
         }
         List<ItemStack> stacks = new LinkedList<>();
         stacks.add(is);
@@ -76,8 +74,7 @@ public class DeterministicEnchantingRecipe extends InputRecipe {
         }
         List<ItemStack> returns = createLoredStacksForInfo(i);
         ItemStack toSt = tool.getItemStackRepresentation().get(0);
-        ItemUtils.addLore(toSt,
-            ChatColor.GREEN + "Enough materials for " + new ItemMap(toSt).getMultiplesContainedIn(i) + " runs");
+        FMText.lore(toSt, FMText.runs(new ItemMap(toSt).getMultiplesContainedIn(i)));
         returns.add(toSt);
         return returns;
     }

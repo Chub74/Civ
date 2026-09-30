@@ -8,12 +8,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 /**
  * Used to repair FurnCraftChest factories. Once one of those factories is in
@@ -33,7 +35,7 @@ public class RepairRecipe extends InputRecipe {
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         List<ItemStack> result = new LinkedList<>();
         ItemStack furn = new ItemStack(Material.FURNACE);
-        ItemUtils.setLore(furn, "+" + String.valueOf(healthPerRun) + " health");
+        FMText.setLore(furn, Component.text().append(CivText.value("+" + healthPerRun)).append(CivText.info(" health")).build());
         result.add(furn);
         return result;
     }
@@ -80,6 +82,6 @@ public class RepairRecipe extends InputRecipe {
 
     @Override
     public List<String> getTextualOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
-        return Arrays.asList(ChatColor.YELLOW + "Repairs the factory by " + healthPerRun + " health");
+        return Arrays.asList("Repairs the factory by " + healthPerRun + " health");
     }
 }

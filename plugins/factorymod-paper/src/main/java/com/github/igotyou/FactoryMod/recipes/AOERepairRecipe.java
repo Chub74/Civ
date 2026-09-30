@@ -10,7 +10,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Chest;
@@ -19,6 +18,9 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class AOERepairRecipe extends InputRecipe {
 
@@ -64,8 +66,7 @@ public class AOERepairRecipe extends InputRecipe {
         List<ItemStack> bla = imp.getItemStackRepresentation();
         for (ItemStack item : bla) {
             item.setAmount(new ItemMap(i).getAmount(essence) - essenceCount);
-            ItemUtils.addLore(item, ChatColor.YELLOW + "Will repair "
-                + facCounter + " nearby factories total");
+            FMText.lore(item, Component.text().append(CivText.info("Repairs ")).append(CivText.value(String.valueOf(facCounter))).append(CivText.info(" nearby factories")).build());
         }
         return bla;
     }
@@ -110,19 +111,7 @@ public class AOERepairRecipe extends InputRecipe {
                 .getRepairManager();
             int diff = 100 - rm.getRawHealth();
             if (diff >= repairPerEssence) {
-                ItemUtils.addLore(
-                    is,
-                    ChatColor.LIGHT_PURPLE
-                        + "Will repair "
-                        + fac.getName()
-                        + " to "
-                        + Math.min(
-                        100,
-                        rm.getRawHealth()
-                            + (repairPerEssence * Math
-                            .min(essenceCount,
-                                diff
-                                    / repairPerEssence))));
+                FMText.lore(is, Component.text().append(CivText.info("Repairs ")).append(FMText.factory(fac.getName())).append(CivText.info(" to ")).append(CivText.value(String.valueOf(Math.min( 100, rm.getRawHealth() + (repairPerEssence * Math .min(essenceCount, diff / repairPerEssence))) + " health"))).build());
                 essenceCount -= Math.min(essenceCount, diff / repairPerEssence);
             }
             if (essenceCount <= 0) {

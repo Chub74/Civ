@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
@@ -17,6 +16,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class Upgraderecipe extends InputRecipe {
 
@@ -54,7 +56,7 @@ public class Upgraderecipe extends InputRecipe {
         im.addEnchant(Enchantment.SHARPNESS, 1, true);
         im.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         res.setItemMeta(im);
-        ItemUtils.setDisplayName(res, name);
+        FMText.name(res, FMText.recipe(name));
         return res;
     }
 
@@ -83,11 +85,9 @@ public class Upgraderecipe extends InputRecipe {
         }
         for (ItemStack is : input.getItemStackRepresentation()) {
             if (possibleRuns.getAmount(is) != 0) {
-                ItemUtils.addLore(is, ChatColor.GREEN
-                    + "Enough of this material available to upgrade");
+                FMText.lore(is, Component.text("Enough of this for the upgrade", CivText.SUCCESS));
             } else {
-                ItemUtils.addLore(is, ChatColor.RED
-                    + "Not enough of this materials available to upgrade");
+                FMText.lore(is, Component.text("Not enough of this for the upgrade", CivText.ERROR));
             }
             result.add(is);
         }
@@ -98,21 +98,19 @@ public class Upgraderecipe extends InputRecipe {
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         List<ItemStack> res = new LinkedList<>();
         ItemStack cr = new ItemStack(Material.CRAFTING_TABLE);
-        ItemUtils.setDisplayName(cr, egg.getName());
-        ItemUtils.setLore(cr, ChatColor.LIGHT_PURPLE
-            + "Upgrade to get new and better recipes");
+        FMText.name(cr, FMText.factory(egg.getName()));
+        FMText.setLore(cr, CivText.info("Upgrade to get new and better recipes"));
         res.add(cr);
         ItemStack fur = new ItemStack(Material.FURNACE);
-        ItemUtils.setDisplayName(fur, egg.getName());
-        ItemUtils.setLore(fur, ChatColor.LIGHT_PURPLE + "Recipes:");
+        FMText.name(fur, FMText.factory(egg.getName()));
+        FMText.setLore(fur, FMText.section("Recipes"));
         for (IRecipe rec : egg.getRecipes()) {
-            ItemUtils.addLore(fur, ChatColor.YELLOW + rec.getName());
+            FMText.lore(fur, FMText.entry(FMText.recipe(rec.getName())));
         }
         res.add(fur);
         ItemStack che = new ItemStack(Material.CHEST);
-        ItemUtils.setLore(che, ChatColor.LIGHT_PURPLE + "Careful, you can not",
-            ChatColor.LIGHT_PURPLE + "revert upgrades!");
-        ItemUtils.setDisplayName(che, egg.getName());
+        FMText.setLore(che, Component.text("You can't undo an upgrade", CivText.WARN));
+        FMText.name(che, FMText.factory(egg.getName()));
         res.add(che);
         return res;
     }

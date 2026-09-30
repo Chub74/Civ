@@ -3,17 +3,21 @@ package com.github.igotyou.FactoryMod.recipes;
 import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import com.github.igotyou.FactoryMod.recipes.scaling.ProductionRecipeModifier;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Random;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 /**
  * Consumes a set of materials from a container and outputs another set of
@@ -46,6 +50,13 @@ public class ProductionRecipe extends InputRecipe {
 
     public ItemMap getOutput() {
         return output;
+    }
+
+    @Override
+    protected Collection<ItemStack> getLineItems() {
+        List<ItemStack> items = new ArrayList<>(super.getLineItems());
+        items.addAll(output.getAllItems().keySet());
+        return items;
     }
 
     public ItemMap getAdjustedOutput(int rank, int runs) {
@@ -85,13 +96,13 @@ public class ProductionRecipe extends InputRecipe {
             double additionalChance = (((double) entry.getValue()) * factor) - currentOut.getAmount(entry.getKey());
             if (Math.abs(additionalChance) > 0.00000001) {
                 ItemStack is = entry.getKey().clone();
-                ItemUtils.addLore(is, ChatColor.GOLD + decimalFormatting.format(additionalChance) + " chance for additional item");
+                FMText.lore(is, Component.text().append(CivText.value(decimalFormatting.format(additionalChance))).append(CivText.info(" chance of an extra item")).build());
                 stacks.add(is);
             }
         }
         int possibleRuns = input.getMultiplesContainedIn(i);
         for (ItemStack is : stacks) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for " + String.valueOf(possibleRuns) + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(possibleRuns)));
         }
         return stacks;
     }

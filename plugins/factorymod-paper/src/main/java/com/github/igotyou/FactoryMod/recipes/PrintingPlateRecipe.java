@@ -26,6 +26,9 @@ import org.bukkit.inventory.meta.BookMeta.Generation;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class PrintingPlateRecipe extends PrintingPressRecipe {
 
@@ -146,8 +149,7 @@ public class PrintingPlateRecipe extends PrintingPressRecipe {
         int possibleRuns = this.input.getMultiplesContainedIn(i);
 
         for (ItemStack is : stacks) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for "
-                + String.valueOf(possibleRuns) + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(possibleRuns)));
         }
 
         return stacks;
@@ -169,25 +171,8 @@ public class PrintingPlateRecipe extends PrintingPressRecipe {
             }
         }
         int needed = 1;
-        ChatColor color = have >= needed ? ChatColor.GREEN : ChatColor.RED;
-        String name = ItemUtils.getItemName(new ItemStack(Material.WRITTEN_BOOK));
-        String plain = ChatColor.GRAY + " - " + ChatColor.AQUA + "1 Written Book";
-        String repl = ChatColor.GRAY + " - " + color + have + "/" + needed + " " + name;
-
-        ItemMeta im = res.getItemMeta();
-        if (im != null) {
-            List<String> lore = im.getLore();
-            if (lore != null) {
-                for (int i = 0; i < lore.size(); i++) {
-                    if (lore.get(i).equals(plain)) {
-                        lore.set(i, repl);
-                        break;
-                    }
-                }
-                im.setLore(lore);
-                res.setItemMeta(im);
-            }
-        }
+        FMText.replaceLine(res, " - 1 Written Book",
+            FMText.entry(FMText.have(have, needed, FMText.item(Material.WRITTEN_BOOK))));
         return res;
     }
 

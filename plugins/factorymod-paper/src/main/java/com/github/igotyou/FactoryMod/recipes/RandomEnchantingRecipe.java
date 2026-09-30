@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Random;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
@@ -15,6 +14,9 @@ import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.EnchantUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class RandomEnchantingRecipe extends InputRecipe {
 
@@ -59,8 +61,7 @@ public class RandomEnchantingRecipe extends InputRecipe {
         }
         List<ItemStack> returns = createLoredStacksForInfo(i);
         ItemStack toSt = new ItemStack(tool);
-        ItemUtils.addLore(toSt, ChatColor.GREEN + "Enough materials for "
-            + new ItemMap(toSt).getMultiplesContainedIn(i) + " runs");
+        FMText.lore(toSt, FMText.runs(new ItemMap(toSt).getMultiplesContainedIn(i)));
         returns.add(toSt);
         return returns;
     }
@@ -72,23 +73,12 @@ public class RandomEnchantingRecipe extends InputRecipe {
             is.addEnchantment(re.enchant, re.level);
         }
         if (i != null) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.GREEN
-                    + "Enough materials for "
-                    + String.valueOf(Math.max(new ItemMap(
-                    new ItemStack(tool))
-                    .getMultiplesContainedIn(i), input
-                    .getMultiplesContainedIn(i))) + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(Math.max(new ItemMap( new ItemStack(tool)) .getMultiplesContainedIn(i), input .getMultiplesContainedIn(i)))));
         }
         for (RandomEnchant re : enchants) {
-            ItemUtils.addLore(is,
-                ChatColor.YELLOW + String.valueOf(re.chance * 100)
-                    + " % chance for " + EnchantUtils.getEnchantNiceName(re.enchant)
-                    + " " + re.level);
+            FMText.lore(is, Component.text().append(CivText.value(re.chance * 100 + "%")).append(CivText.info(" chance of ")).append(CivText.value(EnchantUtils.getEnchantNiceName(re.enchant) + " " + re.level)).build());
         }
-        ItemUtils.addLore(is, ChatColor.LIGHT_PURPLE
-            + "At least one guaranteed");
+        FMText.lore(is, CivText.info("At least one is guaranteed"));
         List<ItemStack> stacks = new LinkedList<>();
         stacks.add(is);
         return stacks;

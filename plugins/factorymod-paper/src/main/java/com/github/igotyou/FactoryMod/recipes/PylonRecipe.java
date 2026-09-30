@@ -8,12 +8,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class PylonRecipe extends InputRecipe {
 
@@ -60,11 +62,10 @@ public class PylonRecipe extends InputRecipe {
         ItemMap currOut = getCurrentOutput();
         List<ItemStack> res = new LinkedList<ItemStack>();
         for (ItemStack is : currOut.getItemStackRepresentation()) {
-            ItemUtils.setLore(is, ChatColor.GOLD + "Currently there are "
-                + FurnCraftChestFactory.getPylonFactories() == null ? "0"
-                : FurnCraftChestFactory.getPylonFactories().size()
-                + " pylons on the map", ChatColor.RED
-                + "Current global weight is " + currentGlobalWeight);
+            FMText.setLore(is,
+                Component.text().append(CivText.value(String.valueOf(FurnCraftChestFactory.getPylonFactories() == null ? 0 : FurnCraftChestFactory.getPylonFactories().size())))
+                    .append(CivText.info(" pylons on the map")).build(),
+                Component.text().append(CivText.info("Global weight ")).append(CivText.value(String.valueOf(currentGlobalWeight))).build());
             res.add(is);
         }
         return res;

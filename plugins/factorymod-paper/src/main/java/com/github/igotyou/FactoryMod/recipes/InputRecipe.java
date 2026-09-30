@@ -6,11 +6,13 @@ import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import com.github.igotyou.FactoryMod.utility.LoggingUtils;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -22,6 +24,9 @@ import vg.civcraft.mc.civmodcore.inventory.CustomItem;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 /**
  * A recipe with any form of item input to run it
@@ -156,10 +161,9 @@ public abstract class InputRecipe implements IRecipe {
 
     public ItemStack getRecipeRepresentation(Inventory inputInv) {
         ItemStack res = new ItemStack(getRecipeRepresentationMaterial());
-        ItemMeta im = res.getItemMeta();
-        im.setDisplayName(ChatColor.DARK_GREEN + getName());
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GOLD + "Input:");
+        FMText.name(res, FMText.recipe(getName()));
+        List<Component> lore = new ArrayList<>();
+        lore.add(FMText.section("Input"));
         List<String> textualInputs = getTextualInputRepresentation(null, null);
         List<Entry<ItemStack, Integer>> baseItems = new ArrayList<>();
         for (Entry<ItemStack, Integer> entry : input.getAllItems().entrySet()) {
@@ -171,24 +175,25 @@ public abstract class InputRecipe implements IRecipe {
         for (int i = 0; i < textualInputs.size(); i++) {
             if (i < baseItems.size() && inputInv != null) {
                 Entry<ItemStack, Integer> entry = baseItems.get(i);
-                String name = formatIngredientName(entry.getKey());
+                Component name = FMText.legacy(formatIngredientName(entry.getKey()));
                 int have = inventoryMap.getAmount(entry.getKey());
-                ChatColor color = have >= entry.getValue() ? ChatColor.GREEN : ChatColor.RED;
-                lore.add(ChatColor.GRAY + " - " + color + have + "/" + entry.getValue() + " " + name);
+                lore.add(FMText.entry(Component.text().append(FMText.icon(entry.getKey()))
+                    .append(FMText.have(have, entry.getValue(), name)).build()));
             } else {
-                lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + textualInputs.get(i));
+                lore.add(FMText.entry(formatLine(textualInputs.get(i))));
             }
         }
-        lore.add("");
-        lore.add(ChatColor.GOLD + "Output:");
+        lore.add(Component.empty());
+        lore.add(FMText.section("Output"));
         for (String s : getTextualOutputRepresentation(null, null)) {
-            lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + s);
+            lore.add(FMText.entry(formatLine(s)));
         }
-        lore.add("");
-        lore.add(ChatColor.DARK_AQUA + "Time: " + ChatColor.GRAY + TextUtil
-            .formatDuration(getProductionTime() * 50, TimeUnit.MILLISECONDS));
-        im.setLore(lore);
-        res.setItemMeta(im);
+        lore.add(Component.empty());
+        lore.add(Component.text()
+            .append(CivText.info("Takes "))
+            .append(CivText.value(TextUtil.formatDuration(getProductionTime() * 50, TimeUnit.MILLISECONDS)))
+            .build());
+        FMText.lore(res, lore.toArray(new Component[0]));
         return res;
     }
 
@@ -216,8 +221,7 @@ public abstract class InputRecipe implements IRecipe {
             }
         }
         for (ItemStack is : input.getItemStackRepresentation()) {
-            ItemUtils.addLore(is, ChatColor.GREEN + "Enough materials for " + String.valueOf(possibleRuns.getAmount(is))
-                + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(possibleRuns.getAmount(is))));
             result.add(is);
         }
         return result;
@@ -236,30 +240,38 @@ public abstract class InputRecipe implements IRecipe {
         return identifier.hashCode();
     }
 
-    protected String formatIngredientName(ItemStack item) {
+    /** Named and custom items show only their own name, their actual item type is irrelevant */
+    public static String formatIngredientName(ItemStack item) {
         if (item == null || item.isEmpty()) {
             return "Unknown";
         }
+        ItemMeta meta = item.hasItemMeta() ? item.getItemMeta() : null;
+        if (meta != null && meta.hasDisplayName()) {
+            return StringUtils.abbreviate(meta.getDisplayName(), 35);
+        }
         if (CustomItem.isCustomItem(item)) {
-            ItemMeta meta = item.getItemMeta();
-            if (meta != null) {
-                if (meta.hasDisplayName()) {
-                    return StringUtils.abbreviate(meta.getDisplayName(), 35);
-                } else if (meta.hasItemName()) {
-                    return StringUtils.abbreviate(meta.getItemName(), 35);
-                }
+            if (meta != null && meta.hasItemName()) {
+                return StringUtils.abbreviate(meta.getItemName(), 35);
             }
             return ChatColor.ITALIC + ItemUtils.getItemName(item);
         }
-        if (!item.hasItemMeta()) {
-            return ItemUtils.getItemName(item);
+        return ItemUtils.getItemName(item);
+    }
+
+    /** A line of the textual input or output, led by the texture of the item it names */
+    public Component formatLine(String line) {
+        Component text = FMText.legacy(line).colorIfAbsent(CivText.VALUE);
+        for (ItemStack item : getLineItems()) {
+            if (line.matches("\\d+ " + Pattern.quote(formatIngredientName(item)))) {
+                return Component.text().append(FMText.icon(item)).append(text).build();
+            }
         }
-        ItemMeta meta = item.getItemMeta();
-        String name = ChatColor.ITALIC + ItemUtils.getItemName(item);
-        if (meta.hasDisplayName()) {
-            name += String.format("%s [%s%1$s]", ChatColor.DARK_AQUA, StringUtils.abbreviate(meta.getDisplayName(), 20));
-        }
-        return name;
+        return text;
+    }
+
+    /** The items the textual input and output lines can name */
+    protected Collection<ItemStack> getLineItems() {
+        return input.getAllItems().keySet();
     }
 
     protected List<String> formatLore(ItemMap ingredients) {

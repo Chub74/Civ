@@ -5,12 +5,9 @@ import com.github.igotyou.FactoryMod.FactoryModManager;
 import com.github.igotyou.FactoryMod.FactoryModPlayerSettings;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.Style;
 import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -22,6 +19,9 @@ import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.LClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.StaticDisplaySection;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * @author caucow
@@ -68,30 +68,26 @@ public class IOConfigSection extends StaticDisplaySection {
         ItemStack display;
         if (chestMissing) {
             display = new ItemStack(Material.BARRIER);
-            ItemUtils.addComponentLore(display, Component
-                .text("<no chest/barrel>")
-                .style(Style.style(TextDecoration.BOLD))
-                .color(TextColor.color(255, 0, 0)));
+            FMText.lore(display, Component.text("No chest or barrel on this side", CivText.ERROR));
         } else {
             display = dirState.getUIVisual();
         }
         if (ioDirectionMode != null) {
             for (String descLine : ioDirectionMode.fullDescription) {
-                ItemUtils.addComponentLore(display,
-                    Component.text(descLine).color(TextColor.color(255, 255, 192)));
+                FMText.lore(display, CivText.info(descLine));
             }
         }
-        ItemUtils.setComponentDisplayName(display,
-            Component.text("\u00a7r")
-                .append(Component.text(dirLabel).color(TextColor.color(192, 192, 192)))
-                .append(Component.text(": "))
-                .append(Component.text(dirState.displayName).color(TextColor.color(dirState.color)))
-                .asComponent());
-        ItemUtils.addComponentLore(display,
-            Component.text("Left click to toggle Input", NamedTextColor.WHITE, TextDecoration.BOLD),
-            Component.text("Shift right click to toggle Fuel", NamedTextColor.WHITE, TextDecoration.BOLD),
-            Component.text("Right click to toggle Output", NamedTextColor.WHITE, TextDecoration.BOLD)
-            );
+        // The state keeps its own colour: it's the legend for input, output and fuel
+        FMText.name(display, Component.text()
+            .append(CivText.value(dirLabel))
+            .append(CivText.info(": "))
+            .append(Component.text(dirState.displayName, TextColor.color(dirState.color)))
+            .build());
+        FMText.lore(display,
+            Component.empty(),
+            FMText.hint("Left click to toggle input"),
+            FMText.hint("Shift right click to toggle fuel"),
+            FMText.hint("Right click to toggle output"));
         FactoryModManager fmMgr = FactoryMod.getInstance().getManager();
         return new Clickable(display) {
             private ClickableInventory inventory;
@@ -102,11 +98,11 @@ public class IOConfigSection extends StaticDisplaySection {
             protected void clicked(Player player) {
                 if (!ioSelector.isInput(dir)) {
                     if (iofProvider.getInputCount() >= fmMgr.getMaxInputChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of inputs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most inputs it can have");
                         return;
                     }
                     if (iofProvider.getTotalIOFCount() >= fmMgr.getMaxTotalIOFChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of total I/O/Fs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most inputs, outputs and fuel inputs it can have");
                         return;
                     }
                 }
@@ -118,11 +114,11 @@ public class IOConfigSection extends StaticDisplaySection {
             protected void onRightClick(Player player) {
                 if (!ioSelector.isOutput(dir)) {
                     if (iofProvider.getOutputCount() >= fmMgr.getMaxOutputChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of outputs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most outputs it can have");
                         return;
                     }
                     if (iofProvider.getTotalIOFCount() >= fmMgr.getMaxTotalIOFChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of total I/O/Fs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most inputs, outputs and fuel inputs it can have");
                         return;
                     }
                 }
@@ -134,11 +130,11 @@ public class IOConfigSection extends StaticDisplaySection {
             protected void onShiftRightClick(Player player) {
                 if (!ioSelector.isFuel(dir)) {
                     if (iofProvider.getFuelCount() >= fmMgr.getMaxFuelChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of fuel inputs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most fuel inputs it can have");
                         return;
                     }
                     if (iofProvider.getTotalIOFCount() >= fmMgr.getMaxTotalIOFChests()) {
-                        player.sendMessage(ChatColor.RED + "This factory is at the maximum number of total I/O/Fs.");
+                        FMText.bar(player, Kind.ERROR, "This factory already has the most inputs, outputs and fuel inputs it can have");
                         return;
                     }
                 }

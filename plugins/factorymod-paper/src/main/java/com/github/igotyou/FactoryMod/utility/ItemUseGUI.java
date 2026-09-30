@@ -10,11 +10,16 @@ import com.github.igotyou.FactoryMod.recipes.ProductionRecipe;
 import com.github.igotyou.FactoryMod.recipes.VariantRecipe;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import org.bukkit.ChatColor;
+import java.util.TreeMap;
+import java.util.regex.Pattern;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import vg.civcraft.mc.civmodcore.inventory.CustomItem;
+import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.LClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.ComponableInventory;
@@ -23,6 +28,11 @@ import vg.civcraft.mc.civmodcore.inventory.gui.components.Scrollbar;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.SlotPredicates;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.StaticDisplaySection;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public class ItemUseGUI {
 
@@ -40,8 +50,7 @@ public class ItemUseGUI {
      */
     public void showItemOverview(ItemStack item) {
         if (inventory == null) {
-            inventory = new ComponableInventory(ChatColor.DARK_GRAY
-                + "As Input            As Output", 6, player);
+            inventory = new ComponableInventory(FMText.title("Used In          Made By"), 6, player);
         }
         FactoryModGUI gui = new FactoryModGUI(player);
         List<IClickable> itemAsInput = new ArrayList<>();
@@ -82,15 +91,13 @@ public class ItemUseGUI {
         }
         if (itemAsInput.isEmpty()) {
             ItemStack noItems = new ItemStack(Material.BARRIER);
-            ItemUtils.setDisplayName(noItems, String.format("%sNo recipes take input %s%s", ChatColor.RED, ChatColor.BOLD,
-                ItemUtils.getItemName(item)));
+            FMText.name(noItems, Component.text().append(Component.text("No recipe uses ", CivText.ERROR)).append(FMText.item(item)).build());
             itemAsInput.add(new LClickable(noItems, p -> {
             }));
         }
         if (itemAsOutput.isEmpty()) {
             ItemStack noItems = new ItemStack(Material.BARRIER);
-            ItemUtils.setDisplayName(noItems, String.format("%sNo recipes output %s%s", ChatColor.RED, ChatColor.BOLD,
-                ItemUtils.getItemName(item)));
+            FMText.name(noItems, Component.text().append(Component.text("No recipe makes ", CivText.ERROR)).append(FMText.item(item)).build());
             itemAsOutput.add(new LClickable(noItems, p -> {
             }));
         }
@@ -109,9 +116,52 @@ public class ItemUseGUI {
         inventory.show();
     }
 
+    /**
+     * All custom and named items used by or produced in factories, keyed by their lookup name, e.g. "player_essence"
+     */
+    public static Map<String, ItemStack> getNamedRecipeItems() {
+        Map<String, ItemStack> result = new TreeMap<>();
+        for (IFactoryEgg egg : FactoryMod.getInstance().getManager().getAllFactoryEggs()) {
+            if (!(egg instanceof FurnCraftChestEgg fccEgg)) {
+                continue;
+            }
+            if (fccEgg.getSetupCost() != null) {
+                addNamedItems(result, fccEgg.getSetupCost());
+            }
+            for (IRecipe recipe : fccEgg.getRecipes()) {
+                if (recipe instanceof InputRecipe inputRecipe) {
+                    addNamedItems(result, inputRecipe.getInput());
+                }
+                if (recipe instanceof ProductionRecipe productionRecipe) {
+                    addNamedItems(result, productionRecipe.getOutput());
+                }
+            }
+        }
+        return result;
+    }
+
+    private static void addNamedItems(Map<String, ItemStack> result, ItemMap items) {
+        for (ItemStack item : items.getAllItems().keySet()) {
+            if (item == null || !item.hasItemMeta()) {
+                continue;
+            }
+            ItemMeta meta = item.getItemMeta();
+            Component name = meta.hasDisplayName() ? meta.displayName()
+                : CustomItem.isCustomItem(item) && meta.hasItemName() ? meta.itemName() : null;
+            if (name != null) {
+                result.putIfAbsent(toLookupName(PlainTextComponentSerializer.plainText().serialize(name)), item.asOne());
+            }
+        }
+    }
+
+    /** "Player Essence" to "player_essence", so it can be typed as a single command argument */
+    public static String toLookupName(String name) {
+        return name.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_|_$", "");
+    }
+
     private IClickable getDividerClick() {
         ItemStack is = new ItemStack(Material.WHITE_STAINED_GLASS_PANE);
-        ItemUtils.setDisplayName(is, "Divider");
+        FMText.name(is, Component.text("Divider", CivText.VALUE));
         return new LClickable(is, p -> {
         });
     }
@@ -158,39 +208,42 @@ public class ItemUseGUI {
 
     private ItemStack getItemRecipeStack(FurnCraftChestEgg fccEgg, InputRecipe recipe, ItemStack item) {
         ItemStack is = new ItemStack(recipe.getRecipeRepresentationMaterial());
-        ItemUtils.setDisplayName(is, ChatColor.DARK_GREEN + fccEgg.getName());
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.DARK_AQUA + recipe.getName());
-        lore.add(ChatColor.GOLD + "Input:");
+        FMText.name(is, FMText.factory(fccEgg.getName()));
+        List<Component> lore = new ArrayList<>();
+        lore.add(FMText.recipe(recipe.getName()));
+        lore.add(Component.empty());
+        lore.add(FMText.section("Input"));
         for (String input : recipe.getTextualInputRepresentation(null, null)) {
-            lore.add(formatIngredient(input, item));
+            lore.add(formatIngredient(input, recipe.formatLine(input), item));
         }
-        lore.add(ChatColor.GOLD + "Output:");
+        lore.add(FMText.section("Output"));
         for (String output : recipe.getTextualOutputRepresentation(null, null)) {
-            lore.add(formatIngredient(output, item));
+            lore.add(formatIngredient(output, recipe.formatLine(output), item));
         }
-        ItemUtils.addLore(is, lore);
+        FMText.lore(is, lore.toArray(new Component[0]));
         return is;
     }
 
     private ItemStack getItemSetupStack(FurnCraftChestEgg fccEgg, ItemStack item) {
         ItemStack is = new ItemStack(Material.CRAFTING_TABLE);
-        ItemUtils.setDisplayName(is, ChatColor.DARK_GREEN + fccEgg.getName());
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GOLD + "Setup cost:");
+        FMText.name(is, FMText.factory(fccEgg.getName()));
+        List<Component> lore = new ArrayList<>();
+        lore.add(FMText.section("Creation cost"));
         for (Map.Entry<ItemStack, Integer> entry : fccEgg.getSetupCost().getAllItems().entrySet()) {
-            String recipeRepresentation = entry.getValue() + " " + ItemUtils.getItemName(entry.getKey());
-            lore.add(formatIngredient(recipeRepresentation, item));
+            String recipeRepresentation = entry.getValue() + " " + InputRecipe.formatIngredientName(entry.getKey());
+            Component line = Component.text().append(FMText.icon(entry.getKey()))
+                .append(FMText.legacy(recipeRepresentation).colorIfAbsent(CivText.VALUE)).build();
+            lore.add(formatIngredient(recipeRepresentation, line, item));
         }
-        ItemUtils.addLore(is, lore);
+        FMText.lore(is, lore.toArray(new Component[0]));
         return is;
     }
 
-    private String formatIngredient(String recipeRepresentation, ItemStack is) {
-        if (recipeRepresentation.matches("\\d+ " + ItemUtils.getItemName(is))) {
-            return String.format("%s - %s%s%s", ChatColor.GRAY, ChatColor.AQUA, ChatColor.BOLD, recipeRepresentation);
-        } else {
-            return String.format("%s - %s%s", ChatColor.GRAY, ChatColor.AQUA, recipeRepresentation);
+    /** The ingredient that was looked up is bold, so it stands out from the rest of the recipe */
+    private Component formatIngredient(String recipeRepresentation, Component ingredient, ItemStack is) {
+        if (recipeRepresentation.matches("\\d+ " + Pattern.quote(InputRecipe.formatIngredientName(is)))) {
+            ingredient = ingredient.decoration(TextDecoration.BOLD, true);
         }
+        return FMText.entry(ingredient);
     }
 }

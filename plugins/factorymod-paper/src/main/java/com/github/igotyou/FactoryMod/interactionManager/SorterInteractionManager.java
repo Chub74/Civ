@@ -5,7 +5,6 @@ import com.github.igotyou.FactoryMod.FactoryModManager;
 import com.github.igotyou.FactoryMod.factories.Sorter;
 import com.github.igotyou.FactoryMod.structures.BlockFurnaceStructure;
 import com.github.igotyou.FactoryMod.structures.MultiBlockStructure;
-import org.bukkit.ChatColor;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -14,6 +13,10 @@ import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.citadel.ReinforcementLogic;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class SorterInteractionManager implements IInteractionManager {
 
@@ -41,7 +44,7 @@ public class SorterInteractionManager implements IInteractionManager {
     public void blockBreak(Player p, Block b) {
         sorter.getRepairManager().breakIt();
         if (p != null) {
-            p.sendMessage(ChatColor.DARK_RED + "The sorter was destroyed");
+            CivUI.warn(p, "You destroyed ", FMText.factory(sorter.getName()));
         }
     }
 
@@ -55,7 +58,7 @@ public class SorterInteractionManager implements IInteractionManager {
         if (manager.isCitadelEnabled()) {
             Reinforcement rein = ReinforcementLogic.getReinforcementProtecting(b);
             if (rein != null && !rein.hasPermission(p, FactoryMod.getInstance().getPermissionManager().getUseFactory())) {
-                p.sendMessage(ChatColor.RED + "You dont have permission to interact with this factory");
+                FMText.deny(p, "You don't have permission to use ", FMText.factory(sorter.getName()));
                 return;
             }
         }
@@ -74,13 +77,13 @@ public class SorterInteractionManager implements IInteractionManager {
             BlockFace side = sorter.getSide(is);
             if (side == null) {
                 sorter.addAssignment(bf, is);
-                p.sendMessage(ChatColor.GREEN + "Added " + ItemUtils.getItemName(is) + " to " + bf.toString());
+                FMText.bar(p, Kind.SUCCESS, "Sorting ", FMText.item(is), " to the ", CivText.value(bf.name().toLowerCase()), " side");
             } else {
                 if (side == bf) {
                     sorter.removeAssignment(is);
-                    p.sendMessage(ChatColor.GOLD + "Removed " + ItemUtils.getItemName(is) + " from " + side.toString());
+                    FMText.bar(p, Kind.SUCCESS, "Stopped sorting ", FMText.item(is), " to the ", CivText.value(side.name().toLowerCase()), " side");
                 } else {
-                    p.sendMessage(ChatColor.RED + "This item is already associated with " + side.toString());
+                    FMText.bar(p, Kind.ERROR, FMText.item(is), " already sorts to the ", CivText.value(side.name().toLowerCase()), " side");
                 }
             }
         }

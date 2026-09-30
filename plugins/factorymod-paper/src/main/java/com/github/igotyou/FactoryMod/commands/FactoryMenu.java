@@ -10,8 +10,9 @@ import com.github.igotyou.FactoryMod.FactoryMod;
 import com.github.igotyou.FactoryMod.eggs.FurnCraftChestEgg;
 import com.github.igotyou.FactoryMod.eggs.IFactoryEgg;
 import com.github.igotyou.FactoryMod.utility.FactoryModGUI;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class FactoryMenu extends BaseCommand {
 
@@ -26,7 +27,7 @@ public class FactoryMenu extends BaseCommand {
         } else {
             IFactoryEgg egg = FactoryMod.getInstance().getManager().getEgg(factoryName);
             if (egg == null) {
-                sender.sendMessage(ChatColor.RED + "The factory " + factoryName + " does not exist");
+                CivUI.error(sender, "There's no factory type called ", FMText.factory(factoryName));
                 return;
             }
             FactoryModGUI gui = new FactoryModGUI(sender);

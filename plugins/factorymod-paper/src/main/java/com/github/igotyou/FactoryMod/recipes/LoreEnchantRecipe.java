@@ -7,13 +7,15 @@ import java.util.List;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class LoreEnchantRecipe extends InputRecipe {
 
@@ -61,12 +63,7 @@ public class LoreEnchantRecipe extends InputRecipe {
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         ItemStack is = exampleOutput.clone();
         if (i != null) {
-            ItemUtils.addLore(
-                is,
-                ChatColor.GREEN
-                    + "Enough materials for "
-                    + String.valueOf(Math.min(tool.getMultiplesContainedIn(i), input.getMultiplesContainedIn(i)))
-                    + " runs");
+            FMText.lore(is, FMText.runs(String.valueOf(Math.min(tool.getMultiplesContainedIn(i), input.getMultiplesContainedIn(i)))));
         }
         List<ItemStack> stacks = new LinkedList<>();
         stacks.add(is);
@@ -83,8 +80,7 @@ public class LoreEnchantRecipe extends InputRecipe {
         for (String s : overwritenLore) {
             ItemUtils.addLore(toSt, s);
         }
-        ItemUtils.addLore(toSt, ChatColor.GREEN + "Enough materials for " + new ItemMap(toSt).getMultiplesContainedIn(i)
-            + " runs");
+        FMText.lore(toSt, FMText.runs(new ItemMap(toSt).getMultiplesContainedIn(i)));
         returns.add(toSt);
         return returns;
     }

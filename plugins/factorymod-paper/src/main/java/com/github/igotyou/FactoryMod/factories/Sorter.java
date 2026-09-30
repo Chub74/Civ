@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -22,6 +21,9 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class Sorter extends Factory {
 
@@ -57,17 +59,17 @@ public class Sorter extends Factory {
                         return;
                     }
                     if (p != null) {
-                        p.sendMessage(ChatColor.GREEN + "Activated " + name);
+                        FMText.bar(p, Kind.SUCCESS, "Started ", FMText.factory(name));
                     }
                     activate();
                 } else {
                     if (p != null) {
-                        p.sendMessage(ChatColor.RED + "Nothing to sort available");
+                        FMText.bar(p, Kind.ERROR, FMText.factory(name), " has nothing to sort");
                     }
                 }
             } else {
                 if (p != null) {
-                    p.sendMessage(ChatColor.RED + "No fuel available");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no fuel");
                 }
             }
         } else {

@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -15,10 +14,12 @@ import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
 
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 /**
  * A recipe where a base input material is mapped to a base output material,
@@ -192,7 +193,7 @@ public class VariantRecipe extends InputRecipe {
 
             if (i != null) {
                 int possibleRuns = fixedInput.getMultiplesContainedIn(i);
-                ItemUtils.addLore(clone, ChatColor.GREEN + "Enough materials for " + possibleRuns + " runs");
+                FMText.lore(clone, FMText.runs(possibleRuns));
             }
 
             result.add(clone);
@@ -200,7 +201,7 @@ public class VariantRecipe extends InputRecipe {
 
         ItemStack variantDisplay = baseVariantInput.clone();
         ItemMeta meta = variantDisplay.getItemMeta();
-        meta.displayName(Component.text(genericInputName, NamedTextColor.YELLOW));
+        meta.displayName(Component.text(genericInputName, CivText.VALUE).decoration(TextDecoration.ITALIC, false));
         variantDisplay.setItemMeta(meta);
 
         if (i != null) {
@@ -214,7 +215,7 @@ public class VariantRecipe extends InputRecipe {
 
             int fixedRuns = fixedInput.getMultiplesContainedIn(i);
             int totalRuns = Math.min(fixedRuns, maxVariantRuns);
-            ItemUtils.addLore(variantDisplay, ChatColor.GREEN + "Enough materials for " + totalRuns + " runs");
+            FMText.lore(variantDisplay, FMText.runs(totalRuns));
         }
         result.add(variantDisplay);
 
@@ -230,7 +231,7 @@ public class VariantRecipe extends InputRecipe {
 
             if (i != null) {
                 int possibleRuns = calculatePossibleRuns(i);
-                ItemUtils.addLore(clone, ChatColor.GREEN + "Enough materials for " + possibleRuns + " runs");
+                FMText.lore(clone, FMText.runs(possibleRuns));
             }
 
             result.add(clone);
@@ -238,12 +239,12 @@ public class VariantRecipe extends InputRecipe {
 
         ItemStack variantDisplay = baseVariantOutput.clone();
         ItemMeta meta = variantDisplay.getItemMeta();
-        meta.displayName(Component.text(computeMatchingName(baseVariantOutput), NamedTextColor.YELLOW));
+        meta.displayName(Component.text(computeMatchingName(baseVariantOutput), CivText.VALUE).decoration(TextDecoration.ITALIC, false));
         variantDisplay.setItemMeta(meta);
 
         if (i != null) {
             int possibleRuns = calculatePossibleRuns(i);
-            ItemUtils.addLore(variantDisplay, ChatColor.GREEN + "Enough materials for " + possibleRuns + " runs");
+            FMText.lore(variantDisplay, FMText.runs(possibleRuns));
         }
         
         result.add(variantDisplay);
@@ -288,10 +289,9 @@ public class VariantRecipe extends InputRecipe {
         }
 
         ItemStack res = new ItemStack(displayMaterial);
-        ItemMeta im = res.getItemMeta();
-        im.setDisplayName(ChatColor.DARK_GREEN + getName());
-        List<String> lore = new ArrayList<>();
-        lore.add(ChatColor.GOLD + "Input:");
+        FMText.name(res, FMText.recipe(getName()));
+        List<Component> lore = new ArrayList<>();
+        lore.add(FMText.section("Input"));
 
         ItemMap inventoryMap = inputInv != null ? new ItemMap(inputInv) : null;
 
@@ -301,14 +301,13 @@ public class VariantRecipe extends InputRecipe {
                 continue;
             }
 
-            String name = formatIngredientName(entry.getKey());
+            Component name = FMText.legacy(formatIngredientName(entry.getKey()));
 
             if (inputInv != null) {
                 int have = inventoryMap.getAmount(entry.getKey());
-                ChatColor color = have >= entry.getValue() ? ChatColor.GREEN : ChatColor.RED;
-                lore.add(ChatColor.GRAY + " - " + color + have + "/" + entry.getValue() + " " + name);
+                lore.add(FMText.entry(FMText.have(have, entry.getValue(), name)));
             } else {
-                lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + entry.getValue() + " " + name);
+                lore.add(FMText.entry(FMText.amount(entry.getValue(), name)));
             }
         }
 
@@ -323,17 +322,16 @@ public class VariantRecipe extends InputRecipe {
                 }
             }
 
-            ChatColor color = maxHave >= baseVariantInput.getAmount() ? ChatColor.GREEN : ChatColor.RED;
-            lore.add(ChatColor.GRAY + " - " + color + maxHave + "/" + baseVariantInput.getAmount() + " " + genericInputName);
+            lore.add(FMText.entry(FMText.have(maxHave, baseVariantInput.getAmount(), CivText.value(genericInputName))));
         } else {
-            lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + baseVariantInput.getAmount() + " " + genericInputName);
+            lore.add(FMText.entry(FMText.amount(baseVariantInput.getAmount(), CivText.value(genericInputName))));
         }
 
-        lore.add("");
-        lore.add(ChatColor.GOLD + "Output:");
+        lore.add(Component.empty());
+        lore.add(FMText.section("Output"));
 
         for (String s : formatLore(fixedOutput)) {
-            lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + s);
+            lore.add(FMText.entry(FMText.legacy(s).colorIfAbsent(CivText.VALUE)));
         }
 
         String variantOutputName;
@@ -344,12 +342,14 @@ public class VariantRecipe extends InputRecipe {
             variantOutputName = computeMatchingName(baseVariantOutput);
         }
 
-        lore.add(ChatColor.GRAY + " - " + ChatColor.AQUA + baseVariantOutput.getAmount() + " " + variantOutputName);
+        lore.add(FMText.entry(FMText.amount(baseVariantOutput.getAmount(), CivText.value(variantOutputName))));
 
-        lore.add("");
-        lore.add(ChatColor.DARK_AQUA + "Time: " + ChatColor.GRAY + TextUtil.formatDuration(getProductionTime() * 50, java.util.concurrent.TimeUnit.MILLISECONDS));
-        im.setLore(lore);
-        res.setItemMeta(im);
+        lore.add(Component.empty());
+        lore.add(Component.text()
+            .append(CivText.info("Takes "))
+            .append(CivText.value(TextUtil.formatDuration(getProductionTime() * 50, java.util.concurrent.TimeUnit.MILLISECONDS)))
+            .build());
+        FMText.lore(res, lore.toArray(new Component[0]));
 
         return res;
     }

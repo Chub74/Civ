@@ -10,10 +10,12 @@ import com.github.igotyou.FactoryMod.FactoryModManager;
 import com.github.igotyou.FactoryMod.factories.Factory;
 import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import java.util.Set;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 public class RunAmountSetterCommand extends BaseCommand {
 
@@ -26,7 +28,7 @@ public class RunAmountSetterCommand extends BaseCommand {
         try {
             newAmount = Integer.parseInt(runCount);
         } catch (NumberFormatException e) {
-            sender.sendMessage(ChatColor.RED + runCount + " is not a number");
+            CivUI.error(sender, CivText.value(runCount), " isn't a number");
             return;
         }
         FactoryModManager manager = FactoryMod.getInstance().getManager();
@@ -35,7 +37,8 @@ public class RunAmountSetterCommand extends BaseCommand {
             if (f instanceof FurnCraftChestFactory) {
                 FurnCraftChestFactory fccf = (FurnCraftChestFactory) f;
                 fccf.setRunCount(fccf.getCurrentRecipe(), newAmount);
-                sender.sendMessage(ChatColor.GREEN + "Set runcount for recipe " + fccf.getCurrentRecipe().getName() + " in " + fccf.getName() + " to " + newAmount);
+                CivUI.success(sender, "Set the run count of ", FMText.recipe(fccf.getCurrentRecipe().getName()), " in ",
+                    FMText.factory(fccf.getName()), " to ", CivText.value(String.valueOf(newAmount)));
             }
         }
     }

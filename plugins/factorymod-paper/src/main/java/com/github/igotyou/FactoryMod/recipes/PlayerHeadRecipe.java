@@ -15,6 +15,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SkullMeta;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 /***
  * Outputs a player head belonging to a random player who is connected to the server when the recipe is run
@@ -36,7 +39,7 @@ public class PlayerHeadRecipe extends InputRecipe {
     @Override
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         ItemStack is = new ItemStack(Material.PLAYER_HEAD, 1);
-        ItemUtils.addLore(is, "The player head of a randomly chosen online player");
+        FMText.lore(is, Component.text("The player head of a randomly chosen online player", CivText.INFO));
         return Collections.singletonList(is);
     }
 

@@ -12,6 +12,7 @@ import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.MetaUtils;
+import java.util.List;
 
 /**
  * Used to compact items, which means whole or multiple stacks of an item are reduced to a single lored item, which is stackable to the same stacksize

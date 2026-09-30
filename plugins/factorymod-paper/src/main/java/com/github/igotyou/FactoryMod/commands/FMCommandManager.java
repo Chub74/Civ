@@ -4,6 +4,7 @@ import co.aikar.commands.BukkitCommandCompletionContext;
 import co.aikar.commands.CommandCompletions;
 import com.github.igotyou.FactoryMod.FactoryMod;
 import com.github.igotyou.FactoryMod.eggs.IFactoryEgg;
+import com.github.igotyou.FactoryMod.utility.ItemUseGUI;
 import org.bukkit.Material;
 import org.bukkit.plugin.Plugin;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +12,6 @@ import vg.civcraft.mc.civmodcore.commands.CommandManager;
 import vg.civcraft.mc.civmodcore.inventory.CustomItem;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -42,6 +42,7 @@ public class FMCommandManager extends CommandManager {
                 allCompletions.add(m.name().toLowerCase());
             }
             allCompletions.addAll(CustomItem.getKeys());
+            allCompletions.addAll(ItemUseGUI.getNamedRecipeItems().keySet());
             return allCompletions;
         });
     }

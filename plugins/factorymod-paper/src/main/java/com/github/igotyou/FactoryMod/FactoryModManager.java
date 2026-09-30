@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -31,6 +30,9 @@ import org.bukkit.block.Dispenser;
 import org.bukkit.block.Dropper;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 /**
  * Manager class which handles all factories, their locations and their creation
@@ -259,8 +261,7 @@ public class FactoryModManager {
                 FurnCraftChestStructure fccs = new FurnCraftChestStructure(b);
                 if (fccs.isComplete()) {
                     if (fccs.blockedByExistingFactory()) {
-                        p.sendMessage(ChatColor.RED
-                            + "At least one of the blocks of this factory is already part of another factory");
+                        CivUI.error(p, "Some of these blocks already belong to another factory");
                         return;
                     }
                     HashMap<ItemMap, IFactoryEgg> eggs = factoryCreationRecipes.get(FurnCraftChestStructure.class);
@@ -280,11 +281,11 @@ public class FactoryModManager {
                                 ((FurnCraftChestFactory) f).getTableIOSelector();
                                 ((Container) (fccs.getChest().getState())).getInventory().clear();
                                 addFactory(f);
-                                p.sendMessage(ChatColor.GREEN + "Successfully created " + f.getName());
+                                CivUI.success(p, "Created a ", FMText.factory(f.getName()));
                                 LoggingUtils.log(f.getLogData() + " was created by " + p.getName());
                             }
                         } else {
-                            p.sendMessage(ChatColor.RED + "There is no factory with the given creation materials");
+                            CivUI.error(p, "No factory is made from what's in the chest. The menu shows every recipe");
                             FactoryModGUI gui = new FactoryModGUI(p);
                             gui.showFactoryOverview(true);
                         }
@@ -296,8 +297,7 @@ public class FactoryModManager {
                 PipeStructure ps = new PipeStructure(b);
                 if (ps.isComplete()) {
                     if (ps.blockedByExistingFactory()) {
-                        p.sendMessage(ChatColor.RED
-                            + "At least one of the blocks of this factory is already part of another factory");
+                        CivUI.error(p, "Some of these blocks already belong to another factory");
                         return;
                     }
                     HashMap<ItemMap, IFactoryEgg> eggs = factoryCreationRecipes.get(PipeStructure.class);
@@ -312,36 +312,35 @@ public class FactoryModManager {
                         }
                         if (egg != null) {
                             if (ps.getPipeType() != ((PipeEgg) egg).getPipeType()) {
-                                p.sendMessage(ChatColor.RED + "You dont have the right block for this pipe");
+                                CivUI.error(p, "That pipe needs a different block");
                                 return;
                             }
                             if (ps.getLength() > ((PipeEgg) egg).getMaximumLength()) {
-                                p.sendMessage(ChatColor.RED + "You cant make pipes of this type, which are that long");
+                                CivUI.error(p, "This pipe can be at most ", CivText.value(String.valueOf(((PipeEgg) egg).getMaximumLength())), " blocks long");
                                 return;
                             }
                             Factory f = egg.hatch(ps, p);
                             if (f != null) {
                                 ((Dispenser) (ps.getStart().getState())).getInventory().clear();
                                 addFactory(f);
-                                p.sendMessage(ChatColor.GREEN + "Successfully created " + f.getName());
+                                CivUI.success(p, "Created a ", FMText.factory(f.getName()));
                                 LoggingUtils.log(f.getLogData() + " was created by " + p.getName());
                             }
 
                         } else {
-                            p.sendMessage(ChatColor.RED + "There is no pipe with the given creation materials");
+                            CivUI.error(p, "No pipe is made from what's in the dispenser");
                         }
                     }
                     return;
                 } else {
-                    p.sendMessage(ChatColor.RED + "This pipe is not set up the right way");
+                    CivUI.error(p, "These blocks don't form a pipe");
                 }
             }
             if (b.getType() == Material.DROPPER) {
                 BlockFurnaceStructure bfs = new BlockFurnaceStructure(b);
                 if (bfs.isComplete()) {
                     if (bfs.blockedByExistingFactory()) {
-                        p.sendMessage(ChatColor.RED
-                            + "At least one of the blocks of this factory is already part of another factory");
+                        CivUI.error(p, "Some of these blocks already belong to another factory");
                         return;
                     }
                     HashMap<ItemMap, IFactoryEgg> eggs = factoryCreationRecipes.get(BlockFurnaceStructure.class);
@@ -359,16 +358,16 @@ public class FactoryModManager {
                             if (f != null) {
                                 ((Dropper) (bfs.getCenter().getBlock().getState())).getInventory().clear();
                                 addFactory(f);
-                                p.sendMessage(ChatColor.GREEN + "Successfully created " + f.getName());
+                                CivUI.success(p, "Created a ", FMText.factory(f.getName()));
                                 LoggingUtils.log(f.getLogData() + " was created by " + p.getName());
                             }
 
                         } else {
-                            p.sendMessage(ChatColor.RED + "There is no sorter with the given creation materials");
+                            CivUI.error(p, "No sorter is made from what's in the dropper");
                         }
                     }
                 } else {
-                    p.sendMessage(ChatColor.RED + "This sorter is not set up the right way");
+                    CivUI.error(p, "These blocks don't form a sorter");
                 }
             }
         }

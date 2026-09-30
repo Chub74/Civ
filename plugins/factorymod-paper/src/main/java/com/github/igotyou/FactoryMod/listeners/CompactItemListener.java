@@ -4,7 +4,6 @@ import com.github.igotyou.FactoryMod.FactoryMod;
 import com.github.igotyou.FactoryMod.events.FactoryActivateEvent;
 import com.github.igotyou.FactoryMod.factories.FurnCraftChestFactory;
 import io.papermc.paper.event.player.PlayerLoomPatternSelectEvent;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -20,6 +19,7 @@ import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.LoomInventory;
 import org.bukkit.inventory.meta.ItemMeta;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 /**
  * Used to handle events related to items with compacted lore
@@ -33,7 +33,7 @@ public class CompactItemListener implements Listener {
     public void blockPlaceEvent(BlockPlaceEvent e) {
         if (isCompacted(e.getItemInHand())) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.RED + "You can not place compacted blocks");
+            FMText.deny(e.getPlayer(), "You can't place compacted blocks");
         }
 
     }
@@ -49,7 +49,7 @@ public class CompactItemListener implements Listener {
                 e.setCancelled(true);
                 HumanEntity h = e.getWhoClicked();
                 if (h instanceof Player) {
-                    h.sendMessage(ChatColor.RED + "You can not craft with compacted items");
+                    FMText.deny(h, "You can't craft with compacted items");
                 }
                 break;
             }
@@ -64,7 +64,7 @@ public class CompactItemListener implements Listener {
         ItemStack ei = e.getItem();
         if (isCompacted(ei)) {
             e.setCancelled(true);
-            e.getEnchanter().sendMessage(ChatColor.RED + "You can not enchant compacted items");
+            FMText.deny(e.getEnchanter(), "You can't enchant compacted items");
         }
     }
 
@@ -75,7 +75,7 @@ public class CompactItemListener implements Listener {
     public void itemConsumeEvent(PlayerItemConsumeEvent e) {
         if (isCompacted(e.getItem())) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.RED + "You can not eat compacted food");
+            FMText.deny(e.getPlayer(), "You can't eat compacted food");
         }
     }
 
@@ -90,7 +90,7 @@ public class CompactItemListener implements Listener {
 
         if (isCompacted(fac.getInputInventory().getItem(0))) {
             e.setCancelled(true);
-            e.getActivator().sendMessage(ChatColor.RED + "You can not wordbank compacted items");
+            FMText.deny(e.getActivator(), "You can't wordbank compacted items");
         }
     }
 
@@ -107,7 +107,7 @@ public class CompactItemListener implements Listener {
             if (e.getSlotType() == InventoryType.SlotType.RESULT) {
                 if (isCompacted(e.getInventory().getItem(0)) || isCompacted(e.getInventory().getItem(1))) {
                     e.setCancelled(true);
-                    e.getWhoClicked().sendMessage(ChatColor.RED + "You can not use compacted items in an anvil");
+                    FMText.deny(e.getWhoClicked(), "You can't use compacted items in an anvil");
                 }
             }
         }
@@ -126,7 +126,7 @@ public class CompactItemListener implements Listener {
             if (e.getSlotType() == InventoryType.SlotType.RESULT) {
                 if (isCompacted(e.getInventory().getItem(0)) || isCompacted(e.getInventory().getItem(1))) {
                     e.setCancelled(true);
-                    e.getWhoClicked().sendMessage(ChatColor.RED + "You can not use compacted items in a smithing table");
+                    FMText.deny(e.getWhoClicked(), "You can't use compacted items in a smithing table");
                 }
             }
         }
@@ -144,7 +144,7 @@ public class CompactItemListener implements Listener {
             if (li.getItem(i).getType() == Material.AIR) continue;
             if (isCompacted(li.getItem(i))) {
                 e.setCancelled(true);
-                e.getPlayer().sendMessage(ChatColor.RED + "You can not use compacted items in a loom");
+                FMText.deny(e.getPlayer(), "You can't use compacted items in a loom");
             }
         }
     }
@@ -162,7 +162,7 @@ public class CompactItemListener implements Listener {
             if (e.getSlotType() == InventoryType.SlotType.RESULT) {
                 if (isCompacted(e.getInventory().getItem(0)) || isCompacted(e.getInventory().getItem(1))) {
                     e.setCancelled(true);
-                    e.getWhoClicked().sendMessage(ChatColor.RED + "You can not copy compacted maps");
+                    FMText.deny(e.getWhoClicked(), "You can't copy compacted maps");
                 }
             }
         }

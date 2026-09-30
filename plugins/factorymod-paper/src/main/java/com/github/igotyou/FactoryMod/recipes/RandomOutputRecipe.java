@@ -10,12 +10,14 @@ import java.util.Map.Entry;
 import java.util.Random;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class RandomOutputRecipe extends InputRecipe {
 
@@ -146,7 +148,7 @@ public class RandomOutputRecipe extends InputRecipe {
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         List<ItemStack> items = lowestChanceMap.getItemStackRepresentation();
         for (ItemStack is : items) {
-            ItemUtils.addLore(is, ChatColor.LIGHT_PURPLE + "Randomized output");
+            FMText.lore(is, CivText.info("Randomized output"));
         }
         return items;
     }

@@ -29,7 +29,6 @@ import java.util.function.Function;
 
 import com.github.igotyou.FactoryMod.utility.MultiInventoryWrapper;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -46,6 +45,9 @@ import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.github.igotyou.FactoryMod.utility.FMText;
 
 /**
  * Represents a "classic" factory, which consists of a furnace as powersource, a
@@ -284,12 +286,12 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                 //Just incase any factory for some reason cannot be repaired.
                 if (autoRepair == null) {
                     if (p != null) {
-                        p.sendMessage(ChatColor.RED + "The factory doesn't have a repair recipe.");
+                        FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no repair recipe");
                     }
                     return;
                 } else {
                     if (p != null) {
-                        p.sendMessage(ChatColor.GOLD + "Automatically selected recipe " + autoRepair.getName());
+                        FMText.bar(p, Kind.INFO, "Auto-selected ", FMText.recipe(autoRepair.getName()));
                     }
                     setRecipe(autoRepair);
                 }
@@ -300,12 +302,12 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                 IRecipe autoSelected = getAutoSelectRecipe();
                 if (autoSelected == null) {
                     if (p != null) {
-                        p.sendMessage(ChatColor.RED + "Not enough materials available to run any recipe");
+                        FMText.bar(p, Kind.ERROR, FMText.factory(name), " doesn't have the materials for any recipe");
                     }
                     return;
                 } else {
                     if (p != null) {
-                        p.sendMessage(ChatColor.GOLD + "Automatically selected recipe " + autoSelected.getName());
+                        FMText.bar(p, Kind.INFO, "Auto-selected ", FMText.recipe(autoSelected.getName()));
                     }
                     setRecipe(autoSelected);
                 }
@@ -314,21 +316,21 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
             //We are running the factory manually, so we just do the usual checks
             if (!hasInputMaterials()) {
                 if (p != null) {
-                    p.sendMessage(ChatColor.RED + "Not enough materials available");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " doesn't have the materials for ", FMText.recipe(currentRecipe.getName()));
                 }
                 return;
             }
             //The factory is broken and needs to be repaired
             if (rm.inDisrepair() && !(currentRecipe instanceof RepairRecipe)) {
                 if (p != null) {
-                    p.sendMessage(ChatColor.RED + "This factory is in disrepair, you have to repair it before using it");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " is in disrepair. Repair it before using it");
                 }
                 return;
             }
             //The factory is at full health, so there's no reason to repair it.
             if (rm.atFullHealth() && (currentRecipe instanceof RepairRecipe)) {
                 if (p != null) {
-                    p.sendMessage(ChatColor.GREEN + "This factory is already at full health");
+                    FMText.bar(p, Kind.INFO, FMText.factory(name), " is already at full health");
                 }
                 return;
             }
@@ -339,9 +341,9 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
             if (p != null) {
                 ItemStack fuel = ((FurnacePowerManager) pm).getFuel().clone();
                 if (fuel != null) {
-                    p.sendMessage(ChatColor.RED + "Failed to activate factory, there is no fuel (" + ItemUtils.getItemName(fuel) + ") in the furnace");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no fuel. Put ", FMText.item(fuel), " in the furnace");
                 } else {
-                    p.sendMessage(ChatColor.RED + "Failed to activate factory, there is no fuel in the furnace");
+                    FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no fuel in the furnace");
                 }
             }
             return;
@@ -352,14 +354,14 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
         if (!(effectFeasibility.isFeasible())) {
             LoggingUtils.log(String.format("Skipping activation of recipe [%s], since the effect wasn't feasible.", currentRecipe.getName()));
             if (p != null) {
-                p.sendMessage(String.format("%sUnable to activate recipe because %s.", ChatColor.RED, effectFeasibility.reasonSnippet()));
+                FMText.bar(p, Kind.ERROR, "Can't run ", FMText.recipe(currentRecipe.getName()), " because ", effectFeasibility.reasonSnippet());
             }
             return;
         }
 
         // Check that there is an output selected at all
         if (furnaceIoSelector.getOutputCount() == 0 && tableIoSelector.getOutputCount() == 0) {
-            p.sendMessage(String.format("%sFailed to activate factory, it has no IO Outputs configured", ChatColor.RED));
+            FMText.bar(p, Kind.ERROR, FMText.factory(name), " has no outputs set up");
             return;
         }
 
@@ -372,7 +374,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                 }
                 if (!NameLayerAPI.getGroupManager().hasAccess(rein.getGroup().getName(), p.getUniqueId(),
                     PermissionType.getPermission("UPGRADE_FACTORY"))) {
-                    p.sendMessage(ChatColor.RED + "You dont have permission to upgrade this factory");
+                    FMText.bar(p, Kind.ERROR, "You don't have permission to upgrade ", FMText.factory(name));
                     return;
                 }
             }
@@ -387,11 +389,10 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                 int consumptionIntervall = ((InputRecipe) currentRecipe).getFuelConsumptionIntervall() > 0 ? ((InputRecipe) currentRecipe)
                     .getFuelConsumptionIntervall() : pm.getPowerConsumptionIntervall();
                 if (((FurnacePowerManager) pm).getFuelAmountAvailable() < (currentRecipe.getProductionTime() / consumptionIntervall)) {
-                    p.sendMessage(ChatColor.RED
-                        + "You don't have enough fuel, the factory will run out of it before completing");
+                    FMText.bar(p, Kind.WARN, FMText.factory(name), " will run out of fuel before this run finishes");
                 }
             }
-            p.sendMessage(ChatColor.GREEN + "Activated " + name + " with recipe: " + currentRecipe.getName());
+            FMText.bar(p, Kind.SUCCESS, "Started ", FMText.factory(name), " on ", FMText.recipe(currentRecipe.getName()));
             activator = p.getUniqueId();
         }
         activate();
@@ -544,7 +545,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                     }
                     // if there is no fuel Available turn off the factory
                     else {
-                        sendActivatorMessage(ChatColor.GOLD + name + " deactivated, because it ran out of fuel");
+                        sendActivatorMessage(Kind.WARN, FMText.factory(name), " stopped - it ran out of fuel");
                         deactivate();
                     }
                 }
@@ -555,7 +556,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                     // check that there is an output to place the item
                     // check is put here instead of on fuel tick for performance reasons, but will waste charcoal
                     if (getOutputInventory().getSize() == 0) {
-                        sendActivatorMessage(ChatColor.RED + currentRecipe.getName() + " in " + name + " deactivated because it has no output inventory");
+                        sendActivatorMessage(Kind.ERROR, FMText.factory(name), " stopped - it has no output inventory for ", FMText.recipe(currentRecipe.getName()));
                         deactivate();
                         return;
                     }
@@ -571,7 +572,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                             return;
                         }
                     }
-                    sendActivatorMessage(ChatColor.GOLD + currentRecipe.getName() + " in " + name + " completed");
+                    sendActivatorMessage(Kind.SUCCESS, FMText.factory(name), " finished ", FMText.recipe(currentRecipe.getName()));
                     if (currentRecipe instanceof Upgraderecipe || currentRecipe instanceof RecipeScalingUpgradeRecipe || !(currentRecipe instanceof InputRecipe)) {
                         // this if else might look a bit weird, but because
                         // upgrading changes the current recipe and a lot of
@@ -583,7 +584,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                         if (currentRecipe.applyEffect(getInputInventory(), getOutputInventory(), this)) {
                             runCount.put(currentRecipe, runCount.get(currentRecipe) + 1);
                         } else {
-                            sendActivatorMessage(ChatColor.RED + currentRecipe.getName() + " in " + name + " deactivated because it ran out of storage space");
+                            sendActivatorMessage(Kind.ERROR, FMText.factory(name), " stopped - its output is full");
                             deactivate();
                             return;
                         }
@@ -591,7 +592,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                     currentProductionTimer = 0;
                     if (currentRecipe instanceof RepairRecipe && rm.atFullHealth()) {
                         // already at full health, dont try to repair further
-                        sendActivatorMessage(ChatColor.GOLD + name + " repaired to full health");
+                        sendActivatorMessage(Kind.SUCCESS, "Repaired ", FMText.factory(name), " to full health");
                         deactivate();
                         return;
                     }
@@ -600,7 +601,7 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
                         if (!hasInputMaterials() && isAutoSelect()) {
                             IRecipe nextOne = getAutoSelectRecipe();
                             if (nextOne != null) {
-                                sendActivatorMessage(ChatColor.GREEN + name + " automatically switched to recipe " + nextOne.getName() + " and began running it");
+                                sendActivatorMessage(Kind.INFO, FMText.factory(name), " switched to ", FMText.recipe(nextOne.getName()), " and kept running");
                                 currentRecipe = nextOne;
                             } else {
                                 deactivate();
@@ -617,17 +618,17 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
             } else {
                 IRecipe nextOne;
                 if (isAutoSelect() && (nextOne = getAutoSelectRecipe()) != null) {
-                    sendActivatorMessage(ChatColor.GREEN + name + " automatically switched to recipe " + nextOne.getName() + " and began running it");
+                    sendActivatorMessage(Kind.INFO, FMText.factory(name), " switched to ", FMText.recipe(nextOne.getName()), " and kept running");
                     currentRecipe = nextOne;
                     scheduleUpdate();
                     // don't setPowerCounter to 0, fuel has been consumed, let it be used for the new recipe
                 } else {
-                    sendActivatorMessage(ChatColor.GOLD + name + " deactivated, because it ran out of required materials");
+                    sendActivatorMessage(Kind.WARN, FMText.factory(name), " stopped - it ran out of materials");
                     deactivate();
                 }
             }
         } else {
-            sendActivatorMessage(ChatColor.GOLD + name + " deactivated, because the factory was destroyed");
+            sendActivatorMessage(Kind.WARN, FMText.factory(name), " stopped - it was destroyed");
             deactivate();
         }
     }
@@ -682,11 +683,11 @@ public class FurnCraftChestFactory extends Factory implements IIOFInventoryProvi
         return level != null ? level : 1;
     }
 
-    private void sendActivatorMessage(String msg) {
+    private void sendActivatorMessage(Kind kind, Object... parts) {
         if (activator != null) {
             Player p = Bukkit.getPlayer(activator);
             if (p != null) {
-                p.sendMessage(msg);
+                FMText.bar(p, kind, parts);
             }
         }
     }

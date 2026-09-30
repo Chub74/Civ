@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -19,6 +18,9 @@ import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.github.igotyou.FactoryMod.utility.FMText;
+import net.kyori.adventure.text.Component;
 
 public class FactoryMaterialReturnRecipe extends InputRecipe {
 
@@ -42,8 +44,8 @@ public class FactoryMaterialReturnRecipe extends InputRecipe {
     public List<ItemStack> getOutputRepresentation(Inventory i, FurnCraftChestFactory fccf) {
         if (i == null) {
             ItemStack is = new ItemStack(Material.PAPER);
-            ItemUtils.setDisplayName(is, "Total setupcost");
-            ItemUtils.addLore(is, ChatColor.AQUA + "All the materials invested into setting up and upgrading this factory");
+            FMText.name(is, Component.text("Total creation cost"));
+            FMText.lore(is, CivText.info("Everything spent creating and upgrading this factory"));
             List<ItemStack> stacks = new LinkedList<>();
             stacks.add(is);
             return stacks;
