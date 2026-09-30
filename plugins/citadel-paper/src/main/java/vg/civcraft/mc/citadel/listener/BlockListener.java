@@ -6,6 +6,7 @@ import java.util.Set;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
@@ -14,7 +15,9 @@ import org.bukkit.block.data.Brushable;
 import org.bukkit.block.data.Lightable;
 import org.bukkit.block.data.Openable;
 import org.bukkit.block.data.type.Comparator;
+import org.bukkit.block.data.type.Jukebox;
 import org.bukkit.block.data.type.Lectern;
+import org.bukkit.block.data.type.Shelf;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
@@ -733,7 +736,13 @@ public class BlockListener implements Listener {
         } else {
             relevant = p.getInventory().getItemInOffHand();
         }
-        if (relevant.getType() != Material.AIR && !Tag.ITEMS_BOOKSHELF_BOOKS.isTagged(relevant.getType())) {
+        // Sneaking with anything in either hand uses the item, not the shelf
+        if (p.isSneaking() && (!p.getInventory().getItemInMainHand().isEmpty() || !p.getInventory().getItemInOffHand().isEmpty())) {
+            return;
+        }
+        boolean placing = Tag.ITEMS_BOOKSHELF_BOOKS.isTagged(relevant.getType());
+        // Any other item, not just an empty hand, falls through to taking a book, but only for the main hand
+        if (!placing && hand != EquipmentSlot.HAND) {
             return;
         }
         Reinforcement rein = Citadel.getInstance().getReinforcementManager().getReinforcement(block);
@@ -741,8 +750,83 @@ public class BlockListener implements Listener {
             return;
         }
         if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
-            CivUI.error(p, "You can't "
-                + (Tag.ITEMS_BOOKSHELF_BOOKS.isTagged(relevant.getType()) ? "place books in this shelf" : "take books from this shelf"));
+            CivUI.error(p, "You can't " + (placing ? "place books in this shelf" : "take books from this shelf"));
+            pie.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void preventUsingShelf(PlayerInteractEvent pie) {
+        if (!pie.hasBlock()) {
+            return;
+        }
+        if (pie.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        Block block = pie.getClickedBlock();
+        if (!(block.getBlockData() instanceof Shelf)) {
+            return;
+        }
+        // Shelves only react to the main hand, with any item or none
+        if (pie.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        Player p = pie.getPlayer();
+        // Sneaking with anything in either hand uses the item, not the shelf
+        if (p.isSneaking() && (!p.getInventory().getItemInMainHand().isEmpty() || !p.getInventory().getItemInOffHand().isEmpty())) {
+            return;
+        }
+        Reinforcement rein = Citadel.getInstance().getReinforcementManager().getReinforcement(block);
+        if (rein == null) {
+            return;
+        }
+        if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
+            CivUI.error(p, "You can't use this shelf");
+            pie.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void preventUsingJukebox(PlayerInteractEvent pie) {
+        if (!pie.hasBlock()) {
+            return;
+        }
+        if (pie.getAction() != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
+        Block block = pie.getClickedBlock();
+        if (!(block.getBlockData() instanceof Jukebox jukebox)) {
+            return;
+        }
+        EquipmentSlot hand = pie.getHand();
+        if (hand != EquipmentSlot.HAND && hand != EquipmentSlot.OFF_HAND) {
+            return;
+        }
+        Player p = pie.getPlayer();
+        // Sneaking with anything in either hand uses the item, not the jukebox
+        if (p.isSneaking() && (!p.getInventory().getItemInMainHand().isEmpty() || !p.getInventory().getItemInOffHand().isEmpty())) {
+            return;
+        }
+        boolean ejecting = jukebox.hasRecord();
+        if (ejecting) {
+            // Any item, not just an empty hand, ejects the disc, but only for the main hand
+            if (hand != EquipmentSlot.HAND) {
+                return;
+            }
+        } else {
+            ItemStack relevant = hand == EquipmentSlot.HAND
+                ? p.getInventory().getItemInMainHand()
+                : p.getInventory().getItemInOffHand();
+            if (relevant.isEmpty() || !relevant.hasData(DataComponentTypes.JUKEBOX_PLAYABLE)) {
+                return;
+            }
+        }
+        Reinforcement rein = Citadel.getInstance().getReinforcementManager().getReinforcement(block);
+        if (rein == null) {
+            return;
+        }
+        if (!rein.hasPermission(p, CitadelPermissionHandler.getModifyBlocks())) {
+            CivUI.error(p, "You can't " + (ejecting ? "take the disc from this jukebox" : "put discs in this jukebox"));
             pie.setCancelled(true);
         }
     }
