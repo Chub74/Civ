@@ -1,6 +1,6 @@
 package net.civeden.civadvancements.listeners;
 
-import com.oheers.fish.api.EMFFishEvent;
+import com.oheers.fish.api.events.EMFFishCaughtEvent;
 import net.civeden.civadvancements.AdvancementManager;
 import net.civeden.civadvancements.ChallengeTracker;
 import net.civeden.civadvancements.CivAdvancementsConfig;
@@ -22,10 +22,10 @@ public class EmfAdvancementListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onEmfFish(EMFFishEvent event) {
+    public void onEmfFish(EMFFishCaughtEvent event) {
         Player player = event.getPlayer();
         adv.award(player, AdvancementManager.EMF_CATCH);
-        if (event.getFish().getRarity().getAnnounce()) {
+        if (event.getFish().getRarity().getBroadcastEnabled()) {
             adv.award(player, AdvancementManager.EMF_RARE);
             int rare = tracker.incrementEmfRareCatches(player.getUniqueId());
             if (rare >= 10) adv.award(player, AdvancementManager.EMF_RARE_10);

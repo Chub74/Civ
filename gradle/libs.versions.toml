@@ -56,8 +56,8 @@ mockbukkit = { group = "org.mockbukkit.mockbukkit", name = "mockbukkit-v26.2", v
 
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
 
-evenmorefish-paper = { group = "com.oheers.evenmorefish", name = "even-more-fish-plugin", version = "2.0.6"}
-evenmorefish-api = { group = "com.oheers.evenmorefish", name = "even-more-fish-api", version = "2.0.6"}
+evenmorefish-paper = { group = "com.oheers.evenmorefish", name = "even-more-fish-plugin", version = "2.5.0"}
+evenmorefish-api = { group = "com.oheers.evenmorefish", name = "even-more-fish-api", version = "2.5.0"}
 discordsrv-paper = { group = "com.discordsrv", name = "discordsrv", version = "1.28.0"}
 jda = { group = "net.dv8tion", name = "JDA", version = "6.2.1"}
 
