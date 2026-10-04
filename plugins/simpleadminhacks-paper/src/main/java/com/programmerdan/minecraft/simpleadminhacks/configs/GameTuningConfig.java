@@ -142,9 +142,8 @@ public class GameTuningConfig extends SimpleHackConfig {
         if (config == null) return;
 
         this.chunkLimitsEnabled = config.getBoolean("enabled", false);
-        this.chunkLimitsExceededMessage = ChatColor.translateAlternateColorCodes('&',
-            config.getString("exceededMessage",
-                ChatColor.RED + "Limit for this chunk reached, you cannot place that! Use a different block."));
+        this.chunkLimitsExceededMessage = config.getString("exceededMessage",
+            "Limit for this chunk reached, you cannot place that! Use a different block.");
 
         // for each "chunkLimits.tileEntities: " entry, record limit.
         ConfigurationSection tileEntities = config.getConfigurationSection("tileEntities");
@@ -235,7 +234,7 @@ public class GameTuningConfig extends SimpleHackConfig {
     }
 
     /**
-     * @return the generic limit message. TODO: Replace with customized message tailored per player.
+     * @return the MiniMessage template for a denied placement, which can use the <limit> and <material> tags.
      */
     public String getChunkLimitsExceededMessage() {
         return this.chunkLimitsExceededMessage;

@@ -1,5 +1,8 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
@@ -100,7 +103,7 @@ public class Trowel extends BasicHack {
             ItemMeta meta = handItem.getItemMeta();
             meta.getPersistentDataContainer().set(TROWEL_ROW, PersistentDataType.INTEGER, nextRow);
             handItem.setItemMeta(meta);
-            player.sendMessage(Component.text("Cycled trowel to row ", NamedTextColor.GRAY).append(Component.text(nextRow + 1, NamedTextColor.WHITE)));
+            SAHText.bar(player, Kind.INFO, "Trowel now places from row ", CivText.value(String.valueOf(nextRow + 1)));
             event.setCancelled(true);
             return;
         }

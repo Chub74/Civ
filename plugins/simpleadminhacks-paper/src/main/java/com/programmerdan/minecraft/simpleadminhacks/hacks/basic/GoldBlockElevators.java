@@ -1,5 +1,6 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.destroystokyo.paper.event.player.PlayerJumpEvent;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
@@ -7,8 +8,6 @@ import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.DataParser;
 import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.TeleportUtil;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -82,9 +81,9 @@ public class GoldBlockElevators extends BasicHack {
             }
         }
 
-        String message = String.format("No %s block to teleport you down to. Jump to teleport up instead.", this.blockName);
+        String message = String.format("No %s block below. Jump to go up instead", this.blockName);
 
-        event.getPlayer().sendMessage(Component.text(message).color(NamedTextColor.RED));
+        SAHText.deny(event.getPlayer(), message);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -102,9 +101,9 @@ public class GoldBlockElevators extends BasicHack {
             }
         }
 
-        String message = String.format("No %s block to teleport you up to. Sneak to teleport down instead.", this.blockName);
+        String message = String.format("No %s block above. Sneak to go down instead", this.blockName);
 
-        event.getPlayer().sendMessage(Component.text(message).color(NamedTextColor.RED));
+        SAHText.deny(event.getPlayer(), message);
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -136,9 +135,9 @@ public class GoldBlockElevators extends BasicHack {
                 }
             }
 
-            String message = String.format("No %s block to teleport you down to. Right click to teleport up instead.", this.blockName);
+            String message = String.format("No %s block below. Right click to go up instead", this.blockName);
 
-            event.getPlayer().sendMessage(Component.text(message).color(NamedTextColor.RED));
+            SAHText.deny(event.getPlayer(), message);
         } else {
             for (int y = below.getY() + 1; y <= below.getWorld().getMaxHeight(); y++) {
                 if (doTeleport(below, event.getPlayer(), y)) {
@@ -146,9 +145,9 @@ public class GoldBlockElevators extends BasicHack {
                 }
             }
 
-            String message = String.format("No %s block to teleport you up to. Left click to teleport down instead.", this.blockName);
+            String message = String.format("No %s block above. Left click to go down instead", this.blockName);
 
-            event.getPlayer().sendMessage(Component.text(message).color(NamedTextColor.RED));
+            SAHText.deny(event.getPlayer(), message);
         }
     }
 

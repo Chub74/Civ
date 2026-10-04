@@ -1,5 +1,7 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
@@ -8,7 +10,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -95,9 +96,7 @@ public final class SafeOreBreak extends BasicHack {
                         continue OUTER;
                     }
 
-                    event.getPlayer().sendMessage(Component.text(
-                            "A SimpleAdminHacks /config option is preventing you from breaking that ore without a silk touch pickaxe.")
-                        .color(NamedTextColor.RED));
+                    SAHText.deny(event.getPlayer(), "Your ", CivText.value("/config"), " only lets you break that ore with silk touch");
 
                     event.setCancelled(true);
                     return;

@@ -1,12 +1,12 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
 import java.util.UUID;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Statistic;
 import org.bukkit.World;
@@ -97,7 +97,7 @@ public final class PhantomMenace extends BasicHack {
         }
         final Player player = event.getPlayer();
         if (event.getPreviousValue() < 72_000 && event.getNewValue() >= 72_000) {
-            player.sendMessage(ChatColor.DARK_RED + "You haven't slept in a while...");
+            CivUI.warn(player, "You haven't slept in a while. Phantoms will come for you");
         }
         final int cap = this.timeSinceRestCap;
         if (cap <= -1 || event.getNewValue() < cap) {

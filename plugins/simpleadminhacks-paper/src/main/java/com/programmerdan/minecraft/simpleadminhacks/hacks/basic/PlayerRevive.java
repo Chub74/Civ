@@ -1,5 +1,6 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandCompletion;
@@ -64,7 +65,7 @@ public final class PlayerRevive extends BasicHack {
             player.setBedSpawnLocation(player.getLocation(), true);
             player.spigot().respawn();
             player.setBedSpawnLocation(prevBedSpawn, true);
-            player.sendMessage(ChatColor.YELLOW + "You have been revived.");
+            CivUI.success(player, "You've been revived");
             sender.sendMessage(player.getName() + " revived.");
         }
 

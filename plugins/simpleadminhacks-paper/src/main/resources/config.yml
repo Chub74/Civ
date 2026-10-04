@@ -102,12 +102,12 @@ hacks:
   DogFacts:
     enabled: false
     intervalTime: 30m
-    #Since we use the tellraw command to dispatch dogfacts now, all our announcements **MUST** be in JSON format
-    #YAML also doesn't like JSON's usage of "" so we have to add escape characters (\) to counteract that.
-    #Here's the site I used to make these ones: https://minecraft.tools/en/json_text.php
+    # Announcements are MiniMessage (https://docs.papermc.io/adventure/minimessage/format/).
+    # The server brand prefix is added automatically, and body text defaults to gray.
+    # Inline textures: <sprite:block/jukebox_top> for blocks, <sprite:items:item/emerald> for items.
     announcements:
-      - "[\"\",{\"text\":\"Buy \"},{\"text\":\"Dogecoin\",\"color\":\"dark_red\",\"clickEvent\":{\"action\":\"open_url\",\"value\":\"https://www.coindesk.com/price/dogecoin\"}},{\"text\":\"!\"}]"
-      - "[\"\",{\"text\":\"Very \"},{\"text\":\"Wow!\",\"italic\":true,\"hoverEvent\":{\"action\":\"show_text\",\"contents\":\"Wow!\"}}]"
+      - "Buy <click:open_url:'https://www.coindesk.com/price/dogecoin'><hover:show_text:'Click to open https://www.coindesk.com/price/dogecoin'><aqua>Dogecoin ↗</aqua></hover></click>!"
+      - "Very <hover:show_text:'Wow!'><i>Wow!</i></hover>"
   EventDebugHack:
     enabled: true
   EventHandlerList:
@@ -274,6 +274,22 @@ hacks:
     delay: 10000
     message: '%Victim% was combat tagged by %Attacker%'
     broadcast: [ OP, CONSOLE ]
+  CushionFeatures:
+    enabled: true
+    # Whether combat tagged players are stopped from sitting on cushions
+    disableSittingInCombat: true
+    # Whether players sitting on a cushion are stood up when they get combat tagged
+    # (a seated player can't be knocked back)
+    dismountOnCombatTag: true
+    # How long (in milliseconds) a player must wait between sitting on cushions,
+    # which stops cushion chaining from outrunning horses. Set to 0 to disable.
+    mountCooldown: 1000
+    # Whether getting off a cushion may not put a player somewhere they couldn't see
+    # from where they stood before sitting down. They're put back there instead.
+    blockDismountThroughWalls: true
+    messages:
+      inCombat: 'You cannot sit down while in combat.'
+      cooldown: 'You can sit down again in <remaining>'
   ElytraFeatures:
     enabled: true
     # Whether Elytra flight should be outright disabled
@@ -350,14 +366,15 @@ hacks:
     enabled: true
     chunkLimits:
       enabled: true
-      exceededMessage: '&9Limit reached for this chunk, you cannot place more of this type of block.'
+      # MiniMessage; <limit> and <material> are filled in.
+      exceededMessage: 'Limit (<limit>) reached for this chunk, you cannot place more <material>.'
       tileEntities:
         HOPPER: 4
-        PISTON_BASE: 4
-        PISTON_STICKY_BASE: 4
+        PISTON: 4
+        STICKY_PISTON: 4
         DISPENSER: 4
         DROPPER: 4
-        REDSTONE_COMPARATOR: 4
+        COMPARATOR: 4
         OBSERVER: 2
       exempt:
         - Steve
@@ -432,7 +449,7 @@ hacks:
         - "We extend our appreciation to the devs, admins, and players at: &oreddit.com/r/Civcraft"
   NewfriendAssist:
     enabled: true
-    announce: '&f%Player% is brand new!'
+    announce: '<player> is brand new!'
     giveIntroKitToRandomSpawners: true
     broadcast: [ PERM, CONSOLE ]
     helptips: on

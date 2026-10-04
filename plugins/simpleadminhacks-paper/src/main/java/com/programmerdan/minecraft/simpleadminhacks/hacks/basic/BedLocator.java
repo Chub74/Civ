@@ -1,5 +1,7 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.annotation.CommandAlias;
 import co.aikar.commands.annotation.CommandPermission;
@@ -7,8 +9,6 @@ import co.aikar.commands.annotation.Description;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.chat.Componentify;
 import vg.civcraft.mc.civmodcore.commands.CommandManager;
@@ -48,14 +48,10 @@ public final class BedLocator extends BasicHack {
         public void giveWand(final Player sender) {
             final var bedLocation = sender.getBedSpawnLocation();
             if (bedLocation == null) {
-                sender.sendMessage(Component.text("You do not a set bed.")
-                    .color(NamedTextColor.GREEN));
+                CivUI.error(sender, "You don't have a bed set");
                 return;
             }
-            sender.sendMessage(Component.text()
-                .color(NamedTextColor.GREEN)
-                .append(Component.text("Your bed is at "))
-                .append(Componentify.blockLocation(bedLocation)));
+            CivUI.info(sender, "Your bed is at ", Componentify.blockLocation(bedLocation).colorIfAbsent(CivText.VALUE));
             if (WorldUtils.doLocationsHaveSameWorld(sender.getLocation(), bedLocation)) {
                 sender.sendMessage('['
                     + "name:Bed Location,"

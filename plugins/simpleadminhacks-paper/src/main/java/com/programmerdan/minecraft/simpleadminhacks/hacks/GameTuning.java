@@ -1,13 +1,27 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.configs.GameTuningConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.SimpleHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.TeleportUtil;
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ItemLore;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Chunk;
+import org.bukkit.ChunkSnapshot;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -49,11 +63,17 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.weather.WeatherChangeEvent;
 import org.bukkit.event.world.PortalCreateEvent;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.SpawnEggMeta;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.NotNull;
-import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
+import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
+import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * This is a grab-bag class to hold any _tuning_ related configurations that impact the
@@ -72,6 +92,15 @@ import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 public class GameTuning extends SimpleHack<GameTuningConfig> implements Listener, CommandExecutor {
 
     public static final String NAME = "GameTuning";
+
+    private static final MiniMessage MM = MiniMessage.miniMessage();
+
+    /** A denied placement fires on every click, so one message per second at most. */
+    private static final Duration DENY_WINDOW = Duration.ofSeconds(1);
+
+    /** MultiPageView only takes a String title. */
+    private static final String LIMITS_TITLE = LegacyComponentSerializer.legacySection()
+        .serialize(CivText.heading("Chunk Limits"));
 
     public GameTuning(SimpleAdminHacks plugin, GameTuningConfig config) {
         super(plugin, config);
@@ -242,10 +271,7 @@ public class GameTuning extends SimpleHack<GameTuningConfig> implements Listener
                 if (state != null && mat.equals(state.getType())) {
                     if (++current > limit) {
                         event.setCancelled(true);
-                        player.sendMessage(config.getChunkLimitsExceededMessage()
-                            .replaceAll("%Limit%", Integer.toString(limit))
-                            .replaceAll("%Material%", ItemUtils.getItemName(mat))
-                        );
+                        sendLimitExceeded(player, mat, limit);
                         return;
                     }
                 }
@@ -253,6 +279,27 @@ public class GameTuning extends SimpleHack<GameTuningConfig> implements Listener
         } catch (Exception e) {
             plugin().log(Level.WARNING, "Failed to measure chunk limit", e);
         }
+    }
+
+    private void sendLimitExceeded(Player player, Material mat, int limit) {
+        String template = config.getChunkLimitsExceededMessage();
+        if (template == null || template.isEmpty()) {
+            return;
+        }
+        CivUI.notice(Kind.ERROR, MM.deserialize(template,
+                Placeholder.component("limit", CivText.value(Integer.toString(limit))),
+                Placeholder.component("material", materialWithIcon(mat))))
+            .from(plugin())
+            .to(player)
+            .atMostEvery(DENY_WINDOW)
+            .send();
+    }
+
+    /** The material's icon then its name; CivUI drops the icon for Bedrock players. */
+    private static Component materialWithIcon(Material mat) {
+        Component name = Component.translatable(mat, CivText.VALUE);
+        Component icon = CivText.icon(mat);
+        return icon == null ? name : Component.text().append(icon, Component.space(), name).build();
     }
 
     // If any limit at all, cancel the piston event.
@@ -396,7 +443,7 @@ public class GameTuning extends SimpleHack<GameTuningConfig> implements Listener
     public void onBlockPlace(BlockPlaceEvent event) {
         if (config.isEnabled() && !config.canPlace(event.getBlock().getType())) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You're not allowed to place that!");
+            SAHText.deny(event.getPlayer(), "You can't place that");
         }
     }
 
@@ -468,22 +515,79 @@ public class GameTuning extends SimpleHack<GameTuningConfig> implements Listener
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        Map<Material, Integer> blockLimits = config.getBlockEntityLimits();
-
-        StringBuilder stringB = new StringBuilder();
-
-        stringB.append(ChatColor.AQUA + "-- Chunk Limitations for the following blocks --\n");
-        stringB.append("\n");
-
-        for (Map.Entry<Material, Integer> entries : blockLimits.entrySet()) {
-            Material material = entries.getKey();
-            Integer blockLimit = entries.getValue();
-            stringB.append("" + ChatColor.WHITE + material + " : " + blockLimit + "\n");
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+        if (!(sender instanceof Player player)) {
+            CivUI.error(sender, "Only players can check chunk limits.");
+            return true;
         }
-        commandSender.sendMessage(stringB.toString());
+        Map<Material, Integer> limits = config.getBlockEntityLimits();
+        if (!config.areChunkLimitsEnabled() || limits.isEmpty()) {
+            CivUI.info(player, "There are no chunk limits on this server.");
+            return true;
+        }
+        Map<Material, Integer> used = countInChunk(player.getChunk(), limits.keySet());
+        List<IClickable> items = limits.entrySet().stream()
+            .filter(entry -> entry.getKey().isItem())
+            .sorted(Comparator.comparing(entry -> entry.getKey().getKey().getKey()))
+            .map(entry -> (IClickable) new DecorationStack(
+                limitItem(entry.getKey(), entry.getValue(), used.getOrDefault(entry.getKey(), 0))))
+            .toList();
+        new MultiPageView(player, new ArrayList<>(items), LIMITS_TITLE, true).showScreen();
         return true;
     }
 
+    /** The limited item, with how much of its limit this chunk has used. Full limits glint so they stand out. */
+    private static ItemStack limitItem(Material material, int limit, int count) {
+        boolean full = count >= limit;
+        ItemStack item = new ItemStack(material);
+        item.setData(DataComponentTypes.ITEM_NAME, Component.translatable(material, full ? CivText.ERROR : CivText.VALUE));
+        item.setData(DataComponentTypes.LORE, ItemLore.lore(List.of(
+            loreLine(Component.text("In this chunk "),
+                Component.text(count, full ? CivText.ERROR : CivText.VALUE),
+                Component.text(" / " + limit)),
+            full
+                ? loreLine(Component.text("Limit reached", CivText.ERROR))
+                : loreLine(Component.text(limit - count, CivText.SUCCESS), Component.text(" more can be placed")))));
+        if (full) {
+            item.setData(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
+        }
+        return item;
+    }
+
+    /** Lore renders italic unless told otherwise. */
+    private static Component loreLine(Component... parts) {
+        return Component.text().color(CivText.INFO).decoration(TextDecoration.ITALIC, false).append(parts).build();
+    }
+
+    /**
+     * Counts the limited blocks and entities in a chunk. Blocks are counted by scanning the whole chunk, since
+     * not every limited block (pistons, observers) has a block entity to find them by.
+     */
+    private static Map<Material, Integer> countInChunk(Chunk chunk, Set<Material> limited) {
+        Map<Material, Integer> counts = new EnumMap<>(Material.class);
+        if (limited.stream().anyMatch(Material::isBlock)) {
+            ChunkSnapshot snapshot = chunk.getChunkSnapshot(false, false, false);
+            int minY = chunk.getWorld().getMinHeight();
+            int maxY = chunk.getWorld().getMaxHeight();
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    for (int y = minY; y < maxY; y++) {
+                        Material type = snapshot.getBlockType(x, y, z);
+                        if (limited.contains(type)) {
+                            counts.merge(type, 1, Integer::sum);
+                        }
+                    }
+                }
+            }
+        }
+        // Item frames, armour stands and paintings are entities named the same as their item
+        for (Entity entity : chunk.getEntities()) {
+            Material type = Material.getMaterial(entity.getType().name());
+            if (type != null && limited.contains(type)) {
+                counts.merge(type, 1, Integer::sum);
+            }
+        }
+        return counts;
+    }
 
 }

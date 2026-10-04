@@ -1,5 +1,7 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
@@ -72,11 +74,7 @@ public class MapCopyProtection extends BasicHack implements CommandExecutor {
 
         if (isCopy(item)) {
             event.setCancelled(true);
-            event.getWhoClicked().sendMessage(
-                Component.text()
-                    .color(NamedTextColor.RED)
-                    .content("You can not clone copy protected maps")
-            );
+            SAHText.deny(event.getWhoClicked(), "You can't copy a copy protected map");
         }
     }
 
@@ -94,20 +92,12 @@ public class MapCopyProtection extends BasicHack implements CommandExecutor {
         ItemStack item = player.getInventory().getItemInMainHand();
 
         if (item.getType() != Material.FILLED_MAP) {
-            sender.sendMessage(
-                Component.text()
-                    .color(NamedTextColor.RED)
-                    .content("Only filled maps can be copy protected")
-            );
+            CivUI.error(sender, "Hold a filled map to copy protect it");
             return true; // Command failed, but was syntactically correct, so no need to tell the player how to use it
         }
 
         if (isCopy(item)) {
-            sender.sendMessage(
-                Component.text()
-                    .color(NamedTextColor.RED)
-                    .content("You can not copy protect copy protected maps")
-            );
+            CivUI.error(sender, "That map is already copy protected");
             return true; // Command failed, but was syntactically correct, so no need to tell the player how to use it
         }
 

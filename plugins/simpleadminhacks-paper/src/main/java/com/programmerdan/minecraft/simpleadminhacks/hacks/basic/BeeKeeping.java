@@ -1,12 +1,12 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.google.common.base.Strings;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
 import net.md_5.bungee.api.ChatColor;
 import net.minecraft.core.component.DataComponents;
@@ -146,14 +146,14 @@ public final class BeeKeeping extends BasicHack {
         }
         final BeehiveBlockEntity beehive = getBeeHive(block);
         if (beehive.isEmpty()) {
-            player.sendMessage(ChatColor.GOLD + "There aren't any bees in that hive.");
+            CivUI.info(player, "There aren't any bees in that hive");
             return;
         }
         final List<BeeData> bees = getBeesFromHive(beehive);
         final int numberOfUnnamed = (int) IterableUtils.countMatches(bees, BeeData::isNameless);
         bees.removeIf(BeeData::isNameless);
         // Start building response
-        final var response = Component.text().color(NamedTextColor.GOLD);
+        final var response = Component.text();
         final Iterator<BeeData> nameIterator = bees.iterator();
         boolean doneFirstElement = false;
         while (nameIterator.hasNext()) {
@@ -184,7 +184,7 @@ public final class BeeKeeping extends BasicHack {
             response.append(Component.text(" happily buzzing"));
         }
         response.append(Component.text(" in that hive."));
-        player.sendMessage(response);
+        CivUI.info(player, response.build());
     }
 
     private static BeehiveBlockEntity getBeeHive(@NotNull final Block block) {

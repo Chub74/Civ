@@ -1,5 +1,8 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import co.aikar.commands.BaseCommand;
 import co.aikar.commands.BukkitCommandCompletionContext;
 import co.aikar.commands.annotation.CommandAlias;
@@ -26,9 +29,7 @@ import java.util.Objects;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import net.minelink.ctplus.CombatTagPlus;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -108,16 +109,15 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
         ) {
             if (checkOTT(sender.getUniqueId())) {
                 final long expiresIn = config().getTimeLimitOnUsageInMillis() - (System.currentTimeMillis() - OneTimeTeleport.this.grantedTimestamps.getValue(sender.getUniqueId()));
-                sender.sendMessage(Component.text()
-                    .content("Your one time teleport will expire in " + TextUtil.formatDuration(expiresIn))
-                    .color(NamedTextColor.GREEN)
-                    .decorate(TextDecoration.UNDERLINED)
-                    .hoverEvent(HoverEvent.showText(Component.text("Clicking this message will suggest an OTT request command")))
-                    .clickEvent(ClickEvent.suggestCommand("/ott to "))
-                );
+                CivUI.notice(Kind.INFO, "Your one-time teleport expires in ", CivText.value(TextUtil.formatDuration(expiresIn)),
+                        ". Click to request one")
+                    .to(sender)
+                    .hover(CivText.info("Suggests /ott to <player>"))
+                    .click(ClickEvent.suggestCommand("/ott to "))
+                    .send();
                 return;
             }
-            sender.sendMessage(Component.text("You don't have a one-time teleport.", NamedTextColor.RED));
+            CivUI.error(sender, "You don't have a one-time teleport");
         }
 
         @Subcommand("to|request")
@@ -128,7 +128,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             @Flags("other") final Player targetPlayer
         ) {
             if (targetPlayer == sender) {
-                sender.sendMessage(Component.text("You cannot OTT to yourself!", NamedTextColor.RED));
+                CivUI.error(sender, "You can't teleport to yourself");
                 return;
             }
 
@@ -136,23 +136,23 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
                 case OK -> {
                 }
                 case FAIL_NO_OTT -> {
-                    sender.sendMessage(Component.text("Your are no longer able to use OTT!"));
+                    CivUI.error(sender, "Your one-time teleport has expired");
                     return;
                 }
                 case FAIL_IN_COMBAT -> {
-                    sender.sendMessage(Component.text("You cannot OTT while in combat!", NamedTextColor.RED));
+                    CivUI.error(sender, "You can't teleport while in combat");
                     return;
                 }
                 case FAIL_IS_PEARLED -> {
-                    sender.sendMessage(Component.text("You cannot OTT while pearled!", NamedTextColor.RED));
+                    CivUI.error(sender, "You can't teleport while pearled");
                     return;
                 }
                 case FAIL_DIFFERENT_WORLD -> {
-                    sender.sendMessage(Component.text("You cannot OTT to another world!", NamedTextColor.RED));
+                    CivUI.error(sender, "You can't teleport to another world");
                     return;
                 }
                 case FAIL_TARGET_IS_PEARLED -> {
-                    sender.sendMessage(Component.text("You cannot OTT to a pearled player!", NamedTextColor.RED));
+                    CivUI.error(sender, "You can't teleport to a pearled player");
                     return;
                 }
             }
@@ -165,20 +165,19 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             if (previousRequest != null) {
                 final Player previousTargetPlayer = Bukkit.getPlayer(previousRequest);
                 if (previousTargetPlayer != null) {
-                    previousTargetPlayer.sendMessage(Component.text(sender.getName() + " has rescinded their OTT request to you.", NamedTextColor.GREEN));
+                    CivUI.info(previousTargetPlayer, CivText.subject(sender.getName()), " withdrew their teleport request");
                 }
             }
 
-            sender.sendMessage(Component.text("You have requested to teleport to " + targetPlayer.getName() + "!", NamedTextColor.GREEN));
+            CivUI.success(sender, "Asked to teleport to ", CivText.subject(targetPlayer.getName()));
 
             final String commandStr = "/ott accept " + sender.getName();
-            targetPlayer.sendMessage(Component.text()
-                .content("Click me or type \"" + commandStr + "\" to accept!")
-                .color(NamedTextColor.DARK_GREEN)
-                .decorate(TextDecoration.BOLD, TextDecoration.UNDERLINED)
-                .hoverEvent(HoverEvent.showText(Component.text("Clicking this message will suggest an accept command.")))
-                .clickEvent(ClickEvent.suggestCommand(commandStr))
-            );
+            CivUI.notice(Kind.INFO, CivText.subject(sender.getName()), " wants to teleport to you. Click or type ",
+                    CivText.value(commandStr), " to accept")
+                .to(targetPlayer)
+                .hover(CivText.info("Suggests " + commandStr))
+                .click(ClickEvent.suggestCommand(commandStr))
+                .send();
         }
 
         @Subcommand("revoke|rescind|stop")
@@ -188,13 +187,13 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
         ) {
             final UUID targetUUID = OneTimeTeleport.this.senderToReceiver.remove(sender.getUniqueId());
             if (targetUUID == null) {
-                sender.sendMessage(Component.text("You have no active OTT requests.", NamedTextColor.RED));
+                CivUI.error(sender, "You have no teleport request open");
                 return;
             }
-            sender.sendMessage(Component.text("You have revoked your OTT request!", NamedTextColor.GREEN));
+            CivUI.success(sender, "Withdrew your teleport request");
             final Player targetPlayer = Bukkit.getPlayer(targetUUID);
             if (targetPlayer != null) {
-                targetPlayer.sendMessage(Component.text(sender.getName() + " has rescinded their OTT request to you.", NamedTextColor.GREEN));
+                CivUI.info(targetPlayer, CivText.subject(sender.getName()), " withdrew their teleport request");
             }
         }
 
@@ -221,7 +220,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             @Flags("other") final Player requestingPlayer
         ) {
             if (requestingPlayer == sender) {
-                sender.sendMessage(Component.text("You cannot accept an OTT from yourself!", NamedTextColor.RED));
+                CivUI.error(sender, "You can't accept your own request");
                 return;
             }
 
@@ -229,7 +228,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
                 requestingPlayer.getUniqueId(),
                 sender.getUniqueId()
             )) {
-                sender.sendMessage(Component.text("There are no active requests from that player!", NamedTextColor.RED));
+                CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " hasn't asked to teleport to you");
                 return;
             }
 
@@ -237,29 +236,29 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
                 case OK -> {
                 }
                 case FAIL_NO_OTT -> {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + "'s one-time teleport has expired!"));
-                    requestingPlayer.sendMessage(Component.text("Failed to teleport because your one-time teleport has expired!"));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), "'s one-time teleport has expired");
+                    CivUI.error(requestingPlayer, "Your one-time teleport has expired");
                     return;
                 }
                 case FAIL_IN_COMBAT -> {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport as they're in combat!", NamedTextColor.RED));
-                    requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but you're in combat!", NamedTextColor.RED));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " can't teleport while in combat");
+                    CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but you're in combat");
                     OneTimeTeleport.this.senderToReceiver.put(requestingPlayer.getUniqueId(), sender.getUniqueId()); // Be kind and put the request back!
                     return;
                 }
                 case FAIL_IS_PEARLED -> {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport as they're pearled!", NamedTextColor.RED));
-                    requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but you're pearled!", NamedTextColor.RED));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " can't teleport while pearled");
+                    CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but you're pearled");
                     return;
                 }
                 case FAIL_DIFFERENT_WORLD -> {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport as they're in a different world!", NamedTextColor.RED));
-                    requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but you're in a different world!", NamedTextColor.RED));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " is in another world");
+                    CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but you're in another world");
                     return;
                 }
                 case FAIL_TARGET_IS_PEARLED -> {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport as you're pearled!", NamedTextColor.RED));
-                    requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but they're pearled", NamedTextColor.RED));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " can't teleport to you while you're pearled");
+                    CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but they're pearled");
                     return;
                 }
             }
@@ -267,8 +266,8 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             if (Bukkit.getPluginManager().isPluginEnabled("Bastion")) {
                 for (final BastionBlock bastion : Bastion.getBastionManager().getBlockingBastions(sender.getLocation())) {
                     if (!bastion.canPlace(sender) || !bastion.canPlace(requestingPlayer)) {
-                        sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport to a hostile bastion!", NamedTextColor.RED));
-                        requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but they're in a hostile bastion!", NamedTextColor.RED));
+                        CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " can't teleport into a hostile bastion");
+                        CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but they're in a hostile bastion");
                         OneTimeTeleport.this.senderToReceiver.put(requestingPlayer.getUniqueId(), sender.getUniqueId()); // Be kind and put the request back!
                         return;
                     }
@@ -277,15 +276,15 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
 
             for (final Block block : getNearbyBlocks(sender.getLocation().getBlock(), 8)) {
                 if (config().getUnsafeMaterials().contains(block.getType())) {
-                    sender.sendMessage(Component.text(requestingPlayer.getName() + " could not one-time teleport with unsafe blocks nearby!", NamedTextColor.RED));
-                    requestingPlayer.sendMessage(Component.text(sender.getName() + " accepted your request, but there's unsafe blocks nearby!", NamedTextColor.RED));
+                    CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " can't teleport here, there are unsafe blocks nearby");
+                    CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " accepted, but there are unsafe blocks near them");
                     OneTimeTeleport.this.senderToReceiver.put(requestingPlayer.getUniqueId(), sender.getUniqueId()); // Be kind and put the request back!
                     return;
                 }
             }
 
             // Remove any blacklisted materials from the player's inventory
-            requestingPlayer.sendMessage(Component.text("You may find some items missing after teleporting, these were removed as they are blacklisted to be teleported with!", NamedTextColor.AQUA));
+            CivUI.warn(requestingPlayer, "Items that can't be teleported were removed from your inventory");
             final Inventory requestingPlayerInventory = requestingPlayer.getInventory();
             config().getMaterialBlacklist().forEach(requestingPlayerInventory::remove);
 
@@ -293,8 +292,8 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
 
             OneTimeTeleport.this.logger.info("Player[" + requestingPlayer.getName() + "] has OTT-teleported from [" + WorldUtils.getBlockLocation(requestingPlayer.getLocation()) + "] to [" + sender.getName() + "] at [" + WorldUtils.getBlockLocation(sender.getLocation()) + "]");
             requestingPlayer.teleport(sender.getLocation());
-            sender.sendMessage(Component.text(requestingPlayer.getName() + " has been teleported to you!", NamedTextColor.GREEN));
-            requestingPlayer.sendMessage(Component.text("You have been teleported to " + sender.getName() + "!", NamedTextColor.GREEN));
+            CivUI.success(sender, CivText.subject(requestingPlayer.getName()), " teleported to you");
+            CivUI.success(requestingPlayer, "Teleported to ", CivText.subject(sender.getName()));
         }
 
         @Subcommand("reject|refuse|deny|no")
@@ -306,7 +305,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             @Flags("other") final Player requestingPlayer
         ) {
             if (requestingPlayer == sender) {
-                sender.sendMessage(Component.text("You cannot reject an OTT from yourself!", NamedTextColor.RED));
+                CivUI.error(sender, "You can't reject your own request");
                 return;
             }
 
@@ -314,11 +313,11 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
                 requestingPlayer.getUniqueId(),
                 sender.getUniqueId()
             )) {
-                sender.sendMessage(Component.text("There are no active requests from that player!", NamedTextColor.RED));
+                CivUI.error(sender, CivText.subject(requestingPlayer.getName()), " hasn't asked to teleport to you");
                 return;
             }
-            sender.sendMessage(Component.text("You have rejected " + requestingPlayer.getName() + "'s OTT request!", NamedTextColor.GREEN));
-            requestingPlayer.sendMessage(Component.text(sender.getName() + " has denied your OTT request!", NamedTextColor.RED));
+            CivUI.success(sender, "Rejected ", CivText.subject(requestingPlayer.getName()), "'s teleport request");
+            CivUI.error(requestingPlayer, CivText.subject(sender.getName()), " rejected your teleport request");
         }
 
         @Subcommand("grant|bestow|give")
@@ -339,7 +338,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             sender.sendMessage(Component.text("You have granted " + receivingPlayer.getName() + " an OTT!", NamedTextColor.GREEN));
             final Player onlineReceivingPlayer = receivingPlayer.getPlayer();
             if (onlineReceivingPlayer != null) {
-                onlineReceivingPlayer.sendMessage(Component.text("You have been granted an OTT!", NamedTextColor.GREEN));
+                CivUI.success(onlineReceivingPlayer, "You've been given a one-time teleport. Use ", CivText.value("/ott to <player>"));
             }
             OneTimeTeleport.this.logger.info(sender.getName() + " has granted " + receivingPlayer.getName() + " an OTT!");
         }
@@ -363,7 +362,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             if (Objects.equals(whoQuit.getUniqueId(), targetUUID)) {
                 final Player requesterPlayer = Bukkit.getPlayer(requesterUUID);
                 if (requesterPlayer != null) { // Just in case
-                    requesterPlayer.sendMessage(Component.text("Your OTT request to " + whoQuit.getName() + " has been voided."));
+                    CivUI.info(requesterPlayer, "Your teleport request to ", CivText.subject(whoQuit.getName()), " expired because they logged off");
                 }
                 return true;
             }
@@ -372,7 +371,7 @@ public final class OneTimeTeleport extends SimpleHack<OneTimeTeleportConfig> imp
             if (Objects.equals(whoQuit.getUniqueId(), requesterUUID)) {
                 final Player targetPlayer = Bukkit.getPlayer(targetUUID);
                 if (targetPlayer != null) { // Just in case
-                    targetPlayer.sendMessage(Component.text(whoQuit.getName() + "'s OTT request has been voided."));
+                    CivUI.info(targetPlayer, CivText.subject(whoQuit.getName()), "'s teleport request expired because they logged off");
                 }
             }
             return false;

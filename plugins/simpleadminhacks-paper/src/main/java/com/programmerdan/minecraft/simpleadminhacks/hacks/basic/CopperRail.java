@@ -1,5 +1,9 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import net.kyori.adventure.text.format.TextColor;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.destroystokyo.paper.MaterialTags;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
@@ -196,7 +200,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
         if (raw == null || raw.isBlank()) {
             return "";
         }
-        Component parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(raw.replace('�', '&'));
+        Component parsed = LegacyComponentSerializer.legacyAmpersand().deserialize(raw.replace('§', '&'));
         return PlainTextComponentSerializer.plainText().serialize(parsed).toLowerCase(Locale.ROOT).trim();
     }
 
@@ -223,7 +227,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     private ItemStack createNitrousItem(int amount) {
         ItemStack item = new ItemStack(nitrousMaterial, amount);
         ItemMeta meta = item.getItemMeta();
-        Component loreLine = LegacyComponentSerializer.legacyAmpersand().deserialize(nitrousLore.replace('�', '&'))
+        Component loreLine = LegacyComponentSerializer.legacyAmpersand().deserialize(nitrousLore.replace('§', '&'))
             .decoration(TextDecoration.ITALIC, false);
         meta.lore(List.of(loreLine));
         item.setItemMeta(meta);
@@ -244,7 +248,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
 
     private void triggerNitrous(PoweredMinecart cart, Player player) {
         if (cart.getFuel() <= 0) {
-            player.sendActionBar(Component.text("Grinder cart is out of amethyst.", NamedTextColor.RED));
+            SAHText.deny(player, "Grinder cart is out of amethyst");
             return;
         }
         grinderBoostUntil.put(cart.getUniqueId(), grinderTicks + nitrousDurationTicks);
@@ -254,7 +258,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
             player.getInventory().setItemInMainHand(hand.getAmount() > 0 ? hand : null);
         }
         cart.getWorld().playSound(cart.getLocation(), Sound.ITEM_FIRECHARGE_USE, SoundCategory.PLAYERS, 0.8f, 1.4f);
-        player.sendActionBar(Component.text("Nitrous!", NamedTextColor.AQUA));
+        SAHText.bar(player, Kind.SUCCESS, "Nitrous!");
     }
 
     private boolean isFuel(ItemStack item) {
@@ -264,7 +268,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     private void refuelGrinder(PoweredMinecart cart, Player player) {
         int current = cart.getFuel();
         if (current >= grinderMaxFuel) {
-            player.sendActionBar(Component.text("Grinder cart fuel is full.", NamedTextColor.GRAY));
+            SAHText.bar(player, Kind.INFO, "Grinder cart fuel is full");
             return;
         }
         cart.setFuel(Math.min(grinderMaxFuel, current + grinderFuelPerItem));
@@ -280,11 +284,11 @@ public class CopperRail extends BasicHack implements CommandExecutor {
     private Component grinderFuelBar(int fuel) {
         int percent = Math.max(0, Math.min(100, (int) Math.round(100.0 * fuel / Math.max(1, grinderMaxFuel))));
         int filled = (int) Math.round(percent / 10.0);
-        NamedTextColor color = percent <= 15 ? NamedTextColor.RED
-            : percent <= 40 ? NamedTextColor.GOLD
-            : NamedTextColor.GREEN;
+        TextColor color = percent <= 15 ? CivText.ERROR
+            : percent <= 40 ? CivText.WARN
+            : CivText.SUCCESS;
         String bar = "▊".repeat(filled) + "░".repeat(10 - filled);
-        return Component.text("Fuel ", NamedTextColor.GRAY)
+        return Component.text("Fuel ", CivText.INFO)
             .append(Component.text(bar + " " + percent + "%", color));
     }
 
@@ -303,7 +307,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
             if (!powered) {
                 this.grinderBoostUntil.remove(id);
                 if (this.grinderActive.remove(id)) {
-                    player.sendActionBar(Component.text("Grinder cart is out of amethyst.", NamedTextColor.RED));
+                    SAHText.deny(player, "Grinder cart is out of amethyst");
                 } else if (showHud) {
                     player.sendActionBar(grinderFuelBar(0));
                 }
@@ -490,7 +494,7 @@ public class CopperRail extends BasicHack implements CommandExecutor {
         }
 
         if (grinder && (held.getType() == Material.COAL || held.getType() == Material.CHARCOAL)) {
-            player.sendActionBar(Component.text("Only amethyst fuels a grinder cart.", NamedTextColor.RED));
+            SAHText.deny(player, "Only amethyst fuels a grinder cart");
             event.setCancelled(true);
             return;
         }

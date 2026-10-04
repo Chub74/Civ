@@ -1,12 +1,12 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.destroystokyo.paper.event.player.PlayerLaunchProjectileEvent;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Player;
@@ -60,7 +60,7 @@ public class AntiStatisChamber extends BasicHack {
             //We remove the pearl here because cancelling the event doesn't prevent the pearl from actually landing
             pearl.remove();
             if (pearl.getShooter() instanceof Player) {
-                ((Player) pearl.getShooter()).sendMessage(Component.text("Your pearl failed to land for being in flight for more than " + pearlLifetime).color(NamedTextColor.RED));
+                CivUI.error((Player) pearl.getShooter(), "Your pearl was in flight for over ", CivText.value(pearlLifetime), " and didn't land");
             }
             event.setCancelled(true);
         }

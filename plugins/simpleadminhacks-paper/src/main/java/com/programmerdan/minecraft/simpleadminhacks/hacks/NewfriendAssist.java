@@ -7,7 +7,10 @@ import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.Broadcas
 import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Level;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
+import net.kyori.adventure.text.minimessage.tag.resolver.Placeholder;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -22,6 +25,9 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * A simple Newfriend tracker and assist module. Keeps track of newfriends so far.
@@ -95,27 +101,7 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
         newfriendSessionTime.put(newUUID, new SessionTime(System.currentTimeMillis()));
 
         if (!config.getAnnounceBroadcast().isEmpty()) {
-            // Prepare message
-            String cleanMessage = cleanMessage(join);
-
-            // Overlap is possible. Some people might get double-notified
-            for (BroadcastLevel level : config.getAnnounceBroadcast()) {
-                plugin().debug("  Broadcast to {0}", level);
-                switch (level) {
-                    case OP:
-                        plugin().serverOperatorBroadcast(cleanMessage);
-                        break;
-                    case PERM:
-                        plugin().serverBroadcast(cleanMessage);
-                        break;
-                    case CONSOLE:
-                        plugin().serverSendConsoleMessage(cleanMessage);
-                        break;
-                    case ALL:
-                        plugin().serverOnlineBroadcast(cleanMessage);
-                        break;
-                }
-            }
+            announceNewfriend(newfriend);
         }
 
         if (config.isIntroKitEnabled()) {
@@ -161,11 +147,31 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
         }
     }
 
-    private String cleanMessage(PlayerJoinEvent event) {
-        return ChatColor.translateAlternateColorCodes('&',
-            config.getAnnounceMessage()
-                .replaceAll("%Player%", event.getPlayer().getDisplayName())
-        );
+    /**
+     * The player's name is resolved as a MiniMessage placeholder component, not a string replacement - a
+     * display name containing markup can't inject formatting into the announcement this way.
+     */
+    private void announceNewfriend(Player newfriend) {
+        Component body = MiniMessage.miniMessage().deserialize(config.getAnnounceMessage(),
+            Placeholder.component("player", CivText.subject(newfriend.getName())));
+        Component message = CivUI.render(Kind.INFO, true, false, body);
+
+        // Overlap is possible. Some people might get double-notified
+        for (BroadcastLevel level : config.getAnnounceBroadcast()) {
+            plugin().debug("  Broadcast to {0}", level);
+            switch (level) {
+                case OP -> {
+                    for (Player op : Bukkit.getOnlinePlayers()) {
+                        if (op.isOp()) {
+                            op.sendMessage(message);
+                        }
+                    }
+                }
+                case PERM -> Bukkit.getServer().broadcast(message, plugin().config().getBroadcastPermission());
+                case CONSOLE -> Bukkit.getConsoleSender().sendMessage(message);
+                case ALL -> Bukkit.getServer().broadcast(message);
+            }
+        }
     }
 
     @Override
@@ -244,7 +250,7 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
                     sb.append("\n    ").append(item);
                 }
             } else {
-                sb.append("\n    ").append(ChatColor.RED).append("-- in error --");
+                sb.append("\n    -- in error --");
             }
         } else {
             sb.append("\n  Introkit gifting is disabled.");
@@ -256,7 +262,7 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!config.isIntroKitEnabled()) {
-            sender.sendMessage(ChatColor.RED + "Introkit gifting is disabled.");
+            CivUI.error(sender, "Introkit gifting is disabled");
             return true;
         }
 
@@ -274,10 +280,10 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
         }
 
         if (p == null) {
-            sender.sendMessage(ChatColor.RED + "Unable to find " + args[0]);
+            CivUI.error(sender, "Unable to find ", CivText.subject(args[0]));
         } else {
             plugin().log(Level.INFO, "Sent introkit to {0}", args[0]);
-            p.sendMessage(ChatColor.GREEN + "You've been given an introductory kit!");
+            CivUI.success(p, "You've been given an introductory kit!");
             Inventory inv = p.getInventory();
             inv.addItem(config.getIntroKit());
         }

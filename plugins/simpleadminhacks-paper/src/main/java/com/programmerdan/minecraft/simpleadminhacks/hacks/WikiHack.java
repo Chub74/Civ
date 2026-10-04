@@ -1,13 +1,13 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.configs.WikiHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.SimpleHack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
-import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -32,17 +32,11 @@ public class WikiHack extends SimpleHack<WikiHackConfig> implements CommandExecu
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        Component link = Component.text(config.getLinkText())
-            .color(NamedTextColor.AQUA)
-            .decorate(TextDecoration.UNDERLINED)
+        Component link = Component.text(config.getLinkText(), CivText.VALUE)
             .clickEvent(ClickEvent.openUrl(config.getWikiUrl()))
-            .hoverEvent(HoverEvent.showText(
-                Component.text(config.getWikiUrl()).color(NamedTextColor.GRAY)
-            ));
+            .hoverEvent(HoverEvent.showText(CivText.info(config.getWikiUrl())));
 
-        sender.sendMessage(
-            Component.text("Wiki: ").color(NamedTextColor.GOLD).append(link)
-        );
+        CivUI.info(sender, "Wiki: ", link);
         return true;
     }
 }

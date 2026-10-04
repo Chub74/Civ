@@ -4,6 +4,7 @@ import com.programmerdan.minecraft.simpleadminhacks.framework.HackManager;
 import com.programmerdan.minecraft.simpleadminhacks.framework.commands.CommandRegistrar;
 import java.util.logging.Level;
 import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.BuildLimit;
+import com.programmerdan.minecraft.simpleadminhacks.listeners.CushionListener;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandExecutor;
@@ -37,6 +38,7 @@ public class SimpleAdminHacks extends ACivMod {
     public void onEnable() {
         super.onEnable();
         this.registerSerializations();
+        registerListener(new CushionListener());
         if (!this.config.parse()) {
             setEnabled(false);
             return;
@@ -49,7 +51,9 @@ public class SimpleAdminHacks extends ACivMod {
     @Override
     public void onDisable() {
         this.manager.disableAllHacks();
-        this.commands.reset();
+        if (this.commands != null) {
+            this.commands.reset();
+        }
         this.config.reset();
         super.onDisable();
     }

@@ -51,7 +51,7 @@ public class NewfriendAssistConfig extends SimpleHackConfig {
 
     @Override
     protected void wireup(ConfigurationSection config) {
-        this.announceMessage = config.getString("announce", "&f%Player% is brand new!");
+        this.announceMessage = config.getString("announce", "<player> is brand new!");
 
         List<String> broadcastTo = config.getStringList("broadcast");
         if (this.announceBroadcast == null) {

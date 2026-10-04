@@ -1,12 +1,11 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.configs.buildlimit.BuildLimitsConfig;
 import com.programmerdan.minecraft.simpleadminhacks.configs.buildlimit.LimitType;
 import com.programmerdan.minecraft.simpleadminhacks.framework.SimpleHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.BuildLimit;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.event.EventHandler;
@@ -41,7 +40,7 @@ public class BuildLimits extends SimpleHack<BuildLimitsConfig> implements Listen
 	public void onBlockPlaceEvent(BlockPlaceEvent e) {
 		if(!withinLimits(e.getBlock().getLocation())) {
 			e.setCancelled(true);
-            e.getPlayer().sendMessage(Component.text("You cannot place blocks here", NamedTextColor.RED));
+            SAHText.deny(e.getPlayer(), "You can't place blocks here");
 		}
 	}
 

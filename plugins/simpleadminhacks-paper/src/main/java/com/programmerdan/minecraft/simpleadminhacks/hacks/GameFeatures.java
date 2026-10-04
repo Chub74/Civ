@@ -1,5 +1,8 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.configs.GameFeaturesConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.SimpleHack;
@@ -553,8 +556,8 @@ public class GameFeatures extends SimpleHack<GameFeaturesConfig> implements List
         Location loc = dead.getLocation();
         if (dead.getKiller() != null) {
             killer = dead.getKiller().getDisplayName();
-            dead.sendMessage(ChatColor.RED + String.format("You were slain by player %s at [%s %d, %d, %d]",
-                killer, loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+            CivUI.info(dead, "You were killed by ", dead.getKiller().displayName().colorIfAbsent(CivText.SUBJECT), " at ",
+                CivText.value(String.format("[%s %d, %d, %d]", loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())));
             return;
         }
         try {
@@ -562,8 +565,8 @@ public class GameFeatures extends SimpleHack<GameFeaturesConfig> implements List
         } catch (NullPointerException e) {
             return;
         }
-        dead.sendMessage(ChatColor.RED + String.format("You were slain by %s at [%s %d, %d, %d]",
-            killer, loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+        CivUI.info(dead, "You were killed by ", CivText.subject(killer), " at ",
+            CivText.value(String.format("[%s %d, %d, %d]", loc.getWorld().getName(), loc.getBlockX(), loc.getBlockY(), loc.getBlockZ())));
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
@@ -591,7 +594,7 @@ public class GameFeatures extends SimpleHack<GameFeaturesConfig> implements List
                 Bukkit.getScheduler().runTask(this.plugin, () -> {
                     for (Player player : InventoryUtils.getViewingPlayers(smithingTable)) {
                         player.updateInventory();
-                        player.sendMessage(ChatColor.RED + "Vanilla netherite crafting is disabled!");
+                        SAHText.deny(player, "Vanilla netherite crafting is disabled");
                     }
                 });
                 break;

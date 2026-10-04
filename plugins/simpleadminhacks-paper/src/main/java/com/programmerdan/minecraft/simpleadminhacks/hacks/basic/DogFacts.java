@@ -4,22 +4,35 @@ import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.autoload.AutoLoad;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.ObjectComponent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import vg.civcraft.mc.civmodcore.config.ConfigHelper;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSettingAPI;
 import vg.civcraft.mc.civmodcore.players.settings.gui.MenuSection;
 import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 public class DogFacts extends BasicHack {
+
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     @AutoLoad
     private List<String> announcements;
     @AutoLoad
     private String intervalTime;
     private BooleanSetting disableAnnouncements;
+    private final List<Component> messages = new ArrayList<>();
+    private BukkitTask task;
     private int counter = 0;
 
     public DogFacts(SimpleAdminHacks plugin, BasicHackConfig config) {
@@ -29,27 +42,63 @@ public class DogFacts extends BasicHack {
     @Override
     public void onEnable() {
         super.onEnable();
-        startRunnable(announcements);
+        parseAnnouncements();
+        startRunnable();
         initSettings();
     }
 
-    public void startRunnable(List<String> announcements) {
+    @Override
+    public void onDisable() {
+        if (task != null) {
+            task.cancel();
+            task = null;
+        }
+        super.onDisable();
+    }
+
+    /** Parsed once up front, so a broken line is reported at startup rather than every broadcast. */
+    private void parseAnnouncements() {
+        messages.clear();
+        for (int i = 0; i < announcements.size(); i++) {
+            try {
+                Component body = untintSprites(MM.deserialize(announcements.get(i)));
+                messages.add(CivUI.render(Kind.INFO, true, false, body));
+            } catch (RuntimeException e) {
+                plugin.warning("Skipping DogFact #" + i + ", it isn't valid MiniMessage: " + e.getMessage());
+            }
+        }
+    }
+
+    /** The client multiplies a sprite by its text colour, so one left uncoloured would take the grey body colour. */
+    private static Component untintSprites(Component component) {
+        List<Component> children = new ArrayList<>(component.children().size());
+        for (Component child : component.children()) {
+            children.add(untintSprites(child));
+        }
+        Component result = component.children(children);
+        if (result instanceof ObjectComponent && result.color() == null) {
+            result = result.color(NamedTextColor.WHITE);
+        }
+        return result;
+    }
+
+    private void startRunnable() {
         long interval = ConfigHelper.parseTimeAsTicks(intervalTime);
-        int tickOffset = (int) (Math.random() * (interval));
-        Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-            if (announcements.isEmpty()) {
+        long tickOffset = (long) (Math.random() * interval);
+        task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            if (messages.isEmpty()) {
                 return;
             }
-            if (counter >= announcements.size()) {
+            if (counter >= messages.size()) {
                 counter = 0;
             }
-            String message = announcements.get(counter);
+            Component message = messages.get(counter);
             plugin.info("Broadcasting DogFact #" + counter);
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (getDisableAnnouncements(player.getUniqueId())) {
                     continue;
                 }
-                Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "tellraw " + player.getDisplayName() + " " + message);
+                player.sendMessage(Bedrock.adapt(player, message));
             }
             counter++;
         }, tickOffset, interval);

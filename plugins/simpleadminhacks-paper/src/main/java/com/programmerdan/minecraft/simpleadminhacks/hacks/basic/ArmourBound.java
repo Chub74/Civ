@@ -1,5 +1,6 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.destroystokyo.paper.event.player.PlayerArmorChangeEvent;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
@@ -78,7 +79,7 @@ public class ArmourBound extends BasicHack {
             ItemStack toDrop = newItem.clone();
             newItem.setAmount(0);
             player.getWorld().dropItemNaturally(player.getLocation(), toDrop);
-            player.sendMessage(Component.text("This armor is not bound to you!").color(NamedTextColor.RED));
+            CivUI.error(player, "This armor is bound to someone else");
         }
     }
 

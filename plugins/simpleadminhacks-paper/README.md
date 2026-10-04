@@ -114,6 +114,12 @@ but for now, that's it. Please, feel free to improve on this.
 An integration into CombatTagPlus, this announces to in-game operators when combat is under way. Invaluable when you
 like your admins to monitor in-game fights.
 
+### CushionFeatures
+
+Closes the PvP holes 26.3 cushions open. Combat tagged players can't sit down and are stood up when tagged (a seated
+player can't be knocked back), sitting has a cooldown so cushion chaining can't outrun horses, and a dismount that
+would put a player somewhere they couldn't see from where they sat down puts them back there instead.
+
 ### Experimental
 
 This is a catch-all for anything micro that has no other home. Useful features like `/serialize` command live here too,

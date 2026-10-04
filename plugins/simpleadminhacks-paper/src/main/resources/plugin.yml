@@ -16,7 +16,7 @@ commands:
       /<command> <hackname> get|set <config> [value]
     permission: simpleadmin.hacks
   chunklimits:
-    description: Display block chunk limit in chat
+    description: Opens a menu showing how much of each block limit your chunk has used
     usage: /<command>
   copyprotect:
     description: Protect a map from copying.

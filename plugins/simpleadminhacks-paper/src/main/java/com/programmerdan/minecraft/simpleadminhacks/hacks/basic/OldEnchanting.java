@@ -1,5 +1,7 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketContainer;
@@ -16,7 +18,6 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -628,10 +629,10 @@ public final class OldEnchanting extends BasicHack {
             player.setLevel(0);
             player.setExp(0);
             player.giveExp(endXP);
-            player.sendMessage(ChatColor.GREEN + "Created " + bottleCount + " XP bottles.");
+            CivUI.success(player, "Made ", CivText.value(String.valueOf(bottleCount)), " XP bottles");
         }
         if (noSpace) {
-            player.sendMessage(ChatColor.RED + "Not enough space in inventory for all XP bottles.");
+            CivUI.warn(player, "Not enough inventory space for all the XP bottles");
         }
     }
 

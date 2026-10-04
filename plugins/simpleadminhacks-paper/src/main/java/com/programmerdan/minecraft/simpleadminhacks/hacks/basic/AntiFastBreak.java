@@ -1,10 +1,9 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.PacketAdapter;
-import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.events.PacketEvent;
-import com.comphenix.protocol.wrappers.BlockPosition;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
@@ -14,9 +13,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.world.level.block.state.BlockState;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -74,11 +74,14 @@ public final class AntiFastBreak extends BasicHack {
         this.packets.addAdapter(new PacketAdapter(plugin(), PacketType.Play.Client.BLOCK_DIG) {
             @Override
             public void onPacketReceiving(final PacketEvent event) {
-                final PacketContainer packet = event.getPacket();
+                // Read the NMS packet directly: ProtocolLib's PlayerDigType can't map newer actions (e.g. CHANGE_DESTROY_DIRECTION)
+                if (!(event.getPacket().getHandle() instanceof ServerboundPlayerActionPacket packet)) {
+                    return;
+                }
                 final Player player = event.getPlayer();
-                final BlockPosition position = packet.getBlockPositionModifier().read(0);
-                final Location location = position.toLocation(player.getWorld());
-                switch (packet.getPlayerDigTypes().read(0)) {
+                final BlockPos position = packet.getPos();
+                final Location location = new Location(player.getWorld(), position.getX(), position.getY(), position.getZ());
+                switch (packet.getAction()) {
                     case START_DESTROY_BLOCK:
                         handleStartDigging(player, location);
                         return;
@@ -110,7 +113,7 @@ public final class AntiFastBreak extends BasicHack {
         if (!this.punishCooldown.onCoolDown(player.getUniqueId())) {
             return;
         }
-        player.sendMessage(ChatColor.RED + "Denying break due to abnormal break speed");
+        SAHText.deny(player, "You're breaking blocks too fast");
         plugin().debug("Denying block break for " + player.getName() + " due cooldown for another "
             + TextUtil.formatDuration(this.punishCooldown.getRemainingCoolDown(player.getUniqueId())));
         event.setCancelled(true);
@@ -166,7 +169,7 @@ public final class AntiFastBreak extends BasicHack {
                 if (this.loggerLimiter.pullToken(player.getUniqueId()) || plugin().isDebugEnabled()) {
                     plugin().warning(player.getName() + " is possibly using civ break, fast break detected");
                 }
-                player.sendMessage(ChatColor.RED + "You are breaking blocks too fast");
+                SAHText.deny(player, "You're breaking blocks too fast");
             });
         }
     }

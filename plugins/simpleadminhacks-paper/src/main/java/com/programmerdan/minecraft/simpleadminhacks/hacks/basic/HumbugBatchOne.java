@@ -1,5 +1,6 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks.basic;
 
+import com.programmerdan.minecraft.simpleadminhacks.framework.utilities.SAHText;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHack;
 import com.programmerdan.minecraft.simpleadminhacks.framework.BasicHackConfig;
@@ -9,7 +10,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -124,7 +124,7 @@ public class HumbugBatchOne extends BasicHack {
         }
         if (event.getItem().getType() == Material.ENCHANTED_GOLDEN_APPLE) {
             event.setCancelled(true);
-            event.getPlayer().sendMessage(ChatColor.RED + "You are not allowed to eat Golden Apples.");
+            SAHText.deny(event.getPlayer(), "You can't eat enchanted golden apples");
         }
     }
 
@@ -154,7 +154,7 @@ public class HumbugBatchOne extends BasicHack {
 
         if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem().getType() == Material.END_CRYSTAL) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.RED + "Sorry, placing end crystals is disabled in this world!");
+            SAHText.deny(e.getPlayer(), "You can't place end crystals in this world");
         }
     }
 
@@ -165,7 +165,7 @@ public class HumbugBatchOne extends BasicHack {
         }
         if (e.getCause() == TeleportCause.END_GATEWAY) {
             e.setCancelled(true);
-            e.getPlayer().sendMessage(ChatColor.RED + "Sorry, these are disabled");
+            SAHText.deny(e.getPlayer(), "End gateways are disabled");
         }
     }
 
@@ -353,7 +353,7 @@ public class HumbugBatchOne extends BasicHack {
         }
         if (pie.getItem() != null && pie.getItem().getType() == Material.ENDER_EYE) {
             pie.setCancelled(true);
-            pie.getPlayer().sendMessage(ChatColor.RED + "Throwing Eyes of Ender is disabled.");
+            SAHText.deny(pie.getPlayer(), "You can't throw eyes of ender");
         }
     }
 

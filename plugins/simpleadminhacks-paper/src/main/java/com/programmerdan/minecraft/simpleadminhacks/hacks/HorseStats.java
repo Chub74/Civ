@@ -1,9 +1,10 @@
 package com.programmerdan.minecraft.simpleadminhacks.hacks;
 
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 import com.programmerdan.minecraft.simpleadminhacks.SimpleAdminHacks;
 import com.programmerdan.minecraft.simpleadminhacks.configs.HorseStatsConfig;
 import com.programmerdan.minecraft.simpleadminhacks.framework.SimpleHack;
-import org.bukkit.ChatColor;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.configuration.ConfigurationSection;
@@ -45,20 +46,18 @@ public class HorseStats extends SimpleHack<HorseStatsConfig> implements Listener
             AbstractHorse horse = (AbstractHorse) entity;
             AttributeInstance attrHealth = horse.getAttribute(Attribute.MAX_HEALTH);
             AttributeInstance attrSpeed = horse.getAttribute(Attribute.MOVEMENT_SPEED);
-            event.getPlayer().sendMessage(String.format("%sHealth = %f, Speed = %fm/s, Jump height = %f blocks",
-                ChatColor.YELLOW,
-                attrHealth.getValue(),
-                attrSpeed.getValue() * INTERNAL_TO_METRES_PER_SECOND,
-                jumpHeightInBlocks(horse.getAttribute(Attribute.JUMP_STRENGTH).getValue())));
+            CivUI.info(event.getPlayer(),
+                "Health ", CivText.value(String.format("%.1f", attrHealth.getValue())),
+                ", speed ", CivText.value(String.format("%.2f m/s", attrSpeed.getValue() * INTERNAL_TO_METRES_PER_SECOND)),
+                ", jump ", CivText.value(String.format("%.2f blocks", jumpHeightInBlocks(horse.getAttribute(Attribute.JUMP_STRENGTH).getValue()))));
             event.setCancelled(true);
         } else if (entity instanceof Strider) {
             Strider strider = (Strider) entity;
             AttributeInstance attrHealth = strider.getAttribute(Attribute.MAX_HEALTH);
             AttributeInstance attrSpeed = strider.getAttribute(Attribute.MOVEMENT_SPEED);
-            event.getPlayer().sendMessage(String.format("%sHealth = %f, Speed = %fm/s",
-                ChatColor.YELLOW,
-                attrHealth.getValue(),
-                attrSpeed.getValue() * INTERNAL_TO_METRES_PER_SECOND));
+            CivUI.info(event.getPlayer(),
+                "Health ", CivText.value(String.format("%.1f", attrHealth.getValue())),
+                ", speed ", CivText.value(String.format("%.2f m/s", attrSpeed.getValue() * INTERNAL_TO_METRES_PER_SECOND)));
             event.setCancelled(true);
         } else {
             return;
