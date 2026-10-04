@@ -37,6 +37,7 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
     private static final byte MAX_LIGHT = 15;
     private static final long INFINITE_TIME = TimeUnit.DAYS.toMillis(365L * 1000L);
     private static final DecimalFormat decimalFormat = new DecimalFormat("0.00");
+    private static final Component INFO_SEPARATOR = Component.text("  |  ", CivText.MUTED);
 
     private ItemStack item;
     private short id;
@@ -110,13 +111,14 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
                 .append(CivText.value(decimalFormat.format(totalMultiplier * 100) + "%"))
                 .append(CivText.info(" chance to grow here"));
         }
+        // One line, since this shows on the action bar
         if (soilMultiplier != 1.0) {
-            info.append(Component.newline())
+            info.append(INFO_SEPARATOR)
                 .append(CivText.info("Soil multiplier: "))
                 .append(CivText.value(decimalFormat.format(soilMultiplier)));
         }
         if (lightMultiplier != 1.0) {
-            info.append(Component.newline())
+            info.append(INFO_SEPARATOR)
                 .append(CivText.info("Light multiplier: "))
                 .append(CivText.value(decimalFormat.format(lightMultiplier)));
         }

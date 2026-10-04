@@ -38,7 +38,9 @@ import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.Channel;
 import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 public class PlayerListener implements Listener {
@@ -244,7 +246,12 @@ public class PlayerListener implements Listener {
         if (plantConfig == null) {
             return;
         }
-        CivUI.info(event.getPlayer(), plantConfig.getInfo(event.getClickedBlock().getRelative(event.getBlockFace())));
+        // Fires on every hit while holding a plant item (building with carved pumpkins), so not in chat
+        CivUI.notice(Kind.INFO, plantConfig.getInfo(event.getClickedBlock().getRelative(event.getBlockFace())))
+            .from(RealisticBiomes.getInstance())
+            .to(event.getPlayer())
+            .on(Channel.ACTION_BAR)
+            .send();
     }
 
     @EventHandler(priority = EventPriority.NORMAL, ignoreCancelled = true)
