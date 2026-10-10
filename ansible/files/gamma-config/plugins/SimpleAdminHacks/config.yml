@@ -115,27 +115,27 @@ hacks:
     enabled: true
     intervalTime: 15m
     announcements:
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Join the Official Discord at https://discord.gg/zp63BaX3Uf","color":"green","clickEvent":{"action":"open_url","value":"https://discord.gg/zp63BaX3Uf"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Visit the community wiki at civwiki.org","color":"green","clickEvent":{"action":"open_url","value":"https://civwiki.org/wiki/Main_Page"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Visit our wiki at wiki.civmc.net","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Check out the player made map at civmc-map.github.io","color":"green","clickEvent":{"action":"open_url","value":"https://civmc-map.github.io/"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Type /global to talk in global chat","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Type /vote to vote for CivMC and receive essence!","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Consider donating to the server at patreon.com/civ_mc! And get some unique perks!","color":"blue","clickEvent":{"action":"open_url","value":"https://www.patreon.com/civ_mc"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"All ores except coal and copper can spawn in big veins. Click for more info","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/plugins/unique/hiddenore"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"All ores except diamond spawn randomly as you dig. Click for more info","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/plugins/unique/hiddenore"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"The command /config will let you adjust various settings","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Type /rb to see the crop information for the biome you are in","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Type /chunklimits to see the restrictions on how many blocks can be placed in a chunk","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Type /emf toggle to turn off/on fishing of decorative heads and custom loot","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"If you type /fm you can see all the types of factories you can make","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Please review the server rules at reddit.com/r/civmc/wiki/index","color":"green","clickEvent":{"action":"open_url","value":"https://www.reddit.com/r/civmc/wiki/index/"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"The use of VPNs or multiple accounts is not allowed, Logging in from the same place as a friend will result in an automatic ban. Accidental use of either may be resolved via a ticket on the official CivMC Discord","color":"green","clickEvent":{"action":"open_url","value":"https://discord.gg/zp63BaX3Uf"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Check out the player run newsletter at https://civwiki.news/ to see whats been going on!","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Check out the starter guide at wiki.civmc.net/pages/getting-started","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/getting-started"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Make sure to reinforce your buildings/chests to protect them from others. Click for more info","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/plugins/essential/citadel"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Jukeboxes and Noteblocks act as CCTV, when reinforced they record player actions. Click for more info","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/plugins/unique/jukealert"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Killing someone with an ender pearl in your hotbar will lock them in the nether! Player essence is used to keep the players trapped. Click for more info","color":"green","clickEvent":{"action":"open_url","value":"https://wiki.civmc.net/pages/plugins/essential/exilepearl"}}]'
+      - "Join the official Discord: <click:open_url:'https://discord.gg/zp63BaX3Uf'><hover:show_text:'Click to open https://discord.gg/zp63BaX3Uf'><aqua>discord.gg/zp63BaX3Uf ↗</aqua></hover></click>"
+      - "<sprite:items:item/book> Visit the community wiki at <click:open_url:'https://civwiki.org/wiki/Main_Page'><hover:show_text:'Click to open https://civwiki.org/wiki/Main_Page'><aqua>civwiki.org ↗</aqua></hover></click>"
+      - "<sprite:items:item/book> Visit our wiki at <click:open_url:'https://wiki.civmc.net/'><hover:show_text:'Click to open https://wiki.civmc.net/'><aqua>wiki.civmc.net ↗</aqua></hover></click>"
+      - "<sprite:items:item/map> Check out the player made map at <click:open_url:'https://civmc-map.github.io/'><hover:show_text:'Click to open https://civmc-map.github.io/'><aqua>civmc-map.github.io ↗</aqua></hover></click>"
+      - "<sprite:items:item/writable_book> Type <click:suggest_command:'/global'><hover:show_text:'Click to type /global'><white>/global</white></hover></click> to talk in global chat"
+      - "<sprite:items:item/emerald> Type <click:suggest_command:'/vote'><hover:show_text:'Click to type /vote'><white>/vote</white></hover></click> to vote for CivMC and receive essence!"
+      - "<sprite:items:item/gold_ingot> Consider donating at <click:open_url:'https://www.patreon.com/civ_mc'><hover:show_text:'Click to open https://www.patreon.com/civ_mc'><aqua>patreon.com/civ_mc ↗</aqua></hover></click> and get some unique perks!"
+      - "<sprite:block/diamond_ore> All ores except coal and copper can spawn in big veins - <click:open_url:'https://wiki.civmc.net/pages/plugins/unique/hiddenore'><hover:show_text:'Click to open https://wiki.civmc.net/pages/plugins/unique/hiddenore'><aqua>more info ↗</aqua></hover></click>"
+      - "<sprite:block/iron_ore> All ores except diamond spawn randomly as you dig - <click:open_url:'https://wiki.civmc.net/pages/plugins/unique/hiddenore'><hover:show_text:'Click to open https://wiki.civmc.net/pages/plugins/unique/hiddenore'><aqua>more info ↗</aqua></hover></click>"
+      - "<sprite:items:item/comparator> The command <click:suggest_command:'/config'><hover:show_text:'Click to type /config'><white>/config</white></hover></click> lets you adjust various settings"
+      - "<sprite:items:item/wheat> Type <click:suggest_command:'/rb'><hover:show_text:'Click to type /rb'><white>/rb</white></hover></click> to see the crop information for the biome you're in"
+      - "<sprite:block/bricks> Type <click:suggest_command:'/chunklimits'><hover:show_text:'Click to type /chunklimits'><white>/chunklimits</white></hover></click> to see how many blocks can be placed in a chunk"
+      - "<sprite:items:item/fishing_rod> Type <click:suggest_command:'/emf toggle'><hover:show_text:'Click to type /emf toggle'><white>/emf toggle</white></hover></click> to turn fishing of decorative heads and custom loot on or off"
+      - "<sprite:block/furnace_front> Type <click:suggest_command:'/fm'><hover:show_text:'Click to type /fm'><white>/fm</white></hover></click> to see all the types of factories you can make"
+      - "<sprite:items:item/written_book> Please review the server rules at <click:open_url:'https://www.reddit.com/r/civmc/wiki/index/'><hover:show_text:'Click to open https://www.reddit.com/r/civmc/wiki/index/'><aqua>reddit.com/r/civmc/wiki ↗</aqua></hover></click>"
+      - "<sprite:items:item/barrier> VPNs and multiple accounts aren't allowed - logging in from the same place as a friend results in an automatic ban. Accidental use of either can be resolved via a ticket on the <click:open_url:'https://discord.gg/zp63BaX3Uf'><hover:show_text:'Click to open https://discord.gg/zp63BaX3Uf'><aqua>official Discord ↗</aqua></hover></click>"
+      - "<sprite:items:item/paper> Check out the player run newsletter at <click:open_url:'https://civwiki.news/'><hover:show_text:'Click to open https://civwiki.news/'><aqua>civwiki.news ↗</aqua></hover></click> to see what's been going on!"
+      - "<sprite:items:item/oak_sign> Check out the starter guide at <click:open_url:'https://wiki.civmc.net/pages/getting-started'><hover:show_text:'Click to open https://wiki.civmc.net/pages/getting-started'><aqua>wiki.civmc.net/pages/getting-started ↗</aqua></hover></click>"
+      - "<sprite:block/reinforced_deepslate_side> Reinforce your buildings and chests to protect them from others - <click:open_url:'https://wiki.civmc.net/pages/plugins/essential/citadel'><hover:show_text:'Click to open https://wiki.civmc.net/pages/plugins/essential/citadel'><aqua>more info ↗</aqua></hover></click>"
+      - "Reinforced <sprite:block/jukebox_top> jukeboxes and <sprite:block/note_block> noteblocks act as CCTV, recording player actions - <click:open_url:'https://wiki.civmc.net/pages/plugins/unique/jukealert'><hover:show_text:'Click to open https://wiki.civmc.net/pages/plugins/unique/jukealert'><aqua>more info ↗</aqua></hover></click>"
+      - "Killing someone with an <sprite:items:item/ender_pearl> ender pearl in your hotbar locks them in the Nether! Player essence keeps them trapped - <click:open_url:'https://wiki.civmc.net/pages/plugins/essential/exilepearl'><hover:show_text:'Click to open https://wiki.civmc.net/pages/plugins/essential/exilepearl'><aqua>more info ↗</aqua></hover></click>"
 
   ElytraFeatures:
     enabled: false
@@ -348,6 +348,22 @@ hacks:
     delay: 10000
     message: '%Victim% was combat tagged by %Attacker%'
     broadcast: [OP, CONSOLE]
+  CushionFeatures:
+    enabled: true
+    # Whether combat tagged players are stopped from sitting on cushions
+    disableSittingInCombat: true
+    # Whether players sitting on a cushion are stood up when they get combat tagged
+    # (a seated player can't be knocked back)
+    dismountOnCombatTag: true
+    # How long (in milliseconds) a player must wait between sitting on cushions,
+    # which stops cushion chaining from outrunning horses. Set to 0 to disable.
+    mountCooldown: 1000
+    # Whether getting off a cushion may not put a player somewhere they couldn't see
+    # from where they stood before sitting down. They're put back there instead.
+    blockDismountThroughWalls: true
+    messages:
+      inCombat: 'You cannot sit down while in combat.'
+      cooldown: 'You can sit down again in <remaining>'
   Experimental:
     enabled: true
     combatspy: false
@@ -398,7 +414,7 @@ hacks:
     enabled: true
     chunkLimits:
       enabled: false
-      exceededMessage: '&9Limit (%Limit%) reached for this chunk, you cannot place more of this type of block (%Material%).'
+      exceededMessage: 'Limit (<limit>) reached for this chunk, you cannot place more <material>.'
       tileEntities:
         HOPPER: 16
         PISTON: 128
@@ -483,7 +499,7 @@ hacks:
         - "        &5Goodluck!&r\nThere are many things to do on CivMC. Let your ambitions run wild!\n\nLeave something behind people will remember for years to come.\n\nBe it your actions, your creations or your destruction..."
   NewfriendAssist:
     enabled: true
-    announce: '&f%Player% is brand new!'
+    announce: '<player> is brand new!'
     giveIntroKitToRandomSpawners: false
     broadcast: [CONSOLE, ALL]
     helptips: on

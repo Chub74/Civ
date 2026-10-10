@@ -29,6 +29,8 @@ dependencies {
     paperPlugin(project(path = ":plugins:simpleadminhacks-paper"))
     paperPlugin(project(path = ":plugins:heliodor-paper"))
     paperPlugin(project(path = ":plugins:secureboot-paper"))
+    paperPlugin(project(path = ":plugins:civadvancements-paper"))
+    paperPlugin(project(path = ":plugins:shortwave-paper"))
 
     gammaPlugin(project(path = ":plugins:banstick-paper", configuration = "shadow"))
     gammaPlugin(project(path = ":plugins:bastion-paper"))
@@ -54,6 +56,7 @@ dependencies {
     gammaPlugin(project(path = ":plugins:simpleadminhacks-paper"))
     gammaPlugin(project(path = ":plugins:heliodor-paper"))
     gammaPlugin(project(path = ":plugins:secureboot-paper"))
+    gammaPlugin(project(path = ":plugins:shortwave-paper"))
     gammaPlugin(project(path = ":plugins:kirabukkitgateway-paper", configuration = "shadow"))
 
     pvpPlugin(project(path = ":plugins:banstick-paper", configuration = "shadow"))

@@ -114,9 +114,9 @@ hacks:
     enabled: true
     intervalTime: 5m
     announcements:
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Join the Official Discord at https://discord.gg/zp63BaX3Uf","color":"green","clickEvent":{"action":"open_url","value":"https://discord.gg/zp63BaX3Uf"}}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Stuck in queue? Type /server mini to go to CivMC Mini (and you''ll remain in the queue!)","color":"green"}]'
-      - '["",{"text":"[CivMC] ","color":"gold"},{"text":"Join the ranked PvP queue with /ranked!","color":"green"}]'
+      - "Join the official Discord: <click:open_url:'https://discord.gg/zp63BaX3Uf'><hover:show_text:'Click to open https://discord.gg/zp63BaX3Uf'><aqua>discord.gg/zp63BaX3Uf ↗</aqua></hover></click>"
+      - "Stuck in queue? Type <click:suggest_command:'/server mini'><hover:show_text:'Click to type /server mini'><white>/server mini</white></hover></click> to go to CivMC Mini (and you'll remain in the queue!)"
+      - "<sprite:items:item/iron_sword> Join the ranked PvP queue with <click:suggest_command:'/ranked'><hover:show_text:'Click to type /ranked'><white>/ranked</white></hover></click>!"
 
   ElytraFeatures:
     enabled: false
@@ -329,6 +329,22 @@ hacks:
     delay: 10000
     message: '%Victim% was combat tagged by %Attacker%'
     broadcast: [OP, CONSOLE]
+  CushionFeatures:
+    enabled: true
+    # Whether combat tagged players are stopped from sitting on cushions
+    disableSittingInCombat: true
+    # Whether players sitting on a cushion are stood up when they get combat tagged
+    # (a seated player can't be knocked back)
+    dismountOnCombatTag: true
+    # How long (in milliseconds) a player must wait between sitting on cushions,
+    # which stops cushion chaining from outrunning horses. Set to 0 to disable.
+    mountCooldown: 1000
+    # Whether getting off a cushion may not put a player somewhere they couldn't see
+    # from where they stood before sitting down. They're put back there instead.
+    blockDismountThroughWalls: true
+    messages:
+      inCombat: 'You cannot sit down while in combat.'
+      cooldown: 'You can sit down again in <remaining>'
   Experimental:
     enabled: true
     combatspy: false
@@ -379,7 +395,7 @@ hacks:
     enabled: true
     chunkLimits:
       enabled: false
-      exceededMessage: '&9Limit (%Limit%) reached for this chunk, you cannot place more of this type of block (%Material%).'
+      exceededMessage: 'Limit (<limit>) reached for this chunk, you cannot place more <material>.'
       tileEntities:
         HOPPER: 16
         PISTON: 128
@@ -464,7 +480,7 @@ hacks:
         - "        &5Goodluck!&r\nThere are many things to do on CivMC. Let your ambitions run wild!\n\nLeave something behind people will remember for years to come.\n\nBe it your actions, your creations or your destruction..."
   NewfriendAssist:
     enabled: false
-    announce: '&f%Player% is brand new!'
+    announce: '<player> is brand new!'
     giveIntroKitToRandomSpawners: false
     broadcast: [CONSOLE, ALL]
     helptips: on
