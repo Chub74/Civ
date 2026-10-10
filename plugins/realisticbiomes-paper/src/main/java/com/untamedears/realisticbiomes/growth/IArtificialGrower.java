@@ -74,4 +74,9 @@ public abstract class IArtificialGrower {
         return false;
     }
 
+    /** Millis until a failed growth is retried, for failures players can fix like an obstructed tree. -1 never retries. */
+    public long getGrowthFailureRetryDelay() {
+        return -1;
+    }
+
 }

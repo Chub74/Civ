@@ -3,6 +3,7 @@ package com.untamedears.realisticbiomes.growth;
 import com.untamedears.realisticbiomes.PlantManager;
 import com.untamedears.realisticbiomes.RealisticBiomes;
 import com.untamedears.realisticbiomes.model.Plant;
+import java.util.concurrent.TimeUnit;
 import org.bukkit.Material;
 import org.bukkit.TreeType;
 import org.bukkit.block.Block;
@@ -10,6 +11,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.Sapling;
 
 public class TreeGrower extends AgeableGrower {
+
+    static final long FAILED_GROWTH_RETRY_DELAY = TimeUnit.MINUTES.toMillis(5);
 
     private static boolean adjacentSaplingCheck(Material mat, Block northwest) {
         for (Block block : new Block[]{northwest, northwest.getRelative(1, 0, 0), northwest.getRelative(0, 0, 1),
@@ -209,7 +212,7 @@ public class TreeGrower extends AgeableGrower {
         } else {
             block.setType(Material.AIR);
             if (!block.getLocation().getWorld().generateTree(block.getLocation(), type)) {
-                //failed, so restore sapling
+                // failed, so restore sapling
                 block.setType(mat);
             }
         }
@@ -219,6 +222,12 @@ public class TreeGrower extends AgeableGrower {
     @Override
     public boolean deleteOnFullGrowth() {
         return true;
+    }
+
+    @Override
+    public long getGrowthFailureRetryDelay() {
+        // trees fail to generate when obstructed, which players can clear up
+        return FAILED_GROWTH_RETRY_DELAY;
     }
 
 }

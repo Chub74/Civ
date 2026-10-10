@@ -11,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import org.bukkit.Material;
-import org.bukkit.TreeType;
 import org.bukkit.block.Block;
 import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.craftbukkit.util.RandomSourceWrapper;
@@ -58,7 +57,7 @@ public class FungusGrower extends AgeableGrower {
         }
         final ServerLevel world = ((CraftWorld) block.getWorld()).getHandle();
         final BlockPos position = new BlockPos(block.getX(), block.getY(), block.getZ());
-        //Taken from CraftWorld.generateTree()
+        // Taken from CraftWorld.generateTree()
         Holder<Feature> growthHolder = world.registryAccess().lookupOrThrow(Registries.FEATURE).get(growth).orElse(null);
 
         if (growthHolder == null) return false;
@@ -72,6 +71,12 @@ public class FungusGrower extends AgeableGrower {
     @Override
     public boolean deleteOnFullGrowth() {
         return true;
+    }
+
+    @Override
+    public long getGrowthFailureRetryDelay() {
+        // trees fail to generate when obstructed, which players can clear up
+        return TreeGrower.FAILED_GROWTH_RETRY_DELAY;
     }
 
 }

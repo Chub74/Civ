@@ -459,6 +459,10 @@ public class PlantGrowthConfig extends AbstractGrowthConfig {
         }
 
         if (!grower.ignoreGrowthFailure()) {
+            long retryDelay = grower.getGrowthFailureRetryDelay();
+            if (retryDelay > 0) {
+                return new SetStageResult(currentStage, intendedStage, creationTime, System.currentTimeMillis() + retryDelay);
+            }
             //setting the state failed due to some external condition, we assume this wont change any time soon
             return NO_NEXT_UPDATE;
         }
