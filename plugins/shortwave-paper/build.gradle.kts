@@ -18,5 +18,5 @@ dependencies {
     compileOnly(project(":plugins:namelayer-paper"))
 
     // SimpleVoiceChat — soft dependency; only loaded when the plugin is present at runtime
-    compileOnly("de.maxhenkel.voicechat:voicechat-api:2.5.27")
+    compileOnly("de.maxhenkel.voicechat:voicechat-api:2.6.24")
 }
