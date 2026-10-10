@@ -135,7 +135,7 @@ public class ModeListener implements Listener {
             state.getOverlayDisplay(), reinBottomLine, reinBoard);
     }
 
-    /** display, if not null, replaces text on the sidebar only - the action bar can't show components. */
+    /** display, if not null, replaces text wherever it shows, so sprites survive. */
     private static void updateDisplaySetting(Player player, DisplayLocationSetting locSetting, boolean state, String text,
                                              Component display, BottomLine bottomLine, CivScoreBoard scoreBoard) {
         if (player == null) {
@@ -150,7 +150,11 @@ public class ModeListener implements Listener {
             scoreBoard.hide(player);
         } else {
             if (locSetting.showOnActionbar(player.getUniqueId())) {
-                bottomLine.updatePlayer(player, text);
+                if (display != null) {
+                    bottomLine.updatePlayer(player, display);
+                } else {
+                    bottomLine.updatePlayer(player, text);
+                }
             }
             if (locSetting.showOnSidebar(player.getUniqueId())) {
                 scoreBoard.set(player, text, display);
@@ -192,9 +196,16 @@ public class ModeListener implements Listener {
     }
 
     public static Component formatHealthRgb(Reinforcement rein) {
+        return Component.text(String.format("%s%% (%s/%s)",
+            commaFormat.format(rein.getHealth() / rein.getType().getHealth() * 100),
+            roundingFormat.format(rein.getHealth()), roundingFormat.format(rein.getType().getHealth())), healthColor(rein));
+    }
+
+    /** Red through green as the reinforcement goes from broken to full health. */
+    public static TextColor healthColor(Reinforcement rein) {
         double broken = rein.getHealth() / rein.getType().getHealth();
-        int slot = (int) (broken * 12);
-        TextColor colour = new TextColor[] {
+        int slot = Math.max(0, Math.min(12, (int) (broken * 12)));
+        return new TextColor[] {
             TextColor.color(0xaa0000),
             TextColor.color(0xaa1c00),
             TextColor.color(0xaa3900),
@@ -209,9 +220,6 @@ public class ModeListener implements Listener {
             TextColor.color(0x68f84c),
             TextColor.color(0x55ff00),
         }[slot];
-        return Component.text(String.format("%s%% (%s/%s)",
-            commaFormat.format(rein.getHealth() / rein.getType().getHealth() * 100),
-            roundingFormat.format(rein.getHealth()), roundingFormat.format(rein.getType().getHealth())), colour);
     }
 
     public static String formatProgress(long start, long timeNeeded, String text) {
@@ -320,7 +328,6 @@ public class ModeListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = false)
     public void onBlockBreak(BlockBreakEvent event) {
-        // refresh hologram
         Reinforcement rein = ReinforcementLogic.getReinforcementProtecting(event.getBlock());
         if (rein == null) {
             return;

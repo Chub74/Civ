@@ -30,7 +30,7 @@ public class FortificationState extends AbstractPlayerState {
 
     /** Appended to a failure message, so the drop out of this mode is part of the same sentence. */
     private static final Component DROPPED_TO_NORMAL = Component.text()
-        .append(Component.text(", switched to ")).append(CivText.mode("Normal mode"))
+        .append(Component.text(". Block placed unreinforced, switched to ")).append(CivText.mode("Normal mode"))
         .build();
 
     @Override
@@ -55,10 +55,10 @@ public class FortificationState extends AbstractPlayerState {
         if (ReinforcementLogic.getReinforcementAt(block.getLocation()) != null) {
             return;
         }
-        if (CitadelUtility.attemptReinforcementCreation(block, type, group, player, DROPPED_TO_NORMAL)) { // true == fail
+        // true == fail. The placement stands: cancelling it pulled the block out from under players
+        // bridging or pillaring when they ran out of materials, dropping them.
+        if (CitadelUtility.attemptReinforcementCreation(block, type, group, player, DROPPED_TO_NORMAL)) {
             Citadel.getInstance().getStateManager().setState(player, null, false);
-            event.setCancelled(true);
-            //return;
         }
     }
 

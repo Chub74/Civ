@@ -18,6 +18,7 @@ import vg.civcraft.mc.citadel.model.AcidManager;
 import vg.civcraft.mc.citadel.model.Reinforcement;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementType;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.ui.Channel;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.ui.Kind;
@@ -228,7 +229,12 @@ public class CitadelUtility {
             return false;
         }
         if (!type.canBeReinforced(block.getType())) {
-            errorAt(player, block.getLocation(), item(type), " can't reinforce ", block.getType(), tail);
+            // The block still places unreinforced and the mode stays, so there is no tail. Action bar rather
+            // than chat, as building with such a block (scaffolding) would otherwise repeat this every placement.
+            Object[] parts = {item(type), " can't reinforce ", CivText.value(block.getType().name())};
+            CivUI.notice(Kind.ERROR, parts).from(Citadel.getInstance()).to(player).on(Channel.ACTION_BAR).send();
+            logReply(player, PlainTextComponentSerializer.plainText()
+                .serialize(CivUI.render(Kind.ERROR, false, false, parts)));
             return false;
         }
         if (!type.isAllowedInWorld(block.getWorld().getName())) {

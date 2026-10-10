@@ -5,6 +5,7 @@ import java.util.Objects;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.type.AmethystCluster;
@@ -135,6 +136,9 @@ public final class ReinforcementLogic {
         if (reinforcement != null) {
             return reinforcement;
         }
+        if (Tag.COPPER_CHESTS.isTagged(block.getType())) {
+            return getOtherChestHalfReinforcement(block);
+        }
         switch (block.getType()) {
             // Chests are awkward since you can place both sides of a double chest
             // independently, which isn't true for
@@ -145,21 +149,7 @@ public final class ReinforcementLogic {
             // the chest as a whole remains protected.
             case CHEST:
             case TRAPPED_CHEST: {
-                Chest chest = (Chest) block.getBlockData();
-                BlockFace facing = chest.getFacing();
-                switch (chest.getType()) {
-                    case LEFT: {
-                        BlockFace face = WorldUtils.turnClockwise(facing);
-                        return getReinforcementAt(block.getLocation().add(face.getDirection()));
-                    }
-                    case RIGHT: {
-                        BlockFace face = WorldUtils.turnAntiClockwise(facing);
-                        return getReinforcementAt(block.getLocation().add(face.getDirection()));
-                    }
-                    default: {
-                        return null;
-                    }
-                }
+                return getOtherChestHalfReinforcement(block);
             }
             default: {
                 Block responsible = getResponsibleBlock(block);
@@ -167,6 +157,24 @@ public final class ReinforcementLogic {
                     return null;
                 }
                 return getReinforcementAt(responsible.getLocation());
+            }
+        }
+    }
+
+    private static Reinforcement getOtherChestHalfReinforcement(Block block) {
+        Chest chest = (Chest) block.getBlockData();
+        BlockFace facing = chest.getFacing();
+        switch (chest.getType()) {
+            case LEFT: {
+                BlockFace face = WorldUtils.turnClockwise(facing);
+                return getReinforcementAt(block.getLocation().add(face.getDirection()));
+            }
+            case RIGHT: {
+                BlockFace face = WorldUtils.turnAntiClockwise(facing);
+                return getReinforcementAt(block.getLocation().add(face.getDirection()));
+            }
+            default: {
+                return null;
             }
         }
     }

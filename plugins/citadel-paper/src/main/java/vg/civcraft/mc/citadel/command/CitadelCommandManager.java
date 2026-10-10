@@ -26,6 +26,7 @@ public class CitadelCommandManager extends CommandManager {
         registerCommand(new Information());
         registerCommand(new Insecure());
         registerCommand(new Off());
+        registerCommand(new Overlay());
         registerCommand(new PatchMode());
         registerCommand(new Reinforce());
         registerCommand(new ReinforcementsGUI());

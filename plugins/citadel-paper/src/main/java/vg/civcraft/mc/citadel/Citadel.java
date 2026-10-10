@@ -8,6 +8,7 @@ import vg.civcraft.mc.citadel.listener.ActivityListener;
 import vg.civcraft.mc.citadel.activity.ActivityMap;
 import vg.civcraft.mc.citadel.command.CitadelCommandManager;
 import vg.civcraft.mc.citadel.listener.BlockListener;
+import vg.civcraft.mc.citadel.listener.CopperGolemListener;
 import vg.civcraft.mc.citadel.listener.EntityListener;
 import vg.civcraft.mc.citadel.listener.HiddenOreListener;
 import vg.civcraft.mc.citadel.listener.InventoryListener;
@@ -20,6 +21,7 @@ import vg.civcraft.mc.citadel.model.CitadelDAO;
 import vg.civcraft.mc.citadel.model.CitadelSettingManager;
 import vg.civcraft.mc.citadel.model.HologramManager;
 import vg.civcraft.mc.citadel.model.Reinforcement;
+import vg.civcraft.mc.citadel.model.ReinforcementOverlayManager;
 import vg.civcraft.mc.citadel.playerstate.PlayerStateManager;
 import vg.civcraft.mc.citadel.reinforcementtypes.ReinforcementTypeManager;
 import vg.civcraft.mc.civmodcore.ACivMod;
@@ -45,6 +47,7 @@ public class Citadel extends ACivMod {
     private AcidManager acidManager;
     private ReinforcementTypeManager typeManager;
     private HologramManager holoManager;
+    private ReinforcementOverlayManager overlayManager;
     private CitadelSettingManager settingManager;
     private CitadelDAO dao;
     private ActivityMap activityMap;
@@ -53,9 +56,6 @@ public class Citadel extends ACivMod {
 
     private PlayerStateManager stateManager;
 
-    /**
-     * @return Acid block manager
-     */
     public AcidManager getAcidManager() {
         return acidManager;
     }
@@ -84,6 +84,11 @@ public class Citadel extends ACivMod {
         return holoManager;
     }
 
+    /** Null without ProtocolLib */
+    public ReinforcementOverlayManager getOverlayManager() {
+        return overlayManager;
+    }
+
     public ActivityMap getActivityMap() {
         return activityMap;
     }
@@ -98,6 +103,9 @@ public class Citadel extends ACivMod {
 
     @Override
     public void onDisable() {
+        if (overlayManager != null) {
+            overlayManager.shutdown();
+        }
         activityMap.disable();
         dao.setBatchMode(true);
         reinManager.shutDown();
@@ -166,6 +174,9 @@ public class Citadel extends ACivMod {
         acidManager = new AcidManager(config.getAcidTypes());
         settingManager = new CitadelSettingManager();
         holoManager = new HologramManager(settingManager);
+        if (Bukkit.getPluginManager().isPluginEnabled("ProtocolLib")) {
+            overlayManager = new ReinforcementOverlayManager(settingManager);
+        }
         multiplier = config.getMultiplier();
         commandManager = new CitadelCommandManager(this);
         CitadelPermissionHandler.setup();
@@ -209,11 +220,15 @@ public class Citadel extends ACivMod {
     private void registerListeners() {
         getServer().getPluginManager().registerEvents(new BlockListener(this), this);
         getServer().getPluginManager().registerEvents(new EntityListener(), this);
+        getServer().getPluginManager().registerEvents(new CopperGolemListener(this), this);
         getServer().getPluginManager().registerEvents(new InventoryListener(), this);
         getServer().getPluginManager().registerEvents(new ModeListener(this), this);
         getServer().getPluginManager().registerEvents(new RedstoneListener(config.getMaxRedstoneDistance()), this);
         getServer().getPluginManager().registerEvents(new ActivityListener(activityMap), this);
         getServer().getPluginManager().registerEvents(new WorldBorderListener(), this);
+        if (overlayManager != null) {
+            getServer().getPluginManager().registerEvents(overlayManager, this);
+        }
         if (getServer().getPluginManager().isPluginEnabled("HiddenOre")) {
             getServer().getPluginManager().registerEvents(new HiddenOreListener(), this);
         }

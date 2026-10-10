@@ -32,13 +32,13 @@ public class CitadelSettingManager {
     private BooleanSetting easyMode;
     private BooleanSetting ctoDisableCti;
     private BooleanSetting ctoDisableCtb;
+    private BooleanSetting overlay;
 
     private BoundedIntegerSetting hologramDuration;
+    private BoundedIntegerSetting overlayRadius;
 
     private CommandReplySetting ctiNotReinforced;
-    // private CommandReplySetting ctiAllied;
     private CommandReplySetting ctiEnemy;
-    // private CommandReplySetting modeSwitch;
     private DecimalFormatSetting ctiPercentageHealth;
     private DecimalFormatSetting ctiReinforcementHealth;
     private DecimalFormatSetting ctiDecayMultiplier;
@@ -99,6 +99,14 @@ public class CitadelSettingManager {
         return hologramDuration.getValue(uuid);
     }
 
+    public BooleanSetting getOverlay() {
+        return overlay;
+    }
+
+    public BoundedIntegerSetting getOverlayRadius() {
+        return overlayRadius;
+    }
+
     void initSettings() {
         MenuSection menu = PlayerSettingAPI.getMainMenu().createMenuSection("Citadel",
             "Citadel and reinforcement related settings", new ItemStack(Material.IRON_INGOT));
@@ -127,6 +135,15 @@ public class CitadelSettingManager {
             "How long should holograms in information mode remain visible, measured in milli seconds", false, 1000,
             30000);
         PlayerSettingAPI.registerSetting(hologramDuration, menu);
+
+        overlay = new BooleanSetting(Citadel.getInstance(), false, "Reinforcement overlay", "citadelOverlay",
+            "Shows group and health directly on the faces of nearby reinforced blocks");
+        PlayerSettingAPI.registerSetting(overlay, menu);
+
+        overlayRadius = new BoundedIntegerSetting(Citadel.getInstance(), 6, "Reinforcement overlay radius",
+            "citadelOverlayRadius", new ItemStack(Material.SPYGLASS),
+            "Up to how many blocks away the reinforcement overlay labels blocks", false, 2, 10);
+        PlayerSettingAPI.registerSetting(overlayRadius, menu);
 
         ctbLocationSetting = new DisplayLocationSetting(Citadel.getInstance(), DisplayLocationSetting.DisplayLocation.NONE, "Bypass display location"
             , "citadelBypassDisplayLocation", new ItemStack(Material.GOLDEN_PICKAXE), "bypass");

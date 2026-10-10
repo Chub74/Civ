@@ -28,7 +28,7 @@ public class AdvancedFortificationState extends AbstractPlayerState {
 
     /** Appended to a failure message, so the drop out of this mode is part of the same sentence. */
     private static final Component DROPPED_TO_NORMAL = Component.text()
-        .append(Component.text(", switched to ")).append(CivText.mode("Normal mode"))
+        .append(Component.text(". Block placed unreinforced, switched to ")).append(CivText.mode("Normal mode"))
         .build();
 
     @Override
@@ -40,8 +40,6 @@ public class AdvancedFortificationState extends AbstractPlayerState {
     public void handleBlockPlace(BlockPlaceEvent e) {
         ItemStack placed = e.getItemInHand();
         Player player = e.getPlayer();
-        // check if we have a setup for this block, we need a copy for lookup so we can
-        // set amount to 1
         ItemStack lookUpCopy = placed.clone();
         lookUpCopy.setAmount(1);
         ReinforcingSetup setup = setups.get(lookUpCopy);
@@ -51,8 +49,8 @@ public class AdvancedFortificationState extends AbstractPlayerState {
             return;
         }
         boolean hadError = CitadelUtility.attemptReinforcementCreation(e.getBlock(), setup.type, setup.group, e.getPlayer(), DROPPED_TO_NORMAL);
+        // The placement stands, so running out mid-build doesn't pull the block out from under the player
         if (hadError) {
-            e.setCancelled(true);
             Citadel.getInstance().getStateManager().setState(e.getPlayer(), null, false);
         }
     }
@@ -95,7 +93,7 @@ public class AdvancedFortificationState extends AbstractPlayerState {
 
     @Override
     public boolean equals(Object o) {
-        //just always make a new state for this one
+        // always make a new state for this one
         return false;
     }
 
