@@ -7,9 +7,8 @@ import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * One sidebar or action bar line: "Reinforcing Aurora", "Destination Spawn". Parts are joined by a space;
- * a bare String is an INFO label, a component keeps its token colour. No brand - these are ambient.
- * Returns a legacy String because ScoreBoardAPI and BottomLineAPI only take Strings.
+ * One sidebar or action bar line, like "Reinforcing Aurora". Parts are joined by a space, a bare String is an
+ * INFO label and a component keeps its colour. of() gives legacy text, component() keeps sprites.
  */
 public final class HudLine {
 

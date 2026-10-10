@@ -3,17 +3,28 @@ package vg.civcraft.mc.civmodcore.players.scoreboard.bottom;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.BiFunction;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import vg.civcraft.mc.civmodcore.CivModCorePlugin;
 
+/**
+ * One segment of the action bar. Held as components so sprites survive; the String methods take and give
+ * legacy section-coded text for the callers that still build strings.
+ */
 public class BottomLine implements Comparable<BottomLine> {
 
-    private Map<UUID, String> texts;
+    private static final LegacyComponentSerializer LEGACY = LegacyComponentSerializer.legacySection();
+
+    private Map<UUID, Component> texts;
+    /** The legacy text a line was last set from, so periodic updates compare strings instead of reserializing */
+    private Map<UUID, String> legacyTexts = new TreeMap<>();
     private String identifier;
     private BukkitRunnable updater;
     private int priority;
@@ -33,10 +44,29 @@ public class BottomLine implements Comparable<BottomLine> {
     }
 
     public void updatePlayer(UUID player, String text) {
-        texts.put(player, text);
+        texts.put(player, LEGACY.deserialize(text));
+        legacyTexts.put(player, text);
+    }
+
+    public void updatePlayer(Player player, Component text) {
+        updatePlayer(player.getUniqueId(), text);
+    }
+
+    public void updatePlayer(UUID player, Component text) {
+        texts.put(player, Objects.requireNonNull(text, "text cannot be null"));
+        legacyTexts.remove(player);
     }
 
     public String getCurrentText(UUID uuid) {
+        String legacy = legacyTexts.get(uuid);
+        if (legacy != null) {
+            return legacy;
+        }
+        Component text = texts.get(uuid);
+        return text == null ? null : LEGACY.serialize(text);
+    }
+
+    public Component getCurrentComponent(UUID uuid) {
         return texts.get(uuid);
     }
 
@@ -48,19 +78,22 @@ public class BottomLine implements Comparable<BottomLine> {
 
             @Override
             public void run() {
-                Iterator<Entry<UUID, String>> iter = texts.entrySet().iterator();
+                Iterator<Entry<UUID, Component>> iter = texts.entrySet().iterator();
                 while (iter.hasNext()) {
-                    Entry<UUID, String> entry = iter.next();
+                    Entry<UUID, Component> entry = iter.next();
                     Player player = Bukkit.getPlayer(entry.getKey());
                     if (player != null) {
-                        String newText = updateFunction.apply(player, entry.getValue());
+                        String oldText = getCurrentText(entry.getKey());
+                        String newText = updateFunction.apply(player, oldText);
                         if (newText == null) {
                             iter.remove();
+                            legacyTexts.remove(entry.getKey());
                             BottomLineAPI.refreshIndividually(player.getUniqueId());
                             continue;
                         }
-                        if (!newText.equals(entry.getValue())) {
-                            entry.setValue(newText);
+                        if (!newText.equals(oldText)) {
+                            entry.setValue(LEGACY.deserialize(newText));
+                            legacyTexts.put(entry.getKey(), newText);
                             BottomLineAPI.refreshIndividually(player.getUniqueId());
                         }
                     }
@@ -75,11 +108,13 @@ public class BottomLine implements Comparable<BottomLine> {
     }
 
     public void removePlayer(UUID uuid) {
-        texts.remove(uuid);
-        BottomLineAPI.refreshIndividually(uuid);
+        legacyTexts.remove(uuid);
+        if (texts.remove(uuid) != null) {
+            BottomLineAPI.refreshIndividually(uuid);
+        }
     }
 
-    Map<UUID, String> getAll() {
+    Map<UUID, Component> getAll() {
         return texts;
     }
 

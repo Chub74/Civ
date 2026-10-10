@@ -1,29 +1,36 @@
 package vg.civcraft.mc.civmodcore.players.scoreboard.bottom;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.TextComponent;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import vg.civcraft.mc.civmodcore.CivModCorePlugin;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public final class BottomLineAPI {
 
     private static Set<BottomLine> lines = new TreeSet<>();
 
-    private static final String SEPARATOR = ChatColor.DARK_GRAY + "  |  " + ChatColor.RESET;
+    /** Players whose bar belongs to a one-off message until the given tick */
+    private static final Map<UUID, Integer> yielded = new HashMap<>();
+
+    private static final Component SEPARATOR = Component.text("  |  ", CivText.MUTED);
 
     public static void init() {
         BukkitRunnable run = new BukkitRunnable() {
 
             @Override
             public void run() {
-                refreshAll();
+                for (Player player : Bukkit.getOnlinePlayers()) {
+                    refreshIndividually(player.getUniqueId());
+                }
             }
         };
         run.runTaskTimer(CivModCorePlugin.getInstance(), 15, 15);
@@ -39,43 +46,43 @@ public final class BottomLineAPI {
         lines.remove(line);
     }
 
+    /** Keeps status lines off this player's bar for the given ticks, so a one-off message isn't overwritten. */
+    public static void yieldTo(UUID uuid, long ticks) {
+        yielded.put(uuid, Bukkit.getCurrentTick() + (int) ticks);
+    }
+
+    /** Sends this player's status lines, if they have any and the bar isn't taken by a one-off message. */
     public static void refreshIndividually(UUID uuid) {
         Player player = Bukkit.getPlayer(uuid);
         if (player == null) {
+            yielded.remove(uuid);
             return;
         }
-        StringBuilder sb = new StringBuilder();
+        Integer until = yielded.get(uuid);
+        if (until != null) {
+            if (Bukkit.getCurrentTick() < until) {
+                return;
+            }
+            yielded.remove(uuid);
+        }
+        TextComponent.Builder bar = Component.text();
+        boolean empty = true;
         for (BottomLine line : lines) {
-            String entry = line.getCurrentText(uuid);
+            Component entry = line.getCurrentComponent(uuid);
             if (entry != null) {
-                if (sb.length() > 0) {
-                    sb.append(SEPARATOR);
+                if (!empty) {
+                    bar.append(SEPARATOR);
                 }
-                sb.append(entry);
+                // Each segment is closed off so its styling can't leak into the next
+                bar.append(Component.text().append(entry));
+                empty = false;
             }
         }
-        player.sendActionBar(sb.toString());
-    }
-
-    private static void refreshAll() {
-        Map<UUID, StringBuilder> texts = new TreeMap<>();
-        for (BottomLine line : lines) {
-            for (Entry<UUID, String> entry : line.getAll().entrySet()) {
-                StringBuilder sb = texts.computeIfAbsent(entry.getKey(), u -> new StringBuilder());
-                if (entry.getValue() != null) {
-                    if (sb.length() > 0) {
-                        sb.append(SEPARATOR);
-                    }
-                    sb.append(entry.getValue());
-                }
-            }
+        if (empty) {
+            return;
         }
-        for (Entry<UUID, StringBuilder> entry : texts.entrySet()) {
-            Player player = Bukkit.getPlayer(entry.getKey());
-            if (player != null) {
-                player.sendActionBar(entry.getValue().toString());
-            }
-        }
+        // Bedrock can't draw sprites, so they come off per viewer rather than for everyone
+        player.sendActionBar(Bedrock.adapt(player, bar.build()));
     }
 
 }

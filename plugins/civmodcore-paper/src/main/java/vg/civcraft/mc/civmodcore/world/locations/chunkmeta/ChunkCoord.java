@@ -156,9 +156,31 @@ public class ChunkCoord extends XZWCoord {
         if (!alwaysLoaded)
             loadAll(LoadStatisticManager.MainThreadIndex);
 
+        ChunkMeta<?> meta;
         synchronized (chunkMetas) {
-            return chunkMetas.get(pluginID);
+            meta = chunkMetas.get(pluginID);
         }
+        if (meta != null || alwaysLoaded) {
+            return meta;
+        }
+        // The plugin registered after this chunk was loaded (e.g. a chunk loaded while plugins were still
+        // enabling), so loadAll() never ran its initializer here. Load it now instead of reporting no data.
+        ChunkMetaInitializer initializer = ChunkMetaFactory.getInstance().getInitializer(pluginID);
+        if (initializer == null) {
+            return null;
+        }
+        synchronized (this) {
+            synchronized (chunkMetas) {
+                meta = chunkMetas.get(pluginID);
+            }
+            if (meta == null) {
+                loadPluginChunk(LoadStatisticManager.MainThreadIndex, initializer);
+                synchronized (chunkMetas) {
+                    meta = chunkMetas.get(pluginID);
+                }
+            }
+        }
+        return meta;
     }
 
     boolean hasPermanentlyLoadedData() {

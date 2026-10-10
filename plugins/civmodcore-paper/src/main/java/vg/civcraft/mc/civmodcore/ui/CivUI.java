@@ -1,5 +1,6 @@
 package vg.civcraft.mc.civmodcore.ui;
 
+import java.nio.channels.Channel;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
@@ -166,7 +167,7 @@ public final class CivUI {
             final boolean isPlayer = recipient instanceof Player;
             if (notice.channel() == Channel.ACTION_BAR) {
                 if (recipient instanceof final Player player) {
-                    ActionBarNotices.show(player, notice.priority(), body(notice.kind(), true, notice.hasIcon(), notice.parts()));
+                    ActionBarNotices.show(player, body(notice.kind(), true, notice.hasIcon(), notice.parts()));
                     playSound(notice, recipient, true);
                 }
                 // Console and other non-player audiences have no action bar

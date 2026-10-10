@@ -143,7 +143,7 @@ public class WorldChunkMetaManager {
     ChunkMetaLoadStatus getChunkMetaIfLoaded(short pluginID, int x, int z, boolean alwaysLoaded) {
         ChunkCoord coord = getChunkCoord(x, z, false, false);
         if (coord == null) {
-            return null;
+            return new ChunkMetaLoadStatus(null, false);
         }
         return coord.getMetaIfLoaded(pluginID, alwaysLoaded);
     }
@@ -231,6 +231,7 @@ public class WorldChunkMetaManager {
 
             ChunkCoord coord;
             while ((coord = unloadingQueue.poll()) != null) {
+                 // make sure chunk hasnt loaded again since
                 if (!coord.isUnloaded()) {
                     CHUNK_META_LOGGER.debug("World " + worldID + ": Skipping chunk " + coord + " because it is loaded at " + coord.getLastLoadedTime() + " after " + coord.getLastUnloadedTime());
                     continue;
@@ -267,15 +268,12 @@ public class WorldChunkMetaManager {
 
             hasPermanentlyLoadedData = coord.hasPermanentlyLoadedData();
             if (hasPermanentlyLoadedData) {
-                // keep chunk coord, but garbage collect the data we dont want to keep inside of
-                // it
+                // keep the coord, but drop the data that isn't kept permanently
                 coord.deleteNonPersistentData();
             }
         }
 
         if (!hasPermanentlyLoadedData) {
-            // coord is up for garbage collection at this point and all of its data has been
-            // written to the db
             synchronized (metas) {
                 if (coord.isUnloaded()) {
                     CHUNK_META_LOGGER.debug("Chunk no longer being tracked: " + coord);

@@ -30,10 +30,6 @@ public final class Notice {
     private Component hover;
     private ClickEvent<?> click;
     private Level logLevel;
-    private int priority = DEFAULT_PRIORITY;
-
-    /** The "what you're doing" band - factories, crops */
-    static final int DEFAULT_PRIORITY = 40;
 
     Notice(@NotNull final Kind kind, @NotNull final Object... parts) {
         this.kind = Objects.requireNonNull(kind, "kind cannot be null");
@@ -106,13 +102,6 @@ public final class Notice {
         return this;
     }
 
-    /** ACTION_BAR only: where the notice sits among other segments, lowest leftmost. Defaults to 40 */
-    @NotNull
-    public Notice priority(final int priority) {
-        this.priority = priority;
-        return this;
-    }
-
     /** Also writes the message, as plain text, to the sending plugin's logger. */
     @NotNull
     public Notice log(@NotNull final Level level) {
@@ -182,10 +171,6 @@ public final class Notice {
     @Nullable
     ClickEvent<?> clickEvent() {
         return this.click;
-    }
-
-    int priority() {
-        return this.priority;
     }
 
     @Nullable

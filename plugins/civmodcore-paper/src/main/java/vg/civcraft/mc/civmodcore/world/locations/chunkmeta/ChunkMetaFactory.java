@@ -1,6 +1,7 @@
 package vg.civcraft.mc.civmodcore.world.locations.chunkmeta;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
 public class ChunkMetaFactory {
@@ -19,11 +20,20 @@ public class ChunkMetaFactory {
 
     private ChunkMetaFactory() {
         this.pluginToInternalIdMapping = new HashMap<>();
-        this.initializers = new ArrayList<>();
+        this.initializers = new CopyOnWriteArrayList<>();
     }
 
     Collection<ChunkMetaInitializer> getInitializers() {
         return initializers;
+    }
+
+    ChunkMetaInitializer getInitializer(short pluginId) {
+        for (ChunkMetaInitializer initializer : initializers) {
+            if (initializer.pluginId == pluginId) {
+                return initializer;
+            }
+        }
+        return null;
     }
 
     public void registerPlugin(String name, short id, Supplier<ChunkMeta<?>> generator) {
