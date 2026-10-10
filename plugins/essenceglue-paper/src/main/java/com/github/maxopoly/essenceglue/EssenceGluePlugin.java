@@ -17,6 +17,7 @@ public final class EssenceGluePlugin extends ACivMod {
     private StreakManager streakMan;
     private RewardManager rewardMan;
     private VotifyManager votifyMan;
+    private VirtualEssenceManager essenceManager;
     private CommandManager commandManager;
 
     public static EssenceGluePlugin instance() {
@@ -50,8 +51,10 @@ public final class EssenceGluePlugin extends ACivMod {
         if (configMan.isPhysical()) {
             rewarder = new PhysicalRewarder(configMan.getRewards());
         } else {
-            VirtualEssenceManager essenceManager = new VirtualEssenceManager(this, configMan.getVirtualCap());
-            commandManager.registerCommand(new EssenceCommand(essenceManager, configMan.getRewards()));
+            essenceManager = new VirtualEssenceManager(this, configMan.getVirtualCap());
+            EssenceWithdrawal withdrawal = new EssenceWithdrawal(this, essenceManager, configMan.getRewards());
+            commandManager.registerCommand(new EssenceCommand(essenceManager, withdrawal));
+            Bukkit.getPluginManager().registerEvents(new FullEssenceReminder(this, essenceManager), this);
             rewarder = new VirtualRewarder(essenceManager);
         }
 
@@ -84,6 +87,11 @@ public final class EssenceGluePlugin extends ACivMod {
 
     public VotifyManager getVoteManager() {
         return votifyMan;
+    }
+
+    /** Null when rewards are physical items rather than stored essence. */
+    public VirtualEssenceManager getEssenceManager() {
+        return essenceManager;
     }
 
     @Override

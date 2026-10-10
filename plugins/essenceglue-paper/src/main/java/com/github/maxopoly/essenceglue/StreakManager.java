@@ -20,8 +20,7 @@ public class StreakManager {
 
     private static final long MILLIS_IN_DAY = TimeUnit.DAYS.toMillis(1);
     private static final Map<UUID, UUID> mainAccountCache = new TreeMap<>();
-    // streak as a bitwise integer where a 0 is a missed day and a 1 is an online
-    // day, in LSB order from current to past
+    // one bit per day, 1 for online and 0 for missed, from the current day in the LSB to the past
     private final IntegerSetting playerStreaks;
     private final LongSetting lastPlayerUpdate;
     private final BooleanSetting receiveRewards;
@@ -91,8 +90,6 @@ public class StreakManager {
                 if (currentCount >= countRequiredForGain && receiveRewards.getValue(p)) {
                     updatePlayerStreak(uuid);
                     currentOnlineTime.remove(uuid);
-//					p.sendMessage(ChatColor.GREEN + "Your login streak is now " + ChatColor.LIGHT_PURPLE
-//							+ getCurrentStreak(uuid, true));
                     if (giveRewardToPearled || ExilePearlPlugin.getApi().getExiledAlts(uuid, true) < 1) {
                         EssenceGluePlugin.instance().getRewardManager().giveLoginReward(p,
                             getCurrentStreak(uuid, true));
@@ -174,6 +171,11 @@ public class StreakManager {
     public void setStreakRaw(int streak, long timeStamp, UUID player) {
         playerStreaks.setValue(player, streak);
         lastPlayerUpdate.setValue(player, timeStamp);
+    }
+
+    /** Whether this account has essence turned on in /config. */
+    public boolean receivesRewards(Player player) {
+        return receiveRewards.getValue(player);
     }
 
     public boolean getShowSitesOnLogin(UUID uuid) {

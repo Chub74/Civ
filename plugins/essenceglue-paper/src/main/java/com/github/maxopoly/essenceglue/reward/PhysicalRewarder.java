@@ -1,10 +1,10 @@
 package com.github.maxopoly.essenceglue.reward;
 
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
-import java.util.HashMap;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class PhysicalRewarder implements Rewarder {
 
@@ -15,22 +15,20 @@ public class PhysicalRewarder implements Rewarder {
     }
 
     @Override
-    public void reward(Player p, int amount) {
+    public void reward(Player p, int amount, Component reason) {
         ItemMap clone = items.clone();
         clone.multiplyContent(amount);
-        if (clone.fitsIn(p.getInventory())) {
-            for (ItemStack is : clone.getItemStackRepresentation()) {
-                HashMap<Integer, ItemStack> notAdded = p.getInventory().addItem(is);
-                for (ItemStack toDrop : notAdded.values()) {
-                    p.sendMessage(ChatColor.GREEN + "Your inventory was full, so it was dropped on the ground");
-                    p.getWorld().dropItemNaturally(p.getLocation(), toDrop);
-                }
+        boolean dropped = false;
+        for (ItemStack is : clone.getItemStackRepresentation()) {
+            for (ItemStack toDrop : p.getInventory().addItem(is).values()) {
+                p.getWorld().dropItemNaturally(p.getLocation(), toDrop);
+                dropped = true;
             }
+        }
+        if (dropped) {
+            CivUI.warn(p, "Your inventory is full, so your reward ", reason, " dropped at your feet");
         } else {
-            p.sendMessage(ChatColor.GREEN + "Your inventory was full, so it was dropped on the ground");
-            for (ItemStack is : clone.getItemStackRepresentation()) {
-                p.getWorld().dropItemNaturally(p.getLocation(), is);
-            }
+            CivUI.success(p, "You received your reward ", reason);
         }
     }
 }

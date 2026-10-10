@@ -1,6 +1,6 @@
 package com.github.maxopoly.essenceglue;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import org.bukkit.configuration.ConfigurationSection;
 import vg.civcraft.mc.civmodcore.ACivMod;
@@ -44,7 +44,7 @@ public class EssenceConfigManager extends ConfigParser {
         votingReward = config.getInt("voting_reward", 1);
         physical = config.getBoolean("physical", true);
         virtualCap = config.getInt("virtual_cap", 64);
-        votingCooldowns = new HashMap<>();
+        votingCooldowns = new LinkedHashMap<>();
         if (config.isConfigurationSection("voting_sites")) {
             ConfigurationSection votingKeySection = config.getConfigurationSection("voting_sites");
             for (String key : votingKeySection.getKeys(false)) {

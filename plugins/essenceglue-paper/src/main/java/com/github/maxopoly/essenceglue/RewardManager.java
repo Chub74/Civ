@@ -1,8 +1,9 @@
 package com.github.maxopoly.essenceglue;
 
 import com.github.maxopoly.essenceglue.reward.Rewarder;
-import org.bukkit.ChatColor;
+import net.kyori.adventure.text.Component;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.CivText;
 
 public class RewardManager {
 
@@ -17,13 +18,11 @@ public class RewardManager {
     }
 
     public void giveLoginReward(Player p, int streak) {
-        p.sendMessage(ChatColor.GREEN + "You've received your daily login reward");
-        rewarder.reward(p, dailyReward * streak);
+        rewarder.reward(p, dailyReward * streak, Component.text("for logging in today"));
     }
 
     public void giveVoteReward(Player p, String page) {
-        p.sendMessage(ChatColor.GREEN + "You received a reward for voting on " + page);
-        rewarder.reward(p, voteReward);
+        rewarder.reward(p, voteReward, Component.text("for voting on ").append(CivText.value(page)));
     }
 
 }
