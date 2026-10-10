@@ -120,7 +120,7 @@ public class BlockBreakListener implements Listener {
         // Check SilkTouch failfast, if configured.
         if (!Config.instance.ignoreSilktouch && inMainHand != null && inMainHand.hasItemMeta() &&
             inMainHand.getEnchantments() != null && inMainHand.getEnchantments().containsKey(Enchantment.SILK_TOUCH)) {
-            plugin.getTracking().postTrackBreak(event.getBlock().getLocation(), true); // before return, let's posttrack.
+            plugin.getTracking().postTrackBreak(event.getBlock().getLocation(), true);
             return;
         }
 
@@ -235,14 +235,11 @@ public class BlockBreakListener implements Listener {
      */
     private Boolean doDrops(boolean clearBlock, Block sourceBlock, BlockBreakEvent event, Player player, String biomeName, ToolConfig dropTool,
                             String dropName, DropConfig dropConfig, String blockName, BlockConfig blockConfig, List<Component> alertBuffer) {
-        // Remove block, drop special drop and cancel the event
+        // Check the source block may be HiddenOre'd at all
         if (!clearBlock) {
             HiddenOreGenerateEvent hoge = new HiddenOreGenerateEvent(player, sourceBlock, Material.AIR);
             Bukkit.getPluginManager().callEvent(hoge);
-            if (!hoge.isCancelled()) {
-                sourceBlock.setType(Material.AIR);
-                event.setCancelled(true);
-            } else {
+            if (hoge.isCancelled()) {
                 log("For {0} at {1}, HiddenOre for {2} cancelled.", player.getDisplayName(), player.getLocation(), sourceBlock);
                 debug("Generate cancelled, cancelling HiddenOre drop.");
                 return false;
@@ -251,6 +248,13 @@ public class BlockBreakListener implements Listener {
 
         final List<ItemStack> items = dropConfig.renderDrop(biomeName, dropTool);
         final Location sourceLocation = sourceBlock.getLocation();
+
+        // Item drops replace the block's normal drop: remove the block and cancel the event.
+        // Generation alone leaves the break to vanilla so the block still drops.
+        if (!items.isEmpty() && !event.isCancelled()) {
+            sourceBlock.setType(Material.AIR);
+            event.setCancelled(true);
+        }
         if (!items.isEmpty()) {
             doActualDrops(items, sourceLocation, player, dropName, blockName, blockConfig, alertBuffer);
         }
@@ -265,8 +269,6 @@ public class BlockBreakListener implements Listener {
         }
 
         runCommand(player, dropConfig.command);
-
-        // xp handled upstream
 
         return true;
     }
@@ -296,7 +298,7 @@ public class BlockBreakListener implements Listener {
 
             if (Config.isAlertUser()) {
                 if (blockConfig.hasCustomPrefix(dropName)) {
-                    // Custom prefix items are immediately reported to a player
+                    // Custom prefix items are reported immediately
                     List<Component> customAlerts = new ArrayList<>();
 
                     for (ItemStack item : hoe.getDrops()) {
@@ -304,7 +306,7 @@ public class BlockBreakListener implements Listener {
                     }
                     Alerts.found(player, blockConfig.getPrefix(dropName), customAlerts);
                 } else {
-                    // otherwise, if list drops are enabled we aggregate and report items when done everything
+                    // the rest is reported once everything is done
                     if (Config.isListDrops()) {
                         for (ItemStack item : hoe.getDrops()) {
                             alertBuffer.add(Alerts.find(item, item.getAmount(), false));
@@ -322,30 +324,28 @@ public class BlockBreakListener implements Listener {
         int maxWalk = 0;
         int cPlace = 0;
         double cAttempt = 0;
-        boolean tryFacing = false; // pick a facing block of attacked block
+        boolean tryFacing = false;
         int forceFacing = -1;
         VeinConfig vc = dropConfig.getVeinNature();
         Block origin = sourceLocation.getBlock();
         for (ItemStack xform : items) {
             Material sample = xform.getType();
             Material expressed = sample;
-            forceFacing = (vc == null ? -1 : (vc.getForceVisibleTransform() ? 0 : -1)); // do index traverse on visible faces
-            // to ensure overall fairness but density in discovery, we add walk attempts to cover forced facing reveal
-            // to make sure we test them all before moving on.
+            forceFacing = (vc == null ? -1 : (vc.getForceVisibleTransform() ? 0 : -1));
+            // extra walk attempts so every visible face is tried when they are forced
             maxWalk += xform.getAmount() * Config.getTransformAttemptMultiplier() + (forceFacing == 0 ? visibleFaces.length : 0);
             cPlace = xform.getAmount();
             while (cPlace > 0 && maxWalk > 0) {
                 Block walk = null;
                 if (forceFacing > -1 && forceFacing < visibleFaces.length) {
-                    walk = this.getVisibleFacing(origin);//origin.getRelative(this.visibleFaces[forceFacing++]);
+                    walk = this.getVisibleFacing(origin);
                     forceFacing++;
                     tryFacing = true;
                 } else if (!tryFacing) {
-                    // Try to ensure something of the generation is visible.
+                    // Try to make something of the generation visible
                     walk = this.getVisibleFacing(origin);
                 } else {
-                    // Use a kind of radial bloom to try to place the discovered blocks.
-                    // expose u0, uA (multiplier on cube root of attempts) in config
+                    // Radial bloom around the broken block
                     double z = Math.random() * 2.0 - 1.0;
                     double zsq = Math.sqrt(1 - Math.pow(z, 2));
                     double u = 0.5 + Math.floor(Math.cbrt(cAttempt++));
@@ -355,7 +355,8 @@ public class BlockBreakListener implements Listener {
                         (int) Math.round(u * zsq * Math.sin(theta)),
                         (int) Math.round(u * z));
                 }
-                if (plugin.getTracking().testGen(walk.getLocation()) && blockConfig.checkGenerateBlock(walk)) {
+                // Never generate into the broken block itself, it may still be mid-break
+                if (!walk.equals(origin) && plugin.getTracking().testGen(walk.getLocation()) && blockConfig.checkGenerateBlock(walk)) {
                     HiddenOreGenerateEvent hoge = new HiddenOreGenerateEvent(player, walk, sample);
                     Bukkit.getPluginManager().callEvent(hoge);
                     if (!hoge.isCancelled()) {
@@ -370,7 +371,7 @@ public class BlockBreakListener implements Listener {
             }
 
             int placed = xform.getAmount() - cPlace;
-            if (placed < 1 && dropConfig.dropIfTransformFails) { // Placement failed, but its not a total failure since its going to be dropped
+            if (placed < 1 && dropConfig.dropIfTransformFails) {
                 ItemStack toDrop = xform.clone();
                 toDrop.setAmount(Math.min(xform.getAmount(), dropConfig.maxDropsIfTransformFails));
                 final List<ItemStack> newDrops = new ArrayList<ItemStack>();
@@ -400,8 +401,8 @@ public class BlockBreakListener implements Listener {
                     
                     return true;
                 }
-                else { // The else here is actually wrong tbh, but since its for Eden and gets displayed anyway no need to check if Config.isAlertUser() is true
-                    // No block was placed, previously this check didnt exist so it would just return nothing and result in "You found a hidden ore" to be fired without actually finding something
+                else {
+                    // Also reached when blocks were placed but alerts are off
                 	return false;
                 }
             }
