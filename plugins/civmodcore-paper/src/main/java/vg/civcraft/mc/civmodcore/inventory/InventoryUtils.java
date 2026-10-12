@@ -62,7 +62,8 @@ public final class InventoryUtils {
         }
         final Inventory clone = ClonedInventory.cloneInventory(inventory);
         for (final ItemStack itemToAdd : items) {
-            if (!clone.addItem(itemToAdd).isEmpty()) {
+            // Inventory#addItem mutates the given stack's amount when it overflows a partial stack, so pass a copy
+            if (!clone.addItem(itemToAdd.clone()).isEmpty()) {
                 return false;
             }
         }
@@ -85,7 +86,7 @@ public final class InventoryUtils {
         }
         final Inventory clone = ClonedInventory.cloneInventory(inventory);
         for (final ItemStack itemToRemove : items) {
-            if (!clone.removeItem(itemToRemove).isEmpty()) {
+            if (!clone.removeItem(itemToRemove.clone()).isEmpty()) {
                 return false;
             }
         }
