@@ -18,14 +18,12 @@ public class VerticalGrower extends IArtificialGrower {
     }
 
     public static Block getRelativeBlock(Block block, BlockFace face) {
-        // Compare by stem material, so the tip/stem variants of one plant (and a bamboo sapling under bamboo)
-        // count as the same column
-        Material mat = RBUtils.getStemMaterial(block.getType());
+        Material mat = block.getType();
         Block bottomBlock = block;
         // not actually using this variable, but just having it here as a fail safe
         for (int i = 0; i < 384; i++) {
             Block below = bottomBlock.getRelative(face);
-            if (RBUtils.getStemMaterial(below.getType()) != mat) {
+            if (below.getType() != mat && below.getType() != RBUtils.getTipMaterial(mat) && below.getType() != RBUtils.getStemMaterial(mat)) {
                 break;
             }
             bottomBlock = below;

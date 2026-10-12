@@ -64,11 +64,7 @@ public class PlantLogicManager {
         Plant plant = plantManager.getPlant(block);
         if (plant != null) {
             plantManager.deletePlant(plant);
-            // Older placements could leave a plant record on an upper block of a column. Breaking that block still
-            // has to rewind the growth time of the plant at the bottom of the column
-            if (!isUpperColumnBlock(block)) {
-                return;
-            }
+            return;
         }
 
         if (!handleColumnBlockDestruction(block)) {
@@ -77,14 +73,6 @@ public class PlantLogicManager {
         }
 
         handleFruitBlockDestruction(block);
-    }
-
-    private boolean isUpperColumnBlock(Block block) {
-        if (columnBlocks == null || !columnBlocks.contains(block.getType())) {
-            return false;
-        }
-        Block sourceColumn = VerticalGrower.getRelativeBlock(block, RBUtils.getGrowthDirection(block.getType()).getOppositeFace());
-        return !sourceColumn.equals(block);
     }
 
     private boolean handleColumnBlockDestruction(Block block) {
@@ -226,8 +214,7 @@ public class PlantLogicManager {
             Material oppositeMaterial = block.getRelative(direction).getType();
             if (oppositeMaterial == blockMaterial
                 || oppositeMaterial == RBUtils.getStemMaterial(blockMaterial)
-                || oppositeMaterial == RBUtils.getTipMaterial(blockMaterial)
-                || RBUtils.getStemMaterial(oppositeMaterial) == blockMaterial) {
+                || oppositeMaterial == RBUtils.getTipMaterial(blockMaterial)) {
                 handleColumnBlockAdded(block);
                 return;
             }
