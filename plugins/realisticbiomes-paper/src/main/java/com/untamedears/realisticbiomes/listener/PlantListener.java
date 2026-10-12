@@ -7,6 +7,9 @@ import com.untamedears.realisticbiomes.growthconfig.PlantGrowthConfig;
 import com.untamedears.realisticbiomes.model.Plant;
 import com.untamedears.realisticbiomes.model.PlantLoadState;
 import com.untamedears.realisticbiomes.utils.RBUtils;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -38,14 +41,23 @@ public class PlantListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void on(BlockPistonExtendEvent event) {
-        for (Block block : event.getBlocks()) {
-            plugin.getPlantLogicManager().handleBlockDestruction(block);
-        }
+        handlePistonBlocks(event.getBlocks());
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void on(BlockPistonRetractEvent event) {
-        plugin.getPlantLogicManager().handleBlockDestruction(event.getBlock());
+        // event.getBlock() is the piston itself, the moved and broken blocks are in getBlocks()
+        handlePistonBlocks(event.getBlocks());
+    }
+
+    private void handlePistonBlocks(List<Block> blocks) {
+        // Process from the top down, so if several blocks of one column break, the lowest one is handled last and
+        // the column's growth time ends up matching the height that actually remains
+        List<Block> sorted = new ArrayList<>(blocks);
+        sorted.sort(Comparator.comparingInt(Block::getY).reversed());
+        for (Block block : sorted) {
+            plugin.getPlantLogicManager().handleBlockDestruction(block);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
