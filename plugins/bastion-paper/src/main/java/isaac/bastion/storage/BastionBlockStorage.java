@@ -380,29 +380,32 @@ public class BastionBlockStorage {
      **/
 
     public void changeBastionGroup(BastionBlock bastion) {
-        Integer oldGroupId = bastion.getListGroupId();
-        if (oldGroupId != null) {
-            List<BastionBlock> oldGroupBastions = groups.get(oldGroupId);
-
-            if (oldGroupBastions != null) {
-                oldGroupBastions.remove(bastion);
-            }
-        }
-
         Reinforcement rein = bastion.getReinforcement();
+        changeBastionGroup(bastion, rein != null ? rein.getGroupId() : null);
+    }
 
-        if (rein != null) {
-            bastion.setListGroupId(rein.getGroupId());
+    /**
+     * Moves a bastion to a new group in the group index. Takes the group id
+     * explicitly because Citadel fires ReinforcementGroupChangeEvent before
+     * it calls setGroup, so the reinforcement still reports the old group.
+     */
+    public void changeBastionGroup(BastionBlock bastion, Integer newGroupId) {
+        // Read outside the groups lock, same lock ordering as removeBastion.
+        Integer oldGroupId = bastion.getListGroupId();
+        synchronized (groups) {
+            if (oldGroupId != null) {
+                List<BastionBlock> oldGroupBastions = groups.get(oldGroupId);
 
-            List<BastionBlock> groupBastions = groups.get(rein.getGroupId());
-
-            if (groupBastions == null) {
-                groups.put(rein.getGroupId(), groupBastions = new ArrayList<>());
+                if (oldGroupBastions != null) {
+                    oldGroupBastions.remove(bastion);
+                }
             }
 
-            groupBastions.add(bastion);
-        } else {
-            bastion.setListGroupId(null);
+            bastion.setListGroupId(newGroupId);
+
+            if (newGroupId != null) {
+                groups.computeIfAbsent(newGroupId, k -> new ArrayList<>()).add(bastion);
+            }
         }
     }
 
