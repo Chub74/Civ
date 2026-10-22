@@ -36,6 +36,7 @@ public class CitadelSettingManager {
 
     private BoundedIntegerSetting hologramDuration;
     private BoundedIntegerSetting overlayRadius;
+    private BoundedIntegerSetting overlayBackgroundOpacity;
 
     private CommandReplySetting ctiNotReinforced;
     private CommandReplySetting ctiEnemy;
@@ -46,6 +47,7 @@ public class CitadelSettingManager {
     private DisplayLocationSetting ctbLocationSetting;
     private DisplayLocationSetting modeLocationSetting;
     private DisplayLocationSetting ctiLocationSetting;
+    private DisplayLocationSetting overlayLocationSetting;
 
     public CitadelSettingManager() {
         initSettings();
@@ -61,6 +63,10 @@ public class CitadelSettingManager {
 
     public DisplayLocationSetting getInformationLocationSetting() {
         return ctiLocationSetting;
+    }
+
+    public DisplayLocationSetting getOverlayLocationSetting() {
+        return overlayLocationSetting;
     }
 
     public BooleanSetting getBypass() {
@@ -107,6 +113,10 @@ public class CitadelSettingManager {
         return overlayRadius;
     }
 
+    public BoundedIntegerSetting getOverlayBackgroundOpacity() {
+        return overlayBackgroundOpacity;
+    }
+
     void initSettings() {
         MenuSection menu = PlayerSettingAPI.getMainMenu().createMenuSection("Citadel",
             "Citadel and reinforcement related settings", new ItemStack(Material.IRON_INGOT));
@@ -142,8 +152,14 @@ public class CitadelSettingManager {
 
         overlayRadius = new BoundedIntegerSetting(Citadel.getInstance(), 6, "Reinforcement overlay radius",
             "citadelOverlayRadius", new ItemStack(Material.SPYGLASS),
-            "Up to how many blocks away the reinforcement overlay labels blocks", false, 2, 10);
+            "Up to how many blocks away the reinforcement overlay labels blocks", false, 2, 6);
         PlayerSettingAPI.registerSetting(overlayRadius, menu);
+
+        overlayBackgroundOpacity = new BoundedIntegerSetting(Citadel.getInstance(), 0,
+            "Reinforcement overlay background", "citadelOverlayBackground",
+            new ItemStack(Material.BLACK_STAINED_GLASS_PANE),
+            "How opaque the dark box behind reinforcement overlay labels is, in percent", false, 0, 100);
+        PlayerSettingAPI.registerSetting(overlayBackgroundOpacity, menu);
 
         ctbLocationSetting = new DisplayLocationSetting(Citadel.getInstance(), DisplayLocationSetting.DisplayLocation.NONE, "Bypass display location"
             , "citadelBypassDisplayLocation", new ItemStack(Material.GOLDEN_PICKAXE), "bypass");
@@ -152,6 +168,10 @@ public class CitadelSettingManager {
         ctiLocationSetting = new DisplayLocationSetting(Citadel.getInstance(), DisplayLocationSetting.DisplayLocation.SIDEBAR, "Information mode display location"
             , "citadelInfoModeDisplayLocation", new ItemStack(Material.BOOKSHELF), "reinforcement info mode");
         PlayerSettingAPI.registerSetting(ctiLocationSetting, menu);
+
+        overlayLocationSetting = new DisplayLocationSetting(Citadel.getInstance(), DisplayLocationSetting.DisplayLocation.SIDEBAR, "Reinforcement overlay display location"
+            , "citadelOverlayDisplayLocation", new ItemStack(Material.SPYGLASS), "reinforcement overlay");
+        PlayerSettingAPI.registerSetting(overlayLocationSetting, menu);
 
         modeLocationSetting = new DisplayLocationSetting(Citadel.getInstance(), DisplayLocationSetting.DisplayLocation.SIDEBAR, "Citadel mode display location"
             , "citadelReinModeDisplayLocation", new ItemStack(Material.NETHER_STAR), "Citadel mode");

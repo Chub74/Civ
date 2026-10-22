@@ -57,6 +57,8 @@ public class ModeListener implements Listener {
     private CivScoreBoard ctiBoard;
     private BottomLine ctbBottomLine;
     private CivScoreBoard ctbBoard;
+    private BottomLine overlayBottomLine;
+    private CivScoreBoard overlayBoard;
     private BottomLine reinBottomLine;
     private CivScoreBoard reinBoard;
     private CitadelSettingManager settingMan;
@@ -69,6 +71,8 @@ public class ModeListener implements Listener {
         this.ctiBoard = ScoreBoardAPI.createBoard("ctiDisplay");
         this.ctbBottomLine = BottomLineAPI.createBottomLine("ctbDisplay", 3);
         this.ctbBoard = ScoreBoardAPI.createBoard("ctbDisplay");
+        this.overlayBottomLine = BottomLineAPI.createBottomLine("ctvDisplay", 3);
+        this.overlayBoard = ScoreBoardAPI.createBoard("ctvDisplay");
         this.reinBottomLine = BottomLineAPI.createBottomLine("ctreinDisplay", 3);
         this.reinBoard = ScoreBoardAPI.createBoard("ctreinDisplay");
         this.settingMan = Citadel.getInstance().getSettingManager();
@@ -96,6 +100,18 @@ public class ModeListener implements Listener {
                 setCtbOverlay(Bukkit.getPlayer(player), settingMan.getBypass().getValue(player));
             }
         });
+        settingMan.getOverlay().registerListener(new SettingChangeListener<Boolean>() {
+            @Override
+            public void handle(UUID player, PlayerSetting<Boolean> setting, Boolean oldValue, Boolean newValue) {
+                setOverlayOverlay(Bukkit.getPlayer(player), newValue);
+            }
+        });
+        settingMan.getOverlayLocationSetting().registerListener(new SettingChangeListener<String>() {
+            @Override
+            public void handle(UUID player, PlayerSetting<String> setting, String oldValue, String newValue) {
+                setOverlayOverlay(Bukkit.getPlayer(player), settingMan.getOverlay().getValue(player));
+            }
+        });
         settingMan.getModeLocationSetting().registerListener(new SettingChangeListener<String>() {
 
             @Override
@@ -114,6 +130,7 @@ public class ModeListener implements Listener {
     public void playerLogin(PlayerJoinEvent e) {
         setCtiOverlay(e.getPlayer(), settingMan.getInformationMode().getValue(e.getPlayer()));
         setCtbOverlay(e.getPlayer(), settingMan.getBypass().getValue(e.getPlayer()));
+        setOverlayOverlay(e.getPlayer(), settingMan.getOverlay().getValue(e.getPlayer()));
         setReinModeOverlay(e.getPlayer(), stateMan.getState(e.getPlayer()));
     }
 
@@ -125,6 +142,11 @@ public class ModeListener implements Listener {
     private void setCtbOverlay(Player player, boolean state) {
         updateDisplaySetting(player, settingMan.getBypassLocationSetting(), state, HudLine.of(CivText.mode("Bypass mode")),
             null, ctbBottomLine, ctbBoard);
+    }
+
+    private void setOverlayOverlay(Player player, boolean state) {
+        updateDisplaySetting(player, settingMan.getOverlayLocationSetting(), state,
+            HudLine.of(CivText.mode("Reinforcement overlay")), null, overlayBottomLine, overlayBoard);
     }
 
     private void setReinModeOverlay(Player player, AbstractPlayerState state) {

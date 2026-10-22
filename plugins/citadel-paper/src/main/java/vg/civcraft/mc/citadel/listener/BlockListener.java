@@ -1,6 +1,7 @@
 package vg.civcraft.mc.citadel.listener;
 
 import com.destroystokyo.paper.MaterialTags;
+import com.destroystokyo.paper.event.block.BlockDestroyEvent;
 import java.util.Iterator;
 import java.util.Set;
 import org.bukkit.ChatColor;
@@ -365,6 +366,18 @@ public class BlockListener implements Listener {
         if (!MaterialUtils.isAir(e.getBlockReplacedState().getType())) {
             return;
         }
+        Reinforcement rein = Citadel.getInstance().getReinforcementManager().getReinforcement(e.getBlock());
+        if (rein != null) {
+            rein.setHealth(-1);
+        }
+    }
+
+    /**
+     * A sign, torch or other attached block that pops off because its support broke is destroyed by a block update,
+     * not broken by a player, so nothing else removes its reinforcement and it would linger on the air left behind.
+     */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void removeReinforcementOfDestroyedBlock(BlockDestroyEvent e) {
         Reinforcement rein = Citadel.getInstance().getReinforcementManager().getReinforcement(e.getBlock());
         if (rein != null) {
             rein.setHealth(-1);

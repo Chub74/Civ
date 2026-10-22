@@ -28,7 +28,7 @@ public class Overlay extends BaseCommand {
         if (radius != null) {
             BoundedIntegerSetting radiusSetting = settings.getOverlayRadius();
             if (!radiusSetting.isValidValue(String.valueOf(radius))) {
-                CivUI.error(player, "The radius has to be between ", CivText.value("2"), " and ", CivText.value("10"));
+                CivUI.error(player, "The radius has to be between ", CivText.value("2"), " and ", CivText.value("6"));
                 return;
             }
             radiusSetting.setValue(player.getUniqueId(), radius);

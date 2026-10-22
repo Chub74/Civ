@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.block.CopperGolemStatue;
 import org.bukkit.entity.CopperGolem;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,6 +19,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import vg.civcraft.mc.citadel.Citadel;
@@ -43,6 +45,7 @@ public class CopperGolemListener implements Listener {
     private static final BlockFace[] FACES = {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH,
         BlockFace.EAST, BlockFace.WEST};
 
+    private final Citadel plugin;
     private final NamespacedKey groupKey;
     private final NamespacedKey ownerKey;
 
@@ -52,6 +55,7 @@ public class CopperGolemListener implements Listener {
     private int lastPumpkinTick;
 
     public CopperGolemListener(Citadel plugin) {
+        this.plugin = plugin;
         this.groupKey = new NamespacedKey(plugin, "golem_group");
         this.ownerKey = new NamespacedKey(plugin, "golem_owner");
     }
@@ -150,6 +154,49 @@ public class CopperGolemListener implements Listener {
             || !rein.hasPermission(UUID.fromString(owner), CitadelPermissionHandler.getChests())) {
             event.setAllowed(false);
         }
+    }
+
+    // a golem turning into a statue only keeps its name, so its group and owner are kept on the statue block
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void rememberStatueGolem(EntityChangeBlockEvent event) {
+        if (!(event.getEntity() instanceof CopperGolem golem)
+            || !(event.getBlockData() instanceof org.bukkit.block.data.type.CopperGolemStatue)) {
+            return;
+        }
+        PersistentDataContainer golemPdc = golem.getPersistentDataContainer();
+        Integer group = golemPdc.get(groupKey, PersistentDataType.INTEGER);
+        String owner = golemPdc.get(ownerKey, PersistentDataType.STRING);
+        if (group == null || owner == null) {
+            return;
+        }
+        Block block = event.getBlock();
+        // the statue's block entity is only created after this event
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!(block.getState() instanceof CopperGolemStatue statue)) {
+                return;
+            }
+            statue.getPersistentDataContainer().set(groupKey, PersistentDataType.INTEGER, group);
+            statue.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner);
+            statue.update();
+        });
+    }
+
+    // scraping a statue back to life spawns a new golem while the statue block is still there
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void restoreReanimatedGolem(CreatureSpawnEvent event) {
+        if (event.getSpawnReason() != CreatureSpawnEvent.SpawnReason.REANIMATE
+            || !(event.getEntity() instanceof CopperGolem golem)
+            || !(event.getLocation().getBlock().getState() instanceof CopperGolemStatue statue)) {
+            return;
+        }
+        PersistentDataContainer statuePdc = statue.getPersistentDataContainer();
+        Integer group = statuePdc.get(groupKey, PersistentDataType.INTEGER);
+        String owner = statuePdc.get(ownerKey, PersistentDataType.STRING);
+        if (group == null || owner == null) {
+            return;
+        }
+        golem.getPersistentDataContainer().set(groupKey, PersistentDataType.INTEGER, group);
+        golem.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, owner);
     }
 
     private UUID getPumpkinPlacer(Block head) {
