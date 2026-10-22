@@ -49,16 +49,17 @@ public class CitadelListener implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onReinforcementRepair(ReinforcementChangeTypeEvent event) {
+    public void onReinforcementChangeType(ReinforcementChangeTypeEvent event) {
         BastionBlock bastionBlock = Bastion.getBastionStorage().getBastionBlock(event.getReinforcement().getLocation());
         if (bastionBlock == null) return;
         bastionBlock.setPlaced(System.currentTimeMillis());
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.MONITOR)
-    public void onReinforcementRepair(ReinforcementGroupChangeEvent event) {
+    public void onReinforcementGroupChange(ReinforcementGroupChangeEvent event) {
         BastionBlock bastionBlock = Bastion.getBastionStorage().getBastionBlock(event.getReinforcement().getLocation());
         if (bastionBlock == null) return;
+        Bastion.getBastionStorage().changeBastionGroup(bastionBlock, event.getNewGroup().getGroupId());
         bastionBlock.setPlaced(System.currentTimeMillis());
     }
 }

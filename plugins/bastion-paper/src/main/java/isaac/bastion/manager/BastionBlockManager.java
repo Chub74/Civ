@@ -308,9 +308,10 @@ public class BastionBlockManager {
 
         if (NameLayerAPI.getGroupManager().hasAccess(reinforcement.getGroup(), player.getUniqueId(),
             PermissionType.getPermission(Permissions.BASTION_PLACE))
-            && NameLayerAPI.getGroupManager().hasAccess(oldReinf.getGroup(), player.getUniqueId(),
-            PermissionType.getPermission(Permissions.BASTION_PLACE))) {
-            storage.changeBastionGroup(bastion);
+            && (oldReinf == null || NameLayerAPI.getGroupManager().hasAccess(oldReinf.getGroup(), player.getUniqueId(),
+            PermissionType.getPermission(Permissions.BASTION_PLACE)))) {
+            // The new reinforcement isn't registered yet during the creation event
+            storage.changeBastionGroup(bastion, reinforcement.getGroupId());
             return Boolean.TRUE;
         } else {
             return Boolean.FALSE;
