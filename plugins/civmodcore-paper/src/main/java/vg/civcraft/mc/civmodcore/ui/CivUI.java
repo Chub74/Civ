@@ -1,6 +1,5 @@
 package vg.civcraft.mc.civmodcore.ui;
 
-import java.nio.channels.Channel;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Objects;
