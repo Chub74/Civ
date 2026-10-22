@@ -79,6 +79,8 @@ hacks:
       - <gold>That <it>really<gold> hurt!
   BedLocator:
     enabled: true
+  BelowWorldRescue:
+    enabled: false
   BeeKeeping:
     enabled: true
     # Value between 0 and 1 that determines the percentage chance that a bee will replace
@@ -628,6 +630,82 @@ hacks:
     striderMaxAge: 360000
   NetheriteCrafting:
     enabled: true
+  # Removes recipes from the server by key (any recipe type, also hidden from the recipe book).
+  # Keys are the vanilla recipe ids, see the data/minecraft/recipe folder of the server jar.
+  DisabledRecipes:
+    enabled: true
+    recipes:
+      - minecraft:beacon
+      - minecraft:golden_apple
+      - minecraft:mace
+      - minecraft:shulker_box
+      - minecraft:diamond_helmet
+      - minecraft:diamond_chestplate
+      - minecraft:diamond_leggings
+      - minecraft:diamond_boots
+      - minecraft:diamond_sword
+      - minecraft:diamond_axe
+      - minecraft:diamond_pickaxe
+      - minecraft:diamond_shovel
+      - minecraft:diamond_hoe
+      - minecraft:netherite_helmet_smithing
+      - minecraft:netherite_chestplate_smithing
+      - minecraft:netherite_leggings_smithing
+      - minecraft:netherite_boots_smithing
+      - minecraft:netherite_ingot
+      - minecraft:netherite_sword_smithing
+      - minecraft:netherite_axe_smithing
+      - minecraft:netherite_pickaxe_smithing
+      - minecraft:netherite_shovel_smithing
+      - minecraft:netherite_hoe_smithing
+      - minecraft:netherite_scrap
+      - minecraft:netherite_scrap_from_blasting
+      - minecraft:golden_helmet
+      - minecraft:golden_chestplate
+      - minecraft:golden_leggings
+      - minecraft:golden_boots
+      - minecraft:golden_sword
+      - minecraft:golden_axe
+      - minecraft:golden_pickaxe
+      - minecraft:golden_shovel
+      - minecraft:golden_hoe
+      - minecraft:iron_helmet
+      - minecraft:iron_chestplate
+      - minecraft:iron_leggings
+      - minecraft:iron_boots
+      - minecraft:end_crystal
+      - minecraft:magma_block
+      - minecraft:lodestone
+      - minecraft:emerald_from_smelting_emerald_ore
+      - minecraft:emerald_from_smelting_deepslate_emerald_ore
+      - minecraft:dried_ghast
+      - minecraft:black_harness
+      - minecraft:blue_harness
+      - minecraft:brown_harness
+      - minecraft:cyan_harness
+      - minecraft:gray_harness
+      - minecraft:green_harness
+      - minecraft:lime_harness
+      - minecraft:magenta_harness
+      - minecraft:orange_harness
+      - minecraft:pink_harness
+      - minecraft:purple_harness
+      - minecraft:red_harness
+      - minecraft:white_harness
+      - minecraft:yellow_harness
+  # Adds recipes. Types: shaped, shapeless, furnace, blasting, smoking, campfire, stonecutting.
+  # Ingredients are a material, an item tag (#minecraft:planks) or a list of those (any of them works).
+  # Shaped:   shape: ["  s", "ii "] and ingredients: {i: IRON_INGOT, s: STICK}
+  # Cooking:  input: RAW_IRON, experience: 0.7, cookingTime: 200 (ticks)
+  # Result:   result: {material: STONE, amount: 2} or just result: STONE
+  CustomRecipes:
+    enabled: true
+    recipes:
+      beetroot_seeds:
+        type: shapeless
+        ingredients:
+          - BEETROOT
+        result: BEETROOT_SEEDS
   SpawnerNerf:
     enabled: true
     disableSpawners: true
