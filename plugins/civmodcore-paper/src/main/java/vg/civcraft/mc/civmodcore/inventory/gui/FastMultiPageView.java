@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -53,8 +52,7 @@ public class FastMultiPageView {
         }
         // back button
         if (currentPage > 0) {
-            ItemStack back = new ItemStack(Material.ARROW);
-            CivMenu.name(back, "Previous page");
+            ItemStack back = CivMenu.previousPage();
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -69,8 +67,7 @@ public class FastMultiPageView {
         }
         // next button
         if (pageClickables.size() > contentSize) {
-            ItemStack forward = new ItemStack(Material.ARROW);
-            CivMenu.name(forward, "Next page");
+            ItemStack forward = CivMenu.nextPage();
             Clickable forCl = new Clickable(forward) {
 
                 @Override

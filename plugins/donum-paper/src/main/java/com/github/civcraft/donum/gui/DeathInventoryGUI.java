@@ -15,6 +15,7 @@ import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 
 public class DeathInventoryGUI {
@@ -48,8 +49,7 @@ public class DeathInventoryGUI {
         }
         // previous button
         if (currentPage > 0) {
-            ItemStack back = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(back, ChatColor.GOLD + "Go to previous page");
+            ItemStack back = CivMenu.previousPage();
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -64,8 +64,7 @@ public class DeathInventoryGUI {
         }
         // next button
         if ((45 * (currentPage + 1)) <= inventories.size()) {
-            ItemStack forward = new ItemStack(Material.ARROW);
-            ItemUtils.setDisplayName(forward, ChatColor.GOLD + "Go to next page");
+            ItemStack forward = CivMenu.nextPage();
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -79,8 +78,7 @@ public class DeathInventoryGUI {
             ci.setSlot(forCl, 53);
         }
         // exit button
-        ItemStack backToOverview = new ItemStack(Material.OAK_DOOR);
-        ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Close");
+        ItemStack backToOverview = CivMenu.close();
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -112,8 +110,7 @@ public class DeathInventoryGUI {
                     ci.addSlot(new DecorationStack(is));
                 }
                 // back button
-                ItemStack backToOverview = new ItemStack(Material.OAK_DOOR);
-                ItemUtils.setDisplayName(backToOverview, ChatColor.GOLD + "Go back to overview");
+                ItemStack backToOverview = CivMenu.back("overview");
                 ci.setSlot(new Clickable(backToOverview) {
 
                     @Override

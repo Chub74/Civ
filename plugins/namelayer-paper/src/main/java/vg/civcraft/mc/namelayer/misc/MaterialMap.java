@@ -10,7 +10,6 @@ public class MaterialMap implements MaterialInterface {
         return switch (specific) {
             case GREEN -> Material.LIME_DYE;
             case RED -> Material.RED_DYE;
-            case BACK -> Material.OAK_DOOR;
             case MOD -> Material.GOLDEN_CHESTPLATE;
             case BLACKLIST -> Material.LEAD;
             case PERMS -> Material.OAK_FENCE_GATE;
@@ -22,7 +21,7 @@ public class MaterialMap implements MaterialInterface {
     @Override
     public ItemStack getItemStack(final Specific specific) {
         return switch (specific) {
-            case GREEN, RED, BACK, MOD, BLACKLIST, PERMS, MERGE, DEFAULT -> new ItemStack(getMaterial(specific));
+            case GREEN, RED, MOD, BLACKLIST, PERMS, MERGE, DEFAULT -> new ItemStack(getMaterial(specific));
         };
     }
 

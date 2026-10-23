@@ -84,8 +84,7 @@ public class EnumSetting<T extends Enum<T>> extends PlayerSetting<T> {
             getNiceName(),
             true);
 
-        final var backButtonItem = new ItemStack(Material.ARROW);
-        CivMenu.name(backButtonItem, "Back to " + menu.getName());
+        final var backButtonItem = CivMenu.back(menu.getName());
         view.setMenuSlot(new Clickable(backButtonItem) {
             @Override
             public void clicked(final Player clicker) {

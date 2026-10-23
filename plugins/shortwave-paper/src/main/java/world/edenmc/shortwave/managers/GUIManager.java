@@ -18,6 +18,7 @@ import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 
 import vg.civcraft.mc.civmodcore.utilities.cooldowns.MilliSecCoolDownHandler;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -94,7 +95,7 @@ public class GUIManager {
             }), 24);
         }
 
-        gui.setSlot(makeButton(createCloseButton(), p -> {
+        gui.setSlot(makeButton(CivMenu.close(), p -> {
             p.closeInventory();
             p.removeMetadata("shortwave_tower_location", plugin);
         }), 26);
@@ -122,7 +123,7 @@ public class GUIManager {
             gui.setSlot(createFuelClickable(entry.getKey(), entry.getValue().duration, tower), slot++);
         }
 
-        gui.setSlot(makeButton(createBackButton(), p -> openTowerGUI(p, tower)), 45);
+        gui.setSlot(makeButton(CivMenu.back("tower"), p -> openTowerGUI(p, tower)), 45);
 
         DecorationStack border = new DecorationStack(createGlassPane());
         for (int i : new int[]{0,1,2,3,5,6,7,8,9,17,18,26,27,35,36,44,46,47,48,49,50,51,52,53}) {
@@ -152,7 +153,7 @@ public class GUIManager {
             }), slots[slotIndex++]);
         }
 
-        gui.setSlot(makeButton(createBackButton(), p -> openTowerGUI(p, tower)), 22);
+        gui.setSlot(makeButton(CivMenu.back("tower"), p -> openTowerGUI(p, tower)), 22);
 
         DecorationStack border = new DecorationStack(createGlassPane());
         for (int i : new int[]{0,1,2,3,4,5,6,7,8,9,17,18,20,21,23,24,25,26}) {
@@ -181,7 +182,7 @@ public class GUIManager {
         }
 
         gui.setSlot(new DecorationStack(createTierInfoItem(currentUpgrade, nextUpgrade)), 22);
-        gui.setSlot(makeButton(createBackButton(), p -> openTowerGUI(p, tower)), 18);
+        gui.setSlot(makeButton(CivMenu.back("tower"), p -> openTowerGUI(p, tower)), 18);
 
         DecorationStack border = new DecorationStack(createGlassPane());
         for (int i : new int[]{0,1,2,3,4,5,6,7,8,9,10,12,14,16,17,19,20,21,23,24,25,26}) {
@@ -621,7 +622,7 @@ public class GUIManager {
             gui.setSlot(new DecorationStack(createMaxBroadcastLineItem()), 22);
         }
 
-        gui.setSlot(makeButton(createBackButton(), p -> openTowerGUI(p, tower)), 18);
+        gui.setSlot(makeButton(CivMenu.back("tower"), p -> openTowerGUI(p, tower)), 18);
 
         DecorationStack border = new DecorationStack(createGlassPane());
         for (int i : new int[]{0,1,2,3,5,6,7,8,9,10,12,14,16,17,19,20,21,23,24,25,26}) {
@@ -845,7 +846,7 @@ public class GUIManager {
             gui.setSlot(new DecorationStack(createMinIntervalReachedItem()), 22);
         }
 
-        gui.setSlot(makeButton(createBackButton(), p -> openTowerGUI(p, tower)), 18);
+        gui.setSlot(makeButton(CivMenu.back("tower"), p -> openTowerGUI(p, tower)), 18);
 
         DecorationStack border = new DecorationStack(createGlassPane());
         for (int i : new int[]{0,1,2,3,5,6,7,8,9,10,12,14,16,17,19,20,21,23,24,25,26}) {
@@ -1305,24 +1306,6 @@ public class GUIManager {
         lore.add(Component.text("will not be activated.", NamedTextColor.GRAY)
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    private ItemStack createBackButton() {
-        ItemStack item = new ItemStack(Material.ARROW);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text("← Back", NamedTextColor.YELLOW)
-                .decoration(TextDecoration.ITALIC, false));
-        item.setItemMeta(meta);
-        return item;
-    }
-
-    private ItemStack createCloseButton() {
-        ItemStack item = new ItemStack(Material.BARRIER);
-        ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text("✖ Close", NamedTextColor.RED)
-                .decoration(TextDecoration.ITALIC, false));
         item.setItemMeta(meta);
         return item;
     }

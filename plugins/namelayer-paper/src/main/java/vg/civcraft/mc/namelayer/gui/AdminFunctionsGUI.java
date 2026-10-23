@@ -20,6 +20,7 @@ import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.command.commands.TransferGroup;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.misc.NLText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class AdminFunctionsGUI extends AbstractGroupGUI {
@@ -108,8 +109,7 @@ public class AdminFunctionsGUI extends AbstractGroupGUI {
         ci.setSlot(deletionClick, 15);
 
         // back button
-        ItemStack backToOverview = goBackStack();
-        MenuUtils.name(backToOverview, Component.text("Back to overview", CivText.VALUE));
+        ItemStack backToOverview = CivMenu.back("overview");
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override

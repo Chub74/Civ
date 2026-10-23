@@ -2,7 +2,6 @@ package vg.civcraft.mc.civmodcore.inventory.gui;
 
 import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import java.util.List;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
@@ -46,8 +45,7 @@ public class MultiPageView {
         }
         // back button
         if (currentPage > 0) {
-            ItemStack back = new ItemStack(Material.ARROW);
-            CivMenu.name(back, "Previous page");
+            ItemStack back = CivMenu.previousPage();
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -62,8 +60,7 @@ public class MultiPageView {
         }
         // next button
         if ((getContentSize() * (currentPage + 1)) < clickables.size()) {
-            ItemStack forward = new ItemStack(Material.ARROW);
-            CivMenu.name(forward, "Next page");
+            ItemStack forward = CivMenu.nextPage();
             Clickable forCl = new Clickable(forward) {
 
                 @Override

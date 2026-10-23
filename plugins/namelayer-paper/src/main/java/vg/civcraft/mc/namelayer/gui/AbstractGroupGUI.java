@@ -66,11 +66,6 @@ public abstract class AbstractGroupGUI {
         return g;
     }
 
-    public static ItemStack goBackStack() {
-        if (mats != null) return mats.getItemStack(MaterialInterface.Specific.BACK);
-        return new ItemStack(Material.BARRIER); // common for now
-    }
-
     public static ItemStack yesStack() {
         if (mats != null) return mats.getItemStack(MaterialInterface.Specific.GREEN);
         return new ItemStack(Material.BARRIER); // common for now

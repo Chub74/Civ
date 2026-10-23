@@ -186,9 +186,7 @@ public class SnitchLogGUI {
     }
 
     public static IClickable constructExitClick() {
-        final var item = new ItemStack(Material.OAK_DOOR);
-        CivMenu.name(item, "Exit");
-        CivMenu.lore(item, CivMenu.hint("Click to close"));
+        final var item = CivMenu.close();
         return new Clickable(item) {
             @Override
             public void clicked(@NotNull final Player clicker) {

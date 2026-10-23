@@ -181,8 +181,7 @@ public abstract class AbstractCollectionSetting<C extends Collection<T>, T> exte
             });
         }
         MultiPageView pageView = new MultiPageView(player, clickables, getNiceName(), true);
-        ItemStack parentItem = new ItemStack(Material.ARROW);
-        CivMenu.name(parentItem, "Back to " + menu.getName());
+        ItemStack parentItem = CivMenu.back(menu.getName());
         pageView.setMenuSlot(new Clickable(parentItem) {
 
             @Override

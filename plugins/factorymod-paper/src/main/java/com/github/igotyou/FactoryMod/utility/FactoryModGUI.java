@@ -20,6 +20,7 @@ import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.LClickable;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.ComponableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.ComponableSection;
 import vg.civcraft.mc.civmodcore.inventory.gui.components.ContentAligners;
@@ -96,8 +97,10 @@ public class FactoryModGUI {
                 continue;
             }
             FurnCraftChestEgg fccEgg = (FurnCraftChestEgg) egg;
-            InputRecipe firstRec = (InputRecipe) fccEgg.getRecipes().get(0);
-            ItemStack is = new ItemStack(firstRec.getRecipeRepresentationMaterial());
+            // a factory can end up with no recipes, e.g. when all of them failed to parse
+            ItemStack is = fccEgg.getRecipes().isEmpty()
+                ? new ItemStack(Material.FURNACE)
+                : new ItemStack(((InputRecipe) fccEgg.getRecipes().get(0)).getRecipeRepresentationMaterial());
             FMText.name(is, FMText.factory(fccEgg.getName()));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.text().append(CivText.info("Runs on ")).append(FMText.item(fccEgg.getFuel().getType())).build());
@@ -185,12 +188,10 @@ public class FactoryModGUI {
             return null;
         }
         FMCHistoryItem previous = history.peekPrevious();
-        LClickable click = new LClickable(Material.SPECTRAL_ARROW, FMText.label("Back"), p -> {
+        return new LClickable(CivMenu.back(previous.toText()), p -> {
             FMCHistoryItem actualPrevious = history.goBack();
             actualPrevious.setStateTo();
         });
-        FMText.lore(click.getItemStack(), FMText.hint("Click to go back to " + previous.toText()));
-        return click;
     }
 
     private Upgraderecipe getUpgradeRecipe(FurnCraftChestEgg child, FurnCraftChestEgg parent) {

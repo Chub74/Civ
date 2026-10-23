@@ -7,6 +7,7 @@ import java.util.List;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +55,46 @@ public final class CivMenu {
     @NotNull
     public static Component hint(@NotNull final String text) {
         return Component.text(text, CivText.MUTED);
+    }
+
+    /** Returns to the previous screen. A spectral arrow, so it never reads as a page arrow */
+    @NotNull
+    public static ItemStack back(@NotNull final String target) {
+        final ItemStack item = new ItemStack(Material.SPECTRAL_ARROW);
+        name(item, "Back");
+        lore(item, hint("Click to go back to " + target));
+        return item;
+    }
+
+    @NotNull
+    public static ItemStack back() {
+        final ItemStack item = new ItemStack(Material.SPECTRAL_ARROW);
+        name(item, "Back");
+        lore(item, hint("Click to go back"));
+        return item;
+    }
+
+    /** Closes the menu entirely */
+    @NotNull
+    public static ItemStack close() {
+        final ItemStack item = new ItemStack(Material.OAK_DOOR);
+        name(item, "Close");
+        lore(item, hint("Click to close"));
+        return item;
+    }
+
+    @NotNull
+    public static ItemStack previousPage() {
+        final ItemStack item = new ItemStack(Material.ARROW);
+        name(item, "Previous page");
+        return item;
+    }
+
+    @NotNull
+    public static ItemStack nextPage() {
+        final ItemStack item = new ItemStack(Material.ARROW);
+        name(item, "Next page");
+        return item;
     }
 
     /** A heading for inventories, which only take a String title */

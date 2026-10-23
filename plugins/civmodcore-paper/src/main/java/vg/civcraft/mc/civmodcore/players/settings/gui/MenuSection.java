@@ -72,15 +72,14 @@ public class MenuSection extends MenuItem {
         }
         MultiPageView pageView = new MultiPageView(player, clickables, getName(), true);
         if (parent != null) {
-            ItemStack parentItem = new ItemStack(Material.ARROW);
-            CivMenu.name(parentItem, "Back to " + parent.getName());
+            ItemStack parentItem = CivMenu.back(parent.getName());
             pageView.setMenuSlot(new Clickable(parentItem) {
 
                 @Override
                 public void clicked(Player p) {
                     parent.showScreen(p);
                 }
-            }, 2);
+            }, 0);
         }
         pageView.showScreen();
     }

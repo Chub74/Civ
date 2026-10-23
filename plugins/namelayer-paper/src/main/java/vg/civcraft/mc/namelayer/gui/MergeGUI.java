@@ -15,6 +15,7 @@ import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerPlugin;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.misc.NLText;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
 
 public class MergeGUI extends AbstractGroupGUI {
@@ -54,8 +55,7 @@ public class MergeGUI extends AbstractGroupGUI {
             }
         }, 15);
         // exit button
-        ItemStack backToOverview = goBackStack();
-        MenuUtils.name(backToOverview, Component.text("Go back to previous menu", CivText.VALUE));
+        ItemStack backToOverview = CivMenu.back();
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -96,8 +96,7 @@ public class MergeGUI extends AbstractGroupGUI {
         }
         // back button
         if (currentPage > 0) {
-            ItemStack back = new ItemStack(Material.ARROW);
-            MenuUtils.name(back, Component.text("Go to previous page", CivText.VALUE));
+            ItemStack back = CivMenu.previousPage();
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -112,8 +111,7 @@ public class MergeGUI extends AbstractGroupGUI {
         }
         // next button
         if ((45 * (currentPage + 1)) <= gName.size()) {
-            ItemStack forward = new ItemStack(Material.ARROW);
-            MenuUtils.name(forward, Component.text("Go to next page", CivText.VALUE));
+            ItemStack forward = CivMenu.nextPage();
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -128,8 +126,7 @@ public class MergeGUI extends AbstractGroupGUI {
         }
 
         // exit button
-        ItemStack backToOverview = goBackStack();
-        MenuUtils.name(backToOverview, Component.text("Exit selection", CivText.VALUE));
+        ItemStack backToOverview = CivMenu.back();
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override

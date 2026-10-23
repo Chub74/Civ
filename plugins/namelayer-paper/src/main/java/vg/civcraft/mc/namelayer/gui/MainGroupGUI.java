@@ -31,6 +31,7 @@ import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import java.util.ArrayList;
 import java.util.List;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
 import vg.civcraft.mc.namelayer.misc.NLText;
 
 public class MainGroupGUI extends AbstractGroupGUI {
@@ -93,8 +94,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         }
         // back button
         if (currentPage > 0) {
-            ItemStack back = new ItemStack(Material.ARROW);
-            MenuUtils.name(back, Component.text("Go to previous page", CivText.VALUE));
+            ItemStack back = CivMenu.previousPage();
             Clickable baCl = new Clickable(back) {
 
                 @Override
@@ -112,8 +112,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         }
         // next button
         if ((36 * (currentPage + 1)) < clicks.size()) {
-            ItemStack forward = new ItemStack(Material.ARROW);
-            MenuUtils.name(forward, Component.text("Go to next page", CivText.VALUE));
+            ItemStack forward = CivMenu.nextPage();
             Clickable forCl = new Clickable(forward) {
 
                 @Override
@@ -140,8 +139,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
         ci.setSlot(setupMemberTypeToggle(PlayerType.OWNER, showOwners), 52);
 
         // exit button
-        ItemStack backToOverview = goBackStack();
-        MenuUtils.name(backToOverview, Component.text("Close", CivText.VALUE));
+        ItemStack backToOverview = CivMenu.close();
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override
@@ -475,8 +473,7 @@ public class MainGroupGUI extends AbstractGroupGUI {
             uuid, PlayerType.OWNER);
         ci.setSlot(ownerClick, 16);
 
-        ItemStack backToOverview = goBackStack();
-        MenuUtils.name(backToOverview, Component.text("Back to overview", CivText.VALUE));
+        ItemStack backToOverview = CivMenu.back("overview");
         ci.setSlot(new Clickable(backToOverview) {
 
             @Override

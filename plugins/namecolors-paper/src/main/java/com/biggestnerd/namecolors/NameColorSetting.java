@@ -245,8 +245,7 @@ public class NameColorSetting extends PlayerSetting<String> {
         });
 
         MultiPageView view = new MultiPageView(player, clicks, getNiceName(), true);
-        ItemStack back = new ItemStack(Material.ARROW);
-        CivMenu.name(back, "Back to " + menu.getName());
+        ItemStack back = CivMenu.back(menu.getName());
         view.setMenuSlot(new Clickable(back) {
             @Override
             public void clicked(@NotNull Player clicker) {
