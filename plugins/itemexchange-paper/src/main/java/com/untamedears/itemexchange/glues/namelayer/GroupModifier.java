@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.group.Group;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * This is where the group limitation is stored. Don't worry if it doesn't seem to do much, it's actually
@@ -70,8 +73,8 @@ public final class GroupModifier extends ModifierData {
     @Override
     public List<String> getDisplayInfo() {
         return List.of(isBroken() ?
-            ChatColor.RED + "BROKEN GROUP MODIFIER" :
-            "Group: " + this.groupName);
+            ChatColor.RED + "Broken group modifier" :
+            ChatColor.GRAY + "Group: " + ChatColor.LIGHT_PURPLE + this.groupName);
     }
 
     @Override
@@ -84,29 +87,29 @@ public final class GroupModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("group")
-    @Description("Sets (or unsets) the group to limit this trade to.")
+    @Description("Sets (or unsets) the group to limit this trade to")
     @Syntax("[group name]")
     public void commandSetGroup(final Player player,
                                 final @Optional @Single String name) {
         if (!NameLayerGlue.instance.isDependencyEnabled()) {
-            player.sendMessage(ChatColor.RED + "Can't do that right now!");
+            CivUI.error(player, "You can't limit trades to a group right now");
             return;
         }
         try (final var handler = new ModifierHandler<>(player, this)) {
             if (StringUtils.isEmpty(name)) {
                 handler.setModifier(null);
-                handler.relay(ChatColor.GREEN + "Successfully removed group requirement.");
+                handler.relay(Kind.SUCCESS, "Removed the group requirement");
                 return;
             }
             final Group group = GroupManager.getGroup(name);
             if (group == null) {
-                handler.relay(ChatColor.RED + "Could not find group \"" + name + "\"");
+                handler.relay(Kind.ERROR, "There's no group called ", CivText.group(name));
                 return;
             }
             final GroupModifier modifier = handler.ensureModifier();
             modifier.setGroupId(group.getGroupId());
             modifier.setGroupName(group.getName());
-            handler.relay(ChatColor.GREEN + "Set trade to group \"" + group.getName() + "\"");
+            handler.relay(Kind.SUCCESS, "Limited the trade to ", CivText.group(group.getName()));
         }
     }
 

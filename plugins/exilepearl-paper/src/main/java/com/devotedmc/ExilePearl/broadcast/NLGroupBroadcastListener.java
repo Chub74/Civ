@@ -8,11 +8,11 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.namelayer.GroupManager;
 import vg.civcraft.mc.namelayer.NameLayerAPI;
 import vg.civcraft.mc.namelayer.group.Group;
 import vg.civcraft.mc.namelayer.permission.PermissionType;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 public class NLGroupBroadcastListener implements BroadcastListener {
 
@@ -29,8 +29,6 @@ public class NLGroupBroadcastListener implements BroadcastListener {
         Location l = pearl.getHolder().getLocation();
         String name = pearl.getHolder().getName();
 
-        String msg = String.format(ChatUtils.parseColor(Lang.groupPearlBroadcast), group.getName(), pearl.getPlayerName(), name, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName());
-
         GroupManager gm = NameLayerAPI.getGroupManager();
 
         if (!gm.hasAccess(group, pearl.getPlayerId(), PermissionType.getPermission(NameLayerPermissions.ALLOW_EXILE_BROADCAST)))
@@ -39,7 +37,8 @@ public class NLGroupBroadcastListener implements BroadcastListener {
         for (UUID uid : group.getCurrentMembers()) {
             Player p = Bukkit.getPlayer(uid);
             if (p != null && p.isOnline()) {
-                p.sendMessage(msg);
+                PearlText.send(p, Lang.groupPearlBroadcast, group.getName(), pearl.getPlayerName(), name,
+                    l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName());
             }
         }
     }

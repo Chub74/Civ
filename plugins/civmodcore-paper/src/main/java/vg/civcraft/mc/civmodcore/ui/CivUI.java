@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /** Entry point for everything a plugin says to a player. */
 public final class CivUI {
 
-    private static final String DEFAULT_BRAND = "Civ";
+    private static final String DEFAULT_BRAND = "Eden";
     private static final String SEPARATOR = " » ";
 
     /** Size at which stale rate-limit entries are swept. */

@@ -11,10 +11,10 @@ import co.aikar.commands.annotation.Subcommand;
 import co.aikar.commands.annotation.Syntax;
 import com.untamedears.itemexchange.rules.ExchangeRule;
 import com.untamedears.itemexchange.utility.RuleHandler;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(SetCommand.ALIAS)
 public final class SetCommand extends BaseCommand {
@@ -22,52 +22,52 @@ public final class SetCommand extends BaseCommand {
     public static final String ALIAS = "ies|ieset|set";
 
     @CatchUnknown
-    @Description("Sets a pertinent field to an exchange rule.")
+    @Description("Sets a pertinent field to an exchange rule")
     @Syntax("<field> [...values]")
     public void base(Player player) {
         throw new InvalidCommandArgument();
     }
 
     @Subcommand("material|mat|m")
-    @Description("Sets the material of an exchange rule.")
+    @Description("Sets the material of an exchange rule")
     @Syntax("<material>")
     @CommandCompletion("@itemMaterials")
     public void setMaterial(Player player, @Single String slug) {
         try (RuleHandler handler = new RuleHandler(player)) {
             Material material = Material.getMaterial(slug.toUpperCase());
             if (!ItemUtils.isValidItemMaterial(material)) {
-                throw new InvalidCommandArgument("You must enter a valid item material.");
+                throw new InvalidCommandArgument("There's no item by that name");
             }
             handler.getRule().setMaterial(material);
-            handler.relay(ChatColor.GREEN + "Material successfully changed.");
+            handler.relay(Kind.SUCCESS, "Changed the material");
         }
     }
 
     @Subcommand("amount|num|number|a")
-    @Description("Sets the amount of an exchange rule.")
+    @Description("Sets the amount of an exchange rule")
     @Syntax("<amount>")
     public void setAmount(Player player, int amount) {
         try (RuleHandler handler = new RuleHandler(player)) {
             if (amount <= 0) {
-                throw new InvalidCommandArgument("You must enter a valid amount.");
+                throw new InvalidCommandArgument("Enter an amount above 0");
             }
             handler.getRule().setAmount(amount);
-            handler.relay(ChatColor.GREEN + "Amount successfully changed.");
+            handler.relay(Kind.SUCCESS, "Changed the amount");
         }
     }
 
     @Subcommand("switchio|switch|swap|swapio")
-    @Description("Sets the amount of an exchange rule.")
+    @Description("Sets the amount of an exchange rule")
     public void switchIO(Player player) {
         try (RuleHandler handler = new RuleHandler(player)) {
             if (handler.getRule().getType() == ExchangeRule.Type.INPUT) {
                 handler.getRule().setType(ExchangeRule.Type.OUTPUT);
-                handler.relay(ChatColor.GREEN + "Rule switched to an output.");
+                handler.relay(Kind.SUCCESS, "Switched the rule to an output");
             } else if (handler.getRule().getType() == ExchangeRule.Type.OUTPUT) {
                 handler.getRule().setType(ExchangeRule.Type.INPUT);
-                handler.relay(ChatColor.GREEN + "Rule switched to an input.");
+                handler.relay(Kind.SUCCESS, "Switched the rule to an input");
             } else {
-                handler.relay(ChatColor.RED + "Rule could not be switched.");
+                handler.relay(Kind.ERROR, "You can't switch this rule");
             }
         }
     }

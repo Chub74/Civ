@@ -42,9 +42,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.utilities.cooldowns.ICoolDownHandler;
 import vg.civcraft.mc.civmodcore.utilities.cooldowns.MilliSecCoolDownHandler;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 /**
  * The prison pearl manager implementation
@@ -130,7 +130,7 @@ final class CorePearlManager implements PearlManager {
         }
         // Cancel if killer is pearled
         if (!pearlApi.getPearlConfig().canPearledPlayersPearlOthers() && pearlApi.isPlayerExiled(killer)) {
-            killer.sendMessage(ChatUtils.parseColor(String.format(Lang.pearlKillerIsPearled)));
+            PearlText.send(killer, Lang.pearlKillerIsPearled);
             return null;
         }
 

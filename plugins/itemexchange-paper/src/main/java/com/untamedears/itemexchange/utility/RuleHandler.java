@@ -1,7 +1,6 @@
 package com.untamedears.itemexchange.utility;
 
 import co.aikar.commands.InvalidCommandArgument;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.untamedears.itemexchange.rules.ExchangeRule;
 import java.io.Closeable;
@@ -9,6 +8,9 @@ import java.util.List;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
+import vg.civcraft.mc.civmodcore.ui.Notice;
 
 /**
  * This is a utility to be used within the default commands.
@@ -19,7 +21,7 @@ public class RuleHandler implements Closeable {
     private final ExchangeRule rule;
     /// How many of the literal exchange-rule buttons was the held-stack?
     private final int buttonAmount;
-    private final List<String> messages;
+    private final List<Notice> messages;
     private boolean saveChanges;
 
     /**
@@ -29,13 +31,13 @@ public class RuleHandler implements Closeable {
      */
     public RuleHandler(Player player) {
         if (player == null || !player.isOnline()) {
-            throw new InvalidCommandArgument("You must be a player to do that.", false);
+            throw new InvalidCommandArgument("Only players can do that", false);
         }
         this.player = player;
         final ItemStack held = player.getInventory().getItemInMainHand();
         this.rule = ExchangeRule.fromItem(held);
         if (this.rule == null) {
-            throw new InvalidCommandArgument("You must be holding an exchange rule.", false);
+            throw new InvalidCommandArgument("Hold an exchange rule to do that", false);
         }
         this.buttonAmount = held.getAmount();
         this.messages = Lists.newArrayList();
@@ -61,10 +63,11 @@ public class RuleHandler implements Closeable {
      * handled successfully and without error. This allows you to relay messages without worrying about a later thrown
      * exception, since that exception will prevent the messages from being sent.
      *
-     * @param message The message to send to the player.
+     * @param kind  The kind of message, which sets its colour.
+     * @param parts The message, as Strings and components.
      */
-    public final void relay(String message) {
-        this.messages.add(message);
+    public final void relay(Kind kind, Object... parts) {
+        this.messages.add(CivUI.notice(kind, parts));
     }
 
     /**
@@ -81,15 +84,13 @@ public class RuleHandler implements Closeable {
         final ItemStack item = this.rule.toItem();
         item.setAmount(this.buttonAmount);
         if (!ItemUtils.isValidItem(item)) {
-            throw new InvalidCommandArgument("Could not replace that rule.", false);
+            throw new InvalidCommandArgument("Couldn't update the rule you're holding", false);
         }
         if (this.saveChanges) {
             this.player.getInventory().setItemInMainHand(item);
         }
-        for (String message : messages) {
-            if (!Strings.isNullOrEmpty(message)) {
-                this.player.sendMessage(message);
-            }
+        for (Notice message : messages) {
+            message.to(this.player).send();
         }
     }
 

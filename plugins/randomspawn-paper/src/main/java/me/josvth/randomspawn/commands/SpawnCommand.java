@@ -2,7 +2,6 @@ package me.josvth.randomspawn.commands;
 
 import java.util.List;
 import me.josvth.randomspawn.RandomSpawn;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -57,8 +56,7 @@ public class SpawnCommand extends AbstractCommand {
         if (plugin.yamlHandler.worlds.getBoolean(world.getName() + ".keeprandomspawns", false))
             target.setBedSpawnLocation(spawn);
 
-        if (plugin.yamlHandler.config.getString("messages.randomspawned") != null)
-            target.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
+        plugin.sendRandomSpawned(target);
 
         if (target != sender)
             sender.sendMessage("Player: " + target.getName() + " was random teleported!");

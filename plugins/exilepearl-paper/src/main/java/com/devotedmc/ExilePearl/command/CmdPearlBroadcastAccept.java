@@ -12,7 +12,7 @@ public class CmdPearlBroadcastAccept extends PearlCommand {
         this.aliases.add("accept");
 
         this.senderMustBePlayer = true;
-        this.setHelpShort("Accepts a pearl broadcast request.");
+        this.setHelpShort("Accepts a pearl broadcast request");
     }
 
     @Override

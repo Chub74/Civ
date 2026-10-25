@@ -2,7 +2,7 @@ name: RandomSpawn
 version: ${version}
 main: me.josvth.randomspawn.RandomSpawn
 author: Josvth
-depend: [ BanStick ]
+depend: [ CivModCore, BanStick ]
 softdepend: [ Bastion ]
 api-version: 26.3
 commands:

@@ -13,7 +13,6 @@ import com.untamedears.itemexchange.events.BlockInventoryRequestEvent;
 import com.untamedears.itemexchange.rules.ExchangeRule;
 import com.untamedears.itemexchange.rules.ExchangeRule.Type;
 import com.untamedears.itemexchange.utility.Utilities;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
@@ -23,6 +22,7 @@ import org.bukkit.util.BlockIterator;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.MaterialUtils;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 /**
  * Commands class involved in creating shop exchange rules
@@ -33,17 +33,16 @@ public final class CreateCommand extends BaseCommand {
     public static final String ALIAS = "iec|iecreate";
     public static final String ALIAS_INPUT_TYPES = "input|i|in|inputs";
     public static final String ALIAS_OUTPUT_TYPES = "output|o|out|outputs";
-    public static final String CREATION_SUCCESS = ChatColor.GREEN + "Created exchange successfully.";
 
     // ------------------------------------------------------------
     // Creating from shop block
     // ------------------------------------------------------------
 
     @Default
-    @Description("Creates an exchange rule based on a shop block.")
+    @Description("Creates an exchange rule based on a shop block")
     public void createFromShop(Player player) {
         if (!ItemExchangeConfig.canCreateFromShop()) {
-            player.sendMessage(ChatColor.RED + "That command is disabled.");
+            CivUI.error(player, "Making a shop from a chest is turned off");
             return;
         }
         BlockIterator ray = new BlockIterator(player, 6);
@@ -63,7 +62,7 @@ public final class CreateCommand extends BaseCommand {
             BlockInventoryRequestEvent event = BlockInventoryRequestEvent.emit(block, player,
                 BlockInventoryRequestEvent.Purpose.ACCESS);
             if (event.isCancelled()) {
-                player.sendMessage(ChatColor.RED + "You do not have access to that.");
+                CivUI.error(player, "You don't have access to that");
                 return;
             }
             ItemStack inputItem = null;
@@ -82,16 +81,16 @@ public final class CreateCommand extends BaseCommand {
                 } else if (outputItem.isSimilar(item)) {
                     outputItem.setAmount(outputItem.getAmount() + item.getAmount());
                 } else {
-                    player.sendMessage(ChatColor.RED + "Inventory should only contain two types of items!");
+                    CivUI.error(player, "To make a shop from it, the chest can only hold two kinds of items");
                     return;
                 }
             }
             if (inputItem == null) {
-                player.sendMessage(ChatColor.RED + "Inventory should have at least one type of item.");
+                CivUI.error(player, "Put the item you want to sell in the chest first");
                 return;
             }
             if (Utilities.isExchangeRule(inputItem) || Utilities.isExchangeRule(outputItem)) {
-                player.sendMessage(ChatColor.RED + "You cannot exchange rule blocks!");
+                CivUI.error(player, "You can't trade exchange rules");
                 return;
             }
             ExchangeRule inputRule = new ExchangeRule(Type.INPUT, inputItem);
@@ -101,28 +100,28 @@ public final class CreateCommand extends BaseCommand {
                 ExchangeRule outputRule = new ExchangeRule(Type.OUTPUT, outputItem);
                 Utilities.giveItemsOrDrop(inventory, inputRule.toItem(), outputRule.toItem());
             }
-            player.sendMessage(CREATION_SUCCESS);
+            CivUI.success(player, "Created the exchange rule");
             return;
         }
-        player.sendMessage(ChatColor.RED + "No block in view is a suitable shop block.");
+        CivUI.error(player, "You aren't looking at a block that can be a shop");
     }
 
     // ------------------------------------------------------------
     // Creating from a held item
     // ------------------------------------------------------------
 
-    public static final String HELD_DESCRIPTION = "Creates an exchange rule based on a held item.";
+    public static final String HELD_DESCRIPTION = "Creates an exchange rule based on a held item";
 
     private void createFromHeld(Player player, Type type) {
         ItemStack held = player.getInventory().getItemInMainHand();
         if (!ItemUtils.isValidItem(held)) {
-            throw new InvalidCommandArgument("You must be holding an item to do that.");
+            throw new InvalidCommandArgument("Hold an item to do that");
         }
         if (Utilities.isExchangeRule(held)) {
-            throw new InvalidCommandArgument("You cannot create a rule from a rule.", false);
+            throw new InvalidCommandArgument("You can't make a rule from a rule", false);
         }
         Utilities.givePlayerExchangeRule(player, new ExchangeRule(type, held));
-        player.sendMessage(CREATION_SUCCESS);
+        CivUI.success(player, "Created the exchange rule");
     }
 
     @Subcommand(ALIAS_INPUT_TYPES)
@@ -143,24 +142,24 @@ public final class CreateCommand extends BaseCommand {
 
     public static final String DETAILS_SYNTAX = "<material> [amount]";
 
-    public static final String DETAILS_DESCRIPTION = "Sets the material of an exchange rule.";
+    public static final String DETAILS_DESCRIPTION = "Sets the material of an exchange rule";
 
     public static final String DETAILS_COMPLETION = "@itemMaterials";
 
     private void createFromDetails(Player player, Type type, String slug, int amount) {
         Material material = MaterialUtils.getMaterial(slug);
         if (!ItemUtils.isValidItemMaterial(material)) {
-            throw new InvalidCommandArgument("You must enter a valid item material.");
+            throw new InvalidCommandArgument("There's no item by that name");
         }
         ExchangeRule rule = new ExchangeRule();
         rule.setType(type);
         rule.setMaterial(material);
         if (amount <= 0) {
-            throw new InvalidCommandArgument("You must enter a valid amount.");
+            throw new InvalidCommandArgument("Enter an amount above 0");
         }
         rule.setAmount(amount);
         Utilities.givePlayerExchangeRule(player, rule);
-        player.sendMessage(CREATION_SUCCESS);
+        CivUI.success(player, "Created the exchange rule");
     }
 
     @Subcommand(ALIAS_INPUT_TYPES)

@@ -19,10 +19,10 @@ public class CmdPearlBroadcast extends PearlCommand {
 
         if (plugin.isNameLayerEnabled()) {
             this.commandArgs.add(required("group/player", autoTab("group_or_player", "No matching group/player found.")));
-            this.setHelpShort("Broadcasts your pearl location to a group or another player.");
+            this.setHelpShort("Broadcasts your pearl location to a group or player");
         } else {
             this.commandArgs.add(requiredPlayer("player"));
-            this.setHelpShort("Broadcasts your pearl location to another player.");
+            this.setHelpShort("Broadcasts your pearl location to a player");
         }
 
         this.senderMustBePlayer = true;

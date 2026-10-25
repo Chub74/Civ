@@ -1,6 +1,7 @@
 package com.devotedmc.ExilePearl.command;
 
 import com.devotedmc.ExilePearl.Lang;
+import com.devotedmc.ExilePearl.util.PearlText;
 import com.devotedmc.ExilePearl.util.StringListIgnoresCase;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -248,7 +249,7 @@ public abstract class BaseCommand<T extends Plugin> {
 
         // Check if the arg is an auto-tab type
         if (args.size() > commandArgs.size()) {
-            msg("<i>No more arguments are needed.");
+            msg("<b>That command doesn't take any more arguments");
             return null;
         }
 
@@ -540,7 +541,7 @@ public abstract class BaseCommand<T extends Plugin> {
      */
     public String getUseageTemplate(List<BaseCommand<? extends Plugin>> commandChain, boolean addShortHelp) {
         StringBuilder ret = new StringBuilder();
-        ret.append(ChatUtils.parseColorTags("<c>"));
+        ret.append("<c>");
         ret.append('/');
 
         for (BaseCommand<? extends Plugin> mc : commandChain) {
@@ -552,13 +553,13 @@ public abstract class BaseCommand<T extends Plugin> {
 
         if (commandArgs.size() > 0) {
             for (CommandArg a : this.commandArgs) {
-                ret.append("<p> ");
+                ret.append(" <p>");
                 ret.append(a.toString());
             }
         }
 
         if (addShortHelp) {
-            ret.append(ChatUtils.parseColorTags(" <i>"));
+            ret.append(" <i>");
             ret.append(this.getHelpShort());
         }
 
@@ -585,8 +586,7 @@ public abstract class BaseCommand<T extends Plugin> {
     }
 
     protected void msg(Player player, String str) {
-        str = parse(str);
-        player.sendMessage(str);
+        PearlText.send(player, str);
     }
 
     /**
@@ -596,17 +596,11 @@ public abstract class BaseCommand<T extends Plugin> {
      * @param args The message arguments
      */
     protected void msg(Player player, String str, Object... args) {
-        str = parse(str, args);
-        player.sendMessage(str);
+        PearlText.send(player, str, args);
     }
 
     protected void msg(String str) {
-        str = parse(str);
-        if (senderIsConsole) {
-            sender.sendMessage(str);
-        } else {
-            me.sendMessage(str);
-        }
+        PearlText.send(senderIsConsole ? sender : me, str);
     }
 
     /**
@@ -616,12 +610,7 @@ public abstract class BaseCommand<T extends Plugin> {
      * @param args The message arguments
      */
     protected void msg(String str, Object... args) {
-        str = parse(str, args);
-        if (senderIsConsole) {
-            sender.sendMessage(str);
-        } else {
-            me.sendMessage(str);
-        }
+        PearlText.send(senderIsConsole ? sender : me, str, args);
     }
 
     /**
@@ -812,7 +801,8 @@ public abstract class BaseCommand<T extends Plugin> {
      * @return The permission forbidden message
      */
     protected String getForbiddenMessage(String perm) {
-        return parse(Lang.permForbidden, getPermissionDescription(perm));
+        // Left as a template, so the error colour survives until PearlText sends it
+        return Lang.permForbidden.replace("%s", getPermissionDescription(perm));
     }
 
 
@@ -865,7 +855,7 @@ public abstract class BaseCommand<T extends Plugin> {
             return true;
         } else if (visiblity != CommandVisibility.VISIBLE) {
             if (informSenderIfNot) {
-                me.sendMessage(Lang.unknownCommand);
+                PearlText.send(me, Lang.unknownCommand);
             }
         } else if (informSenderIfNot) {
             msg(getForbiddenMessage(perm));

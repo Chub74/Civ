@@ -14,7 +14,7 @@ public class CmdSummonConfirm extends PearlCommand {
         this.aliases.add("confirm");
 
         this.senderMustBePlayer = true;
-        this.setHelpShort("Confirms a summon request.");
+        this.setHelpShort("Accepts a summon request");
         this.permission = Permission.SUMMON_CONFIRM.node;
         this.visibility = CommandVisibility.SECRET;
     }
@@ -32,7 +32,7 @@ public class CmdSummonConfirm extends PearlCommand {
             return;
         }
         if (!(pearl.getHolder() instanceof PlayerHolder)) {
-            msg("<b>Somebody must be holding your pearl to be summoned");
+            msg("<b>Someone has to be holding your pearl to summon you");
         } else {
             PlayerHolder holder = (PlayerHolder) pearl.getHolder();
             if (plugin.getPearlManager().summonPearl(pearl, holder.getPlayer())) {
@@ -40,7 +40,7 @@ public class CmdSummonConfirm extends PearlCommand {
                 msg(holder.getPlayer(), Lang.pearlSummoned, pearl.getPlayerName());
             } else {
                 msg(holder.getPlayer(), Lang.pearlCantSummon);
-                msg("<b>Summoning failed");
+                msg("<b>The summon didn't work");
             }
         }
     }

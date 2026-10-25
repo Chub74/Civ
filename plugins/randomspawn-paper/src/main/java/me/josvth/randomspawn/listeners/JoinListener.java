@@ -4,7 +4,6 @@ import com.programmerdan.minecraft.banstick.data.BSPlayer;
 import java.util.List;
 import java.util.Set;
 import me.josvth.randomspawn.RandomSpawn;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.World.Environment;
@@ -84,9 +83,7 @@ public class JoinListener implements Listener {
                     player.setBedSpawnLocation(newSpawn);
                 }
 
-                if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-                }
+                plugin.sendRandomSpawned(player);
                 return;
             }
         }
@@ -109,9 +106,7 @@ public class JoinListener implements Listener {
                 player.setBedSpawnLocation(spawnLocation);
             }
 
-            if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-            }
+            plugin.sendRandomSpawned(player);
             return;
         }
 

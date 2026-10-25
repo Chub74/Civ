@@ -13,7 +13,6 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Tag;
@@ -39,6 +38,7 @@ import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.utilities.NullUtils;
 import vg.civcraft.mc.civmodcore.utilities.Validation;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 /**
  * Listener class that handles shop and rule interactions.
@@ -168,7 +168,7 @@ public final class ItemExchangeListener implements Listener {
         ItemStack[] inputItems = inputRule.getStock(player.getInventory());
         if (inputItems.length < 1) {
             PLUGIN.debug("[Shop] Cancelling, buyer doesn't have enough of the input.");
-            player.sendMessage(ChatColor.RED + "You don't have enough of the input.");
+            CivUI.error(player, "You don't have enough of the input");
             return;
         }
         // Check that the shop has enough of the outputs if needed
@@ -177,7 +177,7 @@ public final class ItemExchangeListener implements Listener {
             outputItems = outputRule.getStock(trade.getInventory());
             if (outputItems.length < 1) {
                 PLUGIN.debug("[Shop] Cancelling, shop doesn't have enough of the output.");
-                player.sendMessage(ChatColor.RED + "Shop does not have enough in stock.");
+                CivUI.error(player, "The shop is out of stock");
                 return;
             }
         }
@@ -197,15 +197,15 @@ public final class ItemExchangeListener implements Listener {
         }
         if (!successfulTransfer) {
             PLUGIN.debug("[Shop] Could not complete that transaction.");
-            player.sendMessage(ChatColor.RED + "Could not complete that transaction!");
+            CivUI.error(player, "The trade didn't go through");
             return;
         }
         Stream.of(clicked, trade.getBlock()).distinct().forEach(Utilities::successfulTransactionButton);
         SuccessfulPurchaseEvent.emit(player, trade, inputItems, outputItems);
         if (trade.hasOutput()) {
-            player.sendMessage(ChatColor.GREEN + "Successful exchange!");
+            CivUI.success(player, "Trade complete");
         } else {
-            player.sendMessage(ChatColor.GREEN + "Successful donation!");
+            CivUI.success(player, "Donation complete");
         }
     }
 

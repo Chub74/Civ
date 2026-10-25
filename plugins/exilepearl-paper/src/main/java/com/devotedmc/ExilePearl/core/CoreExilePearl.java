@@ -24,11 +24,11 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 /**
  * Instance of a player who is imprisoned in an exile pearl
@@ -479,7 +479,7 @@ final class CoreExilePearl implements ExilePearl {
         Location l = getHolder().getLocation();
         String name = getHolder().getName();
         if (getPlayer() != null) {
-            getPlayer().sendMessage(ChatUtils.parseColor(String.format(Lang.pearlPearlIsHeld, name, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName())));
+            PearlText.send(getPlayer(), Lang.pearlPearlIsHeld, name, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName());
         }
         for (BroadcastListener b : bcastListeners) {
             b.broadcast(this);

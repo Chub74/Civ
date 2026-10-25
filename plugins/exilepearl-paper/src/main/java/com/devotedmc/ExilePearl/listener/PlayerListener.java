@@ -25,11 +25,8 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.minelink.ctplus.compat.base.NpcIdentity;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Chunk;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -102,6 +99,7 @@ import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.inventory.InventoryUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 /**
  * Handles events related to prison pearls
@@ -501,7 +499,7 @@ public class PlayerListener implements Listener, Configurable {
                 return;
             }
             if (pearlApi.isPlayerExiled(clicker) && clickerPearl.getPearlType() == PearlType.EXILE) {
-                clicker.sendMessage(ChatUtils.parseColor(Lang.pearlCantHold));
+                PearlText.send(clicker, Lang.pearlCantHold);
                 e.setCancelled(true);
             }
         }
@@ -597,7 +595,7 @@ public class PlayerListener implements Listener, Configurable {
                 // ShiftClicking into a furnace will not move the pearl into the furnace so the pearlHolder should not be updated
                 if (event.getClick().isShiftClick() && holder != null && holder.getInventory() instanceof FurnaceInventory) {
                     event.setCancelled(true);
-                    event.getWhoClicked().sendMessage(ChatColor.RED + "You can not shift-click this pearl into a furnace.");
+                    PearlText.send(event.getWhoClicked(), "<b>You can't shift-click a pearl into a furnace");
                     return;
                 }
 
@@ -656,7 +654,7 @@ public class PlayerListener implements Listener, Configurable {
             // Handled by onItemSpawn
         } else if (a != InventoryAction.NOTHING) {
             if (pearlApi.getPearlFromItemStack(event.getCurrentItem()) != null || pearlApi.getPearlFromItemStack(event.getCursor()) != null) {
-                ((Player) event.getWhoClicked()).sendMessage(ChatColor.RED + "You can't do that with an exile pearl.");
+                PearlText.send(event.getWhoClicked(), "<b>You can't do that with an exile pearl");
 
                 event.setCancelled(true);
             }
@@ -725,7 +723,7 @@ public class PlayerListener implements Listener, Configurable {
             if (!damagers.isEmpty() && pearlApi.getPearlConfig().canPerform(ExileRule.SPAWN_RESET) && pearlApi.getPearl(playerId).getPearlType() == PearlType.EXILE) {
                 pearl.getPlayer().setBedSpawnLocation(null, true);
                 for (Player damager : damagers) {
-                    damager.sendMessage(String.format(Lang.pearlAlreadyPearled, pearlApi.getRealPlayerName(playerId)));
+                    PearlText.send(damager, Lang.pearlAlreadyPearled, pearlApi.getRealPlayerName(playerId));
                 }
                 return;
             }
@@ -758,9 +756,9 @@ public class PlayerListener implements Listener, Configurable {
                 if (pearlApi.isPlayerExiled(playerId)) {
                     for (Player dmgr : damagers) {
                         if (pearlApi.getPearlConfig().getShouldAnnounceExileLocation()) {
-                            dmgr.sendMessage(ChatUtils.parseColor(String.format(Lang.pearlAlreadyPearledAtLocation, pearlApi.getRealPlayerName(playerId), pearlApi.getPearl(playerId).getLocationDescription())));
+                            PearlText.send(dmgr, Lang.pearlAlreadyPearledAtLocation, pearlApi.getRealPlayerName(playerId), pearlApi.getPearl(playerId).getLocationDescription());
                         } else {
-                            dmgr.sendMessage(ChatUtils.parseColor(String.format(Lang.pearlAlreadyPearled, pearlApi.getRealPlayerName(playerId))));
+                            PearlText.send(dmgr, Lang.pearlAlreadyPearled, pearlApi.getRealPlayerName(playerId));
                         }
                     }
                 }
@@ -774,7 +772,7 @@ public class PlayerListener implements Listener, Configurable {
             // Notify other damagers if they were not awarded the pearl
             for (Player damager : damagers) {
                 if (damager != killer) {
-                    damager.sendMessage(ChatUtils.parseColor(String.format(Lang.pearlYouDamagedNotAwarded, pearlApi.getRealPlayerName(playerId), pearlApi.getRealPlayerName(killer.getUniqueId()))));
+                    PearlText.send(damager, Lang.pearlYouDamagedNotAwarded, pearlApi.getRealPlayerName(playerId), pearlApi.getRealPlayerName(killer.getUniqueId()));
                 }
             }
 
@@ -849,7 +847,7 @@ public class PlayerListener implements Listener, Configurable {
         UUID uid = e.getPlayer().getUniqueId();
         ExilePearl pearl = pearlApi.getPearl(uid);
         if (pearl != null && pearl.getFreedOffline()) {
-            pearl.getPlayer().sendMessage(ChatUtils.parseColor(Lang.pearlYouWereFreed));
+            PearlText.send(pearl.getPlayer(), Lang.pearlYouWereFreed);
             pearlApi.freePearl(pearl, PearlFreeReason.FREED_OFFLINE);
             removeHelpItem(pearl.getPlayer());
         } else if (pearl != null) {
@@ -885,13 +883,13 @@ public class PlayerListener implements Listener, Configurable {
         Player player = e.getPlayer();
 
         if (!pearlApi.getPearlConfig().getFreeByThrowing()) {
-            player.sendMessage(ChatUtils.parseColor(Lang.pearlCantThrow));
+            PearlText.send(player, Lang.pearlCantThrow);
             e.setCancelled(true);
             return;
         }
         e.setCancelled(true);
         if (pearlApi.freePearl(pearl, PearlFreeReason.PEARL_THROWN)) {
-            player.sendMessage(String.format(Lang.pearlYouFreed, pearl.getPlayerName()));
+            PearlText.send(player, Lang.pearlYouFreed, pearl.getPlayerName());
         }
     }
 
@@ -923,14 +921,14 @@ public class PlayerListener implements Listener, Configurable {
                 offHand.setAmount(offHand.getAmount() - 1);
             }
             pearlApi.freePearl(pearl, PearlFreeReason.PEARL_THROWN);
-            p.sendMessage(ChatUtils.parseColor(String.format(Lang.pearlYouFreed, pearl.getPlayerName())));
+            PearlText.send(p, Lang.pearlYouFreed, pearl.getPlayerName());
             if (pearl.getPlayer() != null) {
-                pearl.getPlayer().sendMessage(ChatUtils.parseColor(Lang.pearlYouWereFreed));
+                PearlText.send(pearl.getPlayer(), Lang.pearlYouWereFreed);
             }
             e.setCancelled(true);
             return;
         }
-        p.sendMessage(ChatUtils.parseColor(Lang.pearlCantThrow));
+        PearlText.send(p, Lang.pearlCantThrow);
         e.setCancelled(true);
     }
 
@@ -950,9 +948,9 @@ public class PlayerListener implements Listener, Configurable {
         pearlApi.log(String.format("%s has bound %s to a ExilePearl", e.getPearl().getKillerName(), e.getPearl().getPlayerName()));
 
         if (imprisoned != null) {
-            imprisoned.sendMessage(String.format(ChatUtils.parseColor(Lang.pearlYouWereBound), imprisoner.getName()));
+            PearlText.send(imprisoned, Lang.pearlYouWereBound, imprisoner.getName());
         }
-        imprisoner.sendMessage(String.format(ChatUtils.parseColor(Lang.pearlYouBound), e.getPearl().getPlayerName()));
+        PearlText.send(imprisoner, Lang.pearlYouBound, e.getPearl().getPlayerName());
     }
 
 
@@ -1014,7 +1012,7 @@ public class PlayerListener implements Listener, Configurable {
     public void onPlayerFreed(PlayerFreedEvent e) {
         Player player = e.getPearl().getPlayer();
         if (player != null && player.isOnline()) {
-            player.sendMessage(ChatUtils.parseColor(Lang.pearlYouWereFreed));
+            PearlText.send(player, Lang.pearlYouWereFreed);
             removeHelpItem(player);
         }
     }
@@ -1168,10 +1166,10 @@ public class PlayerListener implements Listener, Configurable {
                         giveBack.setAmount(numLeft);
                         if (openSlot >= 0) {
                             player.getInventory().setItem(openSlot, giveBack);
-                            player.sendMessage(ChatUtils.parseColor(String.format("<i>The remaining %d repair items were put back in your inventory.", numLeft)));
+                            PearlText.send(player, "<i>Put the other <p>%d <i>repair items back in your inventory", numLeft);
                         } else {
                             player.getWorld().dropItem(player.getLocation().add(0, 0.5, 0), giveBack);
-                            player.sendMessage(ChatUtils.parseColor(String.format("<i>The remaining %d repair items were put back in your inventory.", numLeft)));
+                            PearlText.send(player, "<i>Put the other <p>%d <i>repair items back in your inventory", numLeft);
                         }
                         break;
                     }
@@ -1216,10 +1214,10 @@ public class PlayerListener implements Listener, Configurable {
                         giveBack.setAmount(numLeft);
                         if (openSlot >= 0) {
                             player.getInventory().setItem(openSlot, giveBack);
-                            player.sendMessage(ChatUtils.parseColor(String.format("<i>The remaining %d upgrade items were put back in your inventory.", numLeft)));
+                            PearlText.send(player, "<i>Put the other <p>%d <i>upgrade items back in your inventory", numLeft);
                         } else {
                             player.getWorld().dropItemNaturally(player.getLocation().add(0, 0.5, 0), giveBack);
-                            player.sendMessage(ChatUtils.parseColor(String.format("<i>The remaining %d upgrade items were dropped on the ground.", numLeft)));
+                            PearlText.send(player, "<w>Your inventory is full, so the other <p>%d <w>upgrade items dropped on the ground", numLeft);
                         }
                         break;
                     }
@@ -1231,7 +1229,7 @@ public class PlayerListener implements Listener, Configurable {
             inv.setResult(pearl.createItemStack());
             if (pearl.getPlayer() != null && pearl.getPlayer().isOnline()) {
                 SpawnUtil.spawnPlayer(pearl.getPlayer(), pearlApi.getPearlConfig().getPrisonWorld());
-                pearl.getPlayer().sendMessage(ChatUtils.parseColor(String.format("<i>You've been imprisoned in the end by %s.", ((Player) e.getWhoClicked()).getDisplayName())));
+                PearlText.send(pearl.getPlayer(), "<b>You were imprisoned in the end by <c>%s", e.getWhoClicked().getName());
             }
             pearlApi.log("The pearl for player %s was upgraded to a Prison Pearl.", pearl.getPlayerName());
         }
@@ -1255,7 +1253,7 @@ public class PlayerListener implements Listener, Configurable {
                 continue;
             }
             event.setCancelled(true);
-            player.sendMessage(Component.text("You cannot fly with imprisoned players!").color(NamedTextColor.RED));
+            PearlText.send(player, "<b>You can't fly while carrying a pearl");
             break;
         }
     }
@@ -1272,7 +1270,7 @@ public class PlayerListener implements Listener, Configurable {
             return;
         }
         event.setCancelled(true);
-        event.getPlayer().sendMessage(Component.text("You cannot fly with imprisoned players!").color(NamedTextColor.RED));
+        PearlText.send(event.getPlayer(), "<b>You can't fly while carrying a pearl");
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -1280,7 +1278,7 @@ public class PlayerListener implements Listener, Configurable {
         ExilePearl pearl = pearlApi.getPearl(event.getPlayer().getUniqueId());
         if (pearl != null && pearl.getPearlType() == PearlType.PRISON && event.getCause() == TeleportCause.END_PORTAL) {
             event.setTo(SpawnUtil.chooseSpawn(pearlApi.getPearlConfig().getPrisonWorld()));
-            event.getPlayer().sendMessage(Component.text("Pearled players cannot use portals!", NamedTextColor.RED));
+            PearlText.send(event.getPlayer(), "<b>You can't use portals while you're pearled");
             event.setCancelled(true);
         }
     }
@@ -1298,7 +1296,7 @@ public class PlayerListener implements Listener, Configurable {
             }
             is.setAmount(is.getAmount() - 1);
             pearl.setHolder(player.getWorld().dropItemNaturally(player.getLocation(), pearl.createItemStack()));
-            player.sendMessage(Component.text("The pearl(s) you were carrying have been dropped since you went through a portal!", NamedTextColor.RED));
+            PearlText.send(player, "<w>You can't take pearls through portals, so one dropped where you stood");
         }
     }
 

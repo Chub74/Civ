@@ -134,10 +134,10 @@ public final class BookModifier extends ModifierData {
     public List<String> getDisplayInfo() {
         final var lines = new ArrayList<String>(2);
         if (hasAuthor()) {
-            lines.add(ChatColor.DARK_AQUA + "Author: " + ChatColor.GRAY + getAuthor());
+            lines.add(ChatColor.GRAY + "Author: " + ChatColor.WHITE + getAuthor());
         }
         if (hasGeneration()) {
-            lines.add(ChatColor.DARK_AQUA + "Generation: " + ChatColor.GRAY + getGeneration().name());
+            lines.add(ChatColor.GRAY + "Generation: " + ChatColor.AQUA + getGeneration().name());
         }
         return lines;
     }

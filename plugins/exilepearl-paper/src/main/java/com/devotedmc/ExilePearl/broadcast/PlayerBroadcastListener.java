@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 public class PlayerBroadcastListener implements BroadcastListener {
 
@@ -23,11 +24,10 @@ public class PlayerBroadcastListener implements BroadcastListener {
         Location l = pearl.getHolder().getLocation();
         String holderName = pearl.getHolder().getName();
 
-        String msg = String.format(Lang.pearlBroadcast, pearl.getPlayerName(), holderName, l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName());
-
         Player p = Bukkit.getPlayer(playerId);
         if (p != null && p.isOnline()) {
-            p.sendMessage(msg);
+            PearlText.send(p, Lang.pearlBroadcast, pearl.getPlayerName(), holderName,
+                l.getBlockX(), l.getBlockY(), l.getBlockZ(), l.getWorld().getName());
         }
     }
 

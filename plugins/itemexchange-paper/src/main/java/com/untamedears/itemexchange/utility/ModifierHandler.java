@@ -22,7 +22,7 @@ public class ModifierHandler<T extends ModifierData> extends RuleHandler {
     public ModifierHandler(Player player, T template) {
         super(player);
         if (ItemExchangePlugin.modifierRegistrar().getModifier(template.getClass()) != template) {
-            throw new InvalidCommandArgument("Could not match that modifier.", false);
+            throw new InvalidCommandArgument("That modifier doesn't exist", false);
         }
         this.template = template;
         this.modifier = getRule().getModifiers().get(template);

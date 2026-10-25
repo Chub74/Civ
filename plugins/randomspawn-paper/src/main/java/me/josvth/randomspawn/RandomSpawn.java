@@ -6,11 +6,13 @@ import me.josvth.randomspawn.listeners.*;
 import me.josvth.randomspawn.spawn.AsyncSpawnSelector;
 import me.josvth.randomspawn.spawn.BlockingSpawnSelector;
 import me.josvth.randomspawn.spawn.SpawnSelector;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 import java.util.ArrayList;
 import java.util.Set;
@@ -64,6 +66,15 @@ public class RandomSpawn extends JavaPlugin {
 
     public void playerInfo(Player player, String message) {
         player.sendMessage(ChatColor.AQUA + "[RandomSpawn] " + ChatColor.RESET + message);
+    }
+
+    /** messages.randomspawned is MiniMessage. Unset or empty sends nothing. */
+    public void sendRandomSpawned(Player player) {
+        String message = yamlHandler.config.getString("messages.randomspawned");
+        if (message == null || message.isEmpty()) {
+            return;
+        }
+        CivUI.info(player, MiniMessage.miniMessage().deserialize(message));
     }
 
     // *------------------------------------------------------------------------------------------------------------*

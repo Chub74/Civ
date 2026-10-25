@@ -41,7 +41,7 @@ import org.bukkit.event.player.PlayerItemConsumeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
+import com.devotedmc.ExilePearl.util.PearlText;
 
 /**
  * Listener for disallowing certain actions of exiled players
@@ -357,7 +357,7 @@ public class ExileListener extends RuleListener implements Configurable {
     public void onCollectXp(PlayerExpChangeEvent e) {
         if (isRuleActive(ExileRule.COLLECT_XP, e.getPlayer().getUniqueId())) {
             e.setAmount(0);
-            e.getPlayer().sendMessage(ChatUtils.parseColor(String.format(Lang.ruleCantDoThat, ExileRule.COLLECT_XP.getActionString())));
+            PearlText.send(e.getPlayer(), Lang.ruleCantDoThat, ExileRule.COLLECT_XP.getActionString());
         }
     }
 
@@ -427,7 +427,7 @@ public class ExileListener extends RuleListener implements Configurable {
         }
 
         if (e.isCancelled()) {
-            player.sendMessage(ChatUtils.parseColor(String.format(Lang.ruleCantDoThat, "do that")));
+            PearlText.send(player, Lang.ruleCantDoThat, "do that");
         }
     }
 

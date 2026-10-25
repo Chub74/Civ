@@ -3,6 +3,7 @@ package com.devotedmc.ExilePearl.command;
 import com.devotedmc.ExilePearl.ExilePearl;
 import com.devotedmc.ExilePearl.ExilePearlApi;
 import com.programmerdan.minecraft.banstick.handler.BanHandler;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -19,9 +20,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import net.md_5.bungee.api.ChatColor;
 import org.apache.commons.collections4.ComparatorUtils;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -29,14 +28,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.CivModCorePlugin;
-import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.inventory.gui.Clickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.ClickableInventory;
 import vg.civcraft.mc.civmodcore.inventory.gui.DecorationStack;
 import vg.civcraft.mc.civmodcore.inventory.gui.IClickable;
 import vg.civcraft.mc.civmodcore.inventory.gui.MultiPageView;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
-import vg.civcraft.mc.civmodcore.inventory.items.MetaUtils;
+import vg.civcraft.mc.civmodcore.ui.Channel;
+import vg.civcraft.mc.civmodcore.ui.CivMenu;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 import vg.civcraft.mc.civmodcore.utilities.MoreCollectionUtils;
 import vg.civcraft.mc.civmodcore.world.WorldUtils;
 
@@ -50,7 +52,7 @@ public class CmdShowAllPearls extends PearlCommand {
     public CmdShowAllPearls(final ExilePearlApi pearlApi) {
         super(pearlApi);
         this.aliases.add("showall");
-        setHelpShort("Lists all pearled players.");
+        setHelpShort("Lists all pearled players");
 
         this.senderMustBePlayer = true;
     }
@@ -67,7 +69,7 @@ public class CmdShowAllPearls extends PearlCommand {
         final long previousUseTime = COOLDOWNS.compute(sender.getUniqueId(),
             (uuid, value) -> value == null ? 0L : value); // This is better than getOrDefault()
         if (previousUseTime > (now - COOLDOWN)) {
-            sender.sendMessage(ChatColor.RED + "You can't do that yet.");
+            CivUI.notice(Kind.ERROR, "Wait a moment before doing that again").to(sender).on(Channel.ACTION_BAR).send();
             return true;
         }
         COOLDOWNS.put(sender.getUniqueId(), now);
@@ -110,62 +112,32 @@ public class CmdShowAllPearls extends PearlCommand {
 
                 Consumer<ItemStack> itemMetaMod = itemToMod ->
                     ItemUtils.handleItemMeta(itemToMod, (ItemMeta meta) -> {
-                        // Pearled player's name
-                        meta.displayName(ChatUtils.newComponent(pearl.getPlayerName())
-                            .color(NamedTextColor.AQUA)
-                            .append(isPlayerBanned ?
-                                Component.text(" <banned>")
-                                    .color(NamedTextColor.RED) :
-                                Component.empty()));
-
-                        meta.lore(List.of(
-                            // Pearl type
-                            ChatUtils.newComponent(pearl.getItemName())
-                                .color(NamedTextColor.GREEN),
-                            // Pearled player's name and hash
-                            ChatUtils.newComponent("Player: ")
-                                .color(NamedTextColor.GOLD)
-                                .append(Component.text(pearl.getPlayerName())
-                                    .color(NamedTextColor.GRAY))
-                                .append(Component.space())
-                                .append(Component.text(Integer.toString(pearl.getPearlId(), 36).toUpperCase())
-                                    .color(NamedTextColor.DARK_GRAY)),
-                            // Pearled Date
-                            ChatUtils.newComponent("Pearled: ")
-                                .color(NamedTextColor.GOLD)
-                                .append(Component.text(DATE_FORMAT.format(pearl.getPearledOn()))
-                                    .color(NamedTextColor.GRAY)),
-                            // Killer's name
-                            ChatUtils.newComponent("Killed by: ")
-                                .color(NamedTextColor.GOLD)
-                                .append(Component.text(pearl.getKillerName())
-                                    .color(NamedTextColor.GRAY))));
-
-                        if (showLocation) {
-                            MetaUtils.addComponentLore(meta,
-                                // Pearl location
-                                ChatUtils.newComponent("Location: ")
-                                    .color(NamedTextColor.GOLD)
-                                    .append(Component.text(pearlLocation.getWorld().getName())
-                                        .color(NamedTextColor.WHITE))
-                                    .append(Component.space())
-                                    .append(Component.text(pearlLocation.getBlockX())
-                                        .color(NamedTextColor.RED))
-                                    .append(Component.space())
-                                    .append(Component.text(pearlLocation.getBlockY())
-                                        .color(NamedTextColor.GREEN))
-                                    .append(Component.space())
-                                    .append(Component.text(pearlLocation.getBlockZ())
-                                        .color(NamedTextColor.BLUE)),
-                                // Waypoint
-                                Component.space(),
-                                ChatUtils.newComponent("Click to receive a waypoint")
-                                    .color(NamedTextColor.GREEN));
-                        }
+                        // A custom name, not ITEM_NAME: player heads name themselves, and that beats ITEM_NAME
+                        meta.displayName(Component.text()
+                            .decoration(TextDecoration.ITALIC, false)
+                            .append(CivText.subject(pearl.getPlayerName()))
+                            .append(isPlayerBanned ? Component.text(" (banned)", CivText.ERROR) : Component.empty())
+                            .build());
                         return true;
                     });
+                Consumer<ItemStack> itemLoreMod = itemToMod -> {
+                    itemToMod.unsetData(DataComponentTypes.LORE);
+                    CivMenu.lore(itemToMod,
+                        CivMenu.stat("Type", pearl.getItemName()),
+                        CivMenu.stat("Pearl", Component.text(Integer.toString(pearl.getPearlId(), 36).toUpperCase(), CivText.MUTED)),
+                        CivMenu.stat("Pearled", DATE_FORMAT.format(pearl.getPearledOn())),
+                        CivMenu.stat("Killed by", CivText.subject(pearl.getKillerName())));
+                    if (showLocation) {
+                        CivMenu.lore(itemToMod,
+                            CivMenu.stat("Location", pearlLocation.getBlockX() + " " + pearlLocation.getBlockY() + " "
+                                + pearlLocation.getBlockZ() + " " + pearlLocation.getWorld().getName()),
+                            Component.empty(),
+                            CivMenu.hint("Click to get a waypoint"));
+                    }
+                };
 
                 itemMetaMod.accept(item);
+                itemLoreMod.accept(item);
 
                 return new Clickable(item) {
                     @Override
@@ -173,9 +145,10 @@ public class CmdShowAllPearls extends PearlCommand {
                         if (showLocation) {
                             final var location = pearl.getLocation();
                             if (!Objects.equals(location.getWorld(), clicker.getWorld())) {
-                                clicker.sendMessage(ChatColor.RED + "That pearl is in a different world!");
+                                CivUI.error(clicker, "That pearl is in another world");
                                 return;
                             }
+                            // Not through CivUI: waypoint mods only pick this up as a bare line
                             clicker.sendMessage('['
                                 + "name:" + pearl.getPlayerName() + "'s pearl,"
                                 + "x:" + location.getBlockX() + ','
@@ -189,6 +162,7 @@ public class CmdShowAllPearls extends PearlCommand {
                     public void addedToInventory(ClickableInventory inv, int slot) {
                         itemReadyFuture.thenAccept(item -> {
                             itemMetaMod.accept(item);
+                            itemLoreMod.accept(item);
                             this.item = item;
                             inv.setItem(item, slot);
                         });
@@ -200,14 +174,13 @@ public class CmdShowAllPearls extends PearlCommand {
 
         if (contentSuppliers.isEmpty()) {
             final var item = new ItemStack(Material.BARRIER);
-            ItemUtils.setComponentDisplayName(item,
-                ChatUtils.newComponent("There are currently no pearls.")
-                    .color(NamedTextColor.RED));
+            CivMenu.name(item, "No pearls");
+            CivMenu.lore(item, Component.text("Nobody is pearled right now"));
             contentSuppliers.add(() -> new DecorationStack(item));
         }
 
         List<IClickable> lazyContents = MoreCollectionUtils.asLazyList(contentSuppliers);
-        final var pageView = new MultiPageView(sender, lazyContents, "All Pearls", true);
+        final var pageView = new MultiPageView(sender, lazyContents, CivMenu.title("All Pearls"), true);
 
         pageView.setMenuSlot(constructBannedPearlsToggleClick(bannedPearlToggle), 4);
         pageView.showScreen();
@@ -215,20 +188,10 @@ public class CmdShowAllPearls extends PearlCommand {
 
     private IClickable constructBannedPearlsToggleClick(final boolean bannedPearlToggle) {
         final var item = new ItemStack(Material.BARRIER);
-        ItemUtils.handleItemMeta(item, (final ItemMeta meta) -> {
-            meta.displayName(Component.text()
-                .decoration(TextDecoration.ITALIC, false)
-                .color(NamedTextColor.GOLD)
-                .content("Toggle banned pearls")
-                .build());
-            MetaUtils.setComponentLore(meta,
-                Component.text()
-                    .decoration(TextDecoration.ITALIC, false)
-                    .color(NamedTextColor.AQUA)
-                    .content("Currently turned " + (bannedPearlToggle ? "on" : "off"))
-                    .build());
-            return true;
-        });
+        CivMenu.name(item, "Banned pearls");
+        CivMenu.lore(item,
+            CivMenu.stat("Shown", CivText.toggle(bannedPearlToggle)),
+            CivMenu.hint("Click to " + (bannedPearlToggle ? "hide" : "show") + " pearls of banned players"));
         return new Clickable(item) {
             @Override
             public void clicked(final Player clicker) {
@@ -238,10 +201,7 @@ public class CmdShowAllPearls extends PearlCommand {
                 } else {
                     TOGGLES.remove(clicker.getUniqueId());
                 }
-                clicker.sendMessage(Component.text()
-                    .color(NamedTextColor.GREEN)
-                    .content("Banned pearls toggled " + (!bannedPearlToggle ? "on" : "off"))
-                    .build());
+                CivUI.success(clicker, "Banned pearls ", CivText.toggle(!bannedPearlToggle));
                 generateOpenPearlsMenu(clicker);
             }
         };

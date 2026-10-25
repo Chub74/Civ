@@ -11,12 +11,13 @@ import com.untamedears.itemexchange.rules.interfaces.Modifier;
 import com.untamedears.itemexchange.rules.interfaces.ModifierData;
 import com.untamedears.itemexchange.utility.ModifierHandler;
 import org.apache.commons.lang3.StringUtils;
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
+import vg.civcraft.mc.civmodcore.ui.CivText;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(SetCommand.ALIAS)
 @Modifier(slug = "DISPLAY", order = 100)
@@ -87,30 +88,30 @@ public final class DisplayNameModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("displayname|display|name")
-    @Description("Sets or resets the item's display name.")
+    @Description("Sets or resets the item's display name")
     @Syntax("[name]")
     public void commandSetDisplayName(Player player, @Optional String value) {
         try (ModifierHandler<DisplayNameModifier> handler = new ModifierHandler<>(player, this)) {
             if (Strings.isNullOrEmpty(value)) {
                 handler.setModifier(null);
-                handler.relay(ChatColor.GREEN + "Now ignoring display names.");
+                handler.relay(Kind.SUCCESS, "The rule now ignores display names");
             } else {
                 handler.ensureModifier().setDisplayName(value);
-                handler.relay(ChatColor.GREEN + "Display name set to: " + value);
+                handler.relay(Kind.SUCCESS, "Set the display name to ", CivText.value(value));
             }
         }
     }
 
     @Subcommand("ignoredisplayname|ignoredisplay|ignorename")
-    @Description("Toggles the rule of ignoring display names.")
+    @Description("Toggles the rule of ignoring display names")
     public void commandToggleIgnoreDisplayName(Player player) {
         try (ModifierHandler<DisplayNameModifier> handler = new ModifierHandler<>(player, this)) {
             if (handler.getModifier() == null) {
                 handler.ensureModifier();
-                handler.relay(ChatColor.GREEN + "That rule will no longer ignore display names.");
+                handler.relay(Kind.SUCCESS, "The rule no longer ignores display names");
             } else {
                 handler.setModifier(null);
-                handler.relay(ChatColor.GREEN + "That rule will now ignore display names.");
+                handler.relay(Kind.SUCCESS, "The rule now ignores display names");
             }
         }
     }

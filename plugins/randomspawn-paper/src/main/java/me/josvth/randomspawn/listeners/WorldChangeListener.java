@@ -2,7 +2,6 @@ package me.josvth.randomspawn.listeners;
 
 import java.util.List;
 import me.josvth.randomspawn.RandomSpawn;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -58,9 +57,7 @@ public class WorldChangeListener implements Listener {
                 player.setBedSpawnLocation(spawnLocation);
             }
 
-            if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-            }
+            plugin.sendRandomSpawned(player);
         }
     }
 }

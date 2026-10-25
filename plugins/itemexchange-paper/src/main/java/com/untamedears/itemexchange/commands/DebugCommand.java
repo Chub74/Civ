@@ -6,6 +6,7 @@ import co.aikar.commands.annotation.Default;
 import co.aikar.commands.annotation.Description;
 import com.untamedears.itemexchange.utility.RuleHandler;
 import org.bukkit.entity.Player;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(DebugCommand.ALIAS)
 public final class DebugCommand extends BaseCommand {
@@ -13,11 +14,11 @@ public final class DebugCommand extends BaseCommand {
     public static final String ALIAS = "ied|iedebug";
 
     @Default
-    @Description("Outputs a string of debug information.")
+    @Description("Outputs a string of debug information")
     public void setMaterial(Player player) {
         try (RuleHandler handler = new RuleHandler(player)) {
             handler.saveChanges(false); // This is read-only
-            handler.relay(handler.getRule().toString());
+            handler.relay(Kind.INFO, handler.getRule().toString());
         }
     }
 

@@ -34,7 +34,7 @@ public class CmdUpgrade extends PearlCommand {
         }
         Set<RepairMaterial> upgradeMaterials = plugin.getPearlConfig().getUpgradeMaterials();
         if (pearl.getPearlType() != PearlType.EXILE || upgradeMaterials == null) {
-            msg("<i>This type of pearl is not upgradable!");
+            msg("<b>You can only upgrade exile pearls");
             return;
         }
         ItemMap inv = new ItemMap(player().getInventory());
@@ -49,17 +49,16 @@ public class CmdUpgrade extends PearlCommand {
                 }
             }
         }
-        msg("<b>You lack the materials to upgrade this pearl");
+        msg("<b>You don't have the materials to upgrade this pearl");
     }
 
     public void upgradePearl(ExilePearl pearl) {
         pearl.setPearlType(PearlType.PRISON);
         if (pearl.getPlayer() != null && pearl.getPlayer().isOnline()) {
             SpawnUtil.spawnPlayer(pearl.getPlayer(), pearl.getPearlType() == PearlType.PRISON ? plugin.getPearlConfig().getPrisonWorld() : plugin.getPearlConfig().getMainWorld());
-            msg(pearl.getPlayer(), "<i>You've been imprisoned in the end by %s.", player().getDisplayName());
+            msg(pearl.getPlayer(), "<b>You were imprisoned in the end by <c>%s", player().getName());
         }
-        String feedback = "The pearl for player %s was upgraded to a Prison Pearl.";
-        plugin.log(feedback, pearl.getPlayerName());
-        msg(feedback, pearl.getPlayerName());
+        plugin.log("The pearl for player %s was upgraded to a Prison Pearl.", pearl.getPlayerName());
+        msg("<g>Upgraded <c>%s<g>'s pearl to a prison pearl", pearl.getPlayerName());
     }
 }

@@ -36,6 +36,7 @@ import vg.civcraft.mc.civmodcore.inventory.items.EnchantUtils;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
 import vg.civcraft.mc.civmodcore.utilities.KeyedUtils;
 import vg.civcraft.mc.civmodcore.utilities.MoreMapUtils;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(SetCommand.ALIAS)
 @Modifier(slug = "ENCHANTS", order = 200)
@@ -144,48 +145,48 @@ public final class EnchantModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("ignoreenchantments|ignoreenchants")
-    @Description("Allows items with unspecified enchantments to be bought and sold.")
+    @Description("Allows items with unspecified enchantments to be bought and sold")
     public void commandIgnoreEnchantments(Player player) {
         try (ModifierHandler<EnchantModifier> handler = new ModifierHandler<>(player, this)) {
             handler.setModifier(null);
-            handler.relay(ChatColor.GREEN + "Now ignoring enchantments.");
+            handler.relay(Kind.SUCCESS, "The rule now ignores enchantments");
         }
     }
 
     @Subcommand("allowenchantments|allowenchants")
-    @Description("Allows items with unspecified enchantments to be bought and sold.")
+    @Description("Allows items with unspecified enchantments to be bought and sold")
     public void commandAllowUnlistedEnchantments(Player player) {
         try (ModifierHandler<EnchantModifier> handler = new ModifierHandler<>(player, this)) {
             handler.ensureModifier().setAllowUnlistedEnchants(true);
-            handler.relay(ChatColor.GREEN + "Unlisted enchantments are now allowed.");
+            handler.relay(Kind.SUCCESS, "The rule now allows unlisted enchantments");
         }
     }
 
     @Subcommand("denyenchantments|denyenchants")
-    @Description("Disallows items with unspecified enchantments to be bought and sold.")
+    @Description("Disallows items with unspecified enchantments to be bought and sold")
     public void commandDisallowUnlistedEnchantments(Player player) {
         try (ModifierHandler<EnchantModifier> handler = new ModifierHandler<>(player, this)) {
             handler.ensureModifier().setAllowUnlistedEnchants(false);
-            handler.relay(ChatColor.GREEN + "Unlisted enchantments are now denied.");
+            handler.relay(Kind.SUCCESS, "The rule now denies unlisted enchantments");
         }
     }
 
     @Subcommand("enchantment|enchant|e")
-    @Description("Disallows items with unspecified enchantments to be bought and sold.")
+    @Description("Disallows items with unspecified enchantments to be bought and sold")
     @Syntax("<+/?/-><enchantment>[level]")
     public void commandSetEnchantment(Player player, @Single String details) {
         try (ModifierHandler<EnchantModifier> handler = new ModifierHandler<>(player, this)) {
             EnchantModifier modifier = handler.ensureModifier();
             if (Strings.isNullOrEmpty(details)) {
-                throw new InvalidCommandArgument("You must enter an enchantment.");
+                throw new InvalidCommandArgument("Enter an enchantment");
             }
             Matcher matcher = SET_ENCHANT_PATTERN.matcher(details);
             if (!matcher.matches()) {
-                throw new InvalidCommandArgument("You must enter a valid instruction.");
+                throw new InvalidCommandArgument("Enter a valid instruction");
             }
             Enchantment enchantment = EnchantUtils.getEnchantment(matcher.group(2));
             if (enchantment == null) {
-                throw new InvalidCommandArgument("You must enter a valid enchantment.");
+                throw new InvalidCommandArgument("There's no enchantment by that name");
             }
             Map<Enchantment, Integer> required = modifier.getRequiredEnchants();
             Set<Enchantment> excluded = modifier.getExcludedEnchants();
@@ -200,28 +201,28 @@ public final class EnchantModifier extends ModifierData {
                         } catch (Exception ignored) {
                         } // No need to error here because it'll error below
                         if (level < enchantment.getStartLevel() || level > enchantment.getMaxLevel()) {
-                            throw new InvalidCommandArgument("You must enter a valid level.");
+                            throw new InvalidCommandArgument("Enter a valid level");
                         }
                     }
                     required.put(enchantment, level);
                     excluded.remove(enchantment);
-                    handler.relay(ChatColor.GREEN + "Successfully added required enchantment.");
+                    handler.relay(Kind.SUCCESS, "Added the required enchantment");
                     break;
                 }
                 case "-": {
                     required.remove(enchantment);
                     excluded.add(enchantment);
-                    handler.relay(ChatColor.GREEN + "Successfully added excluded enchantment.");
+                    handler.relay(Kind.SUCCESS, "Added the excluded enchantment");
                     break;
                 }
                 case "?": {
                     required.remove(enchantment);
                     excluded.remove(enchantment);
-                    handler.relay(ChatColor.GREEN + "Successfully removed rules relating to enchantment.");
+                    handler.relay(Kind.SUCCESS, "Removed the rules for that enchantment");
                     break;
                 }
                 default: {
-                    throw new InvalidCommandArgument("You entered an invalid instruction.");
+                    throw new InvalidCommandArgument("That isn't a valid instruction");
                 }
             }
             modifier.setRequiredEnchants(required);

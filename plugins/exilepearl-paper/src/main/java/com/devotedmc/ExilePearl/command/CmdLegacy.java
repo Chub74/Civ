@@ -19,6 +19,6 @@ public class CmdLegacy extends PearlCommand {
 
     @Override
     public void perform() {
-        msg("<i>Use <c>/ep <i>instead.");
+        msg("<i>Use <c>/ep <i>instead");
     }
 }

@@ -108,7 +108,7 @@ public final class PotionModifier extends ModifierData {
 
     @Override
     public List<String> getDisplayInfo() {
-        return Collections.singletonList(ChatColor.AQUA + "Potion Name: " + ChatColor.WHITE + getName());
+        return Collections.singletonList(ChatColor.GRAY + "Potion Name: " + ChatColor.WHITE + getName());
     }
 
     @Override

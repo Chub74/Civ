@@ -84,8 +84,9 @@ public final class ShopRule implements Validation {
         if (trade == null) {
             throw new NullPointerException("Could not message player about trade... this shouldn't happen.");
         }
+        // The browse lines keep their wording and go out unbranded: shop mods read them from chat
         player.sendMessage(String.format("%s(%d/%d) exchanges present.",
-            ChatColor.YELLOW, this.currentTradeIndex + 1, this.trades.size()));
+            ChatColor.GOLD, this.currentTradeIndex + 1, this.trades.size()));
         for (String line : trade.getInput().getDisplayInfo()) {
             player.sendMessage(line);
         }
@@ -95,7 +96,7 @@ public final class ShopRule implements Validation {
             }
             PLUGIN.debug("[ShopRule] Calculating stock.");
             int stock = trade.calculateStock();
-            player.sendMessage(ChatColor.YELLOW + "" + stock + " exchange" + (stock == 1 ? "" : "s") + " available.");
+            player.sendMessage(ChatColor.AQUA + "" + stock + ChatColor.GRAY + " exchange" + (stock == 1 ? "" : "s") + " available.");
         }
     }
 

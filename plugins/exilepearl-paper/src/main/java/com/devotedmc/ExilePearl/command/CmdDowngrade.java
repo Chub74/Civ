@@ -29,7 +29,7 @@ public class CmdDowngrade extends PearlCommand {
             return;
         }
         if (pearl.getPearlType() != PearlType.PRISON) {
-            msg("<i>This type of pearl cannot be downgraded");
+            msg("<b>You can only downgrade prison pearls");
             return;
         }
         downgradePearl(pearl);
@@ -39,10 +39,9 @@ public class CmdDowngrade extends PearlCommand {
         pearl.setPearlType(PearlType.EXILE);
         if (pearl.getPlayer() != null && pearl.getPlayer().isOnline()) {
             SpawnUtil.spawnPlayer(pearl.getPlayer(), pearl.getPearlType() == PearlType.PRISON ? plugin.getPearlConfig().getPrisonWorld() : plugin.getPearlConfig().getMainWorld());
-            msg(pearl.getPlayer(), "<i>Your pearl has been downgraded by %s.", player().getDisplayName());
+            msg(pearl.getPlayer(), "<i>Your pearl was downgraded by <c>%s", player().getName());
         }
-        String feedback = "The pearl for player %s was downgraded to an Exile Pearl.";
-        plugin.log(feedback, pearl.getPlayerName());
-        msg(feedback, pearl.getPlayerName());
+        plugin.log("The pearl for player %s was downgraded to an Exile Pearl.", pearl.getPlayerName());
+        msg("<g>Downgraded <c>%s<g>'s pearl to an exile pearl", pearl.getPlayerName());
     }
 }

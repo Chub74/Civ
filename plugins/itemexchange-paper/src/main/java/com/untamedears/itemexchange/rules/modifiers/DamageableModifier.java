@@ -22,6 +22,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(SetCommand.ALIAS)
 @Modifier(slug = "DAMAGE", order = 500)
@@ -93,12 +94,12 @@ public final class DamageableModifier extends ModifierData {
         int ruleDamage = getDamage();
         switch (ruleDamage) {
             case ExchangeRule.ANY:
-                return Collections.singletonList(ChatColor.GOLD + "Condition: Any");
+                return Collections.singletonList(ChatColor.GRAY + "Condition: " + ChatColor.AQUA + "Any");
             case ExchangeRule.NEW:
-                return Collections.singletonList(ChatColor.GOLD + "Condition: Undamaged");
+                return Collections.singletonList(ChatColor.GRAY + "Condition: " + ChatColor.AQUA + "Undamaged");
             default:
             case ExchangeRule.USED:
-                return Collections.singletonList(ChatColor.GOLD + "Condition: Damaged");
+                return Collections.singletonList(ChatColor.GRAY + "Condition: " + ChatColor.AQUA + "Damaged");
         }
     }
 
@@ -107,13 +108,13 @@ public final class DamageableModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("durability|d|damage|dmg")
-    @Description("Sets the durability of an exchange rule.")
+    @Description("Sets the durability of an exchange rule")
     @Syntax("<durability>")
     public void commandSetDurability(Player player, @Optional @Single String value) {
         try (ModifierHandler<DamageableModifier> handler = new ModifierHandler<>(player, this)) {
             if (Strings.isNullOrEmpty(value)) {
                 handler.setModifier(null);
-                handler.relay(ChatColor.GREEN + "Now ignoring durability.");
+                handler.relay(Kind.SUCCESS, "The rule now ignores durability");
                 return;
             }
             DamageableModifier modifier = handler.ensureModifier();
@@ -122,13 +123,13 @@ public final class DamageableModifier extends ModifierData {
                 case "%":
                 case "*": {
                     modifier.setDamage(ExchangeRule.ANY);
-                    handler.relay(ChatColor.YELLOW + "Modifier will now accept any damage level.");
+                    handler.relay(Kind.SUCCESS, "The rule now accepts any damage level");
                     break;
                 }
                 case "DAMAGED":
                 case "USED": {
                     modifier.setDamage(ExchangeRule.USED);
-                    handler.relay(ChatColor.YELLOW + "Modifier will only accept damaged items.");
+                    handler.relay(Kind.SUCCESS, "The rule now only accepts damaged items");
                     break;
                 }
                 default:
@@ -141,10 +142,10 @@ public final class DamageableModifier extends ModifierData {
                     } catch (NumberFormatException ignored) {
                     }
                     if (durability == ExchangeRule.ERROR) {
-                        throw new InvalidCommandArgument("Please enter a valid durability.");
+                        throw new InvalidCommandArgument("Enter a valid durability");
                     }
                     modifier.setDamage(durability);
-                    handler.relay(ChatColor.YELLOW + "Successfully set a new damage level!");
+                    handler.relay(Kind.SUCCESS, "Set the damage level");
                     break;
             }
         }

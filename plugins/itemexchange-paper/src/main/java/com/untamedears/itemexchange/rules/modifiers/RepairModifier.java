@@ -23,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Repairable;
 import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 /**
  * <p>This additional represents a repair level condition.</p>
@@ -90,11 +91,11 @@ public final class RepairModifier extends ModifierData {
         List<String> info = Lists.newArrayList();
         int repairCost = getRepairCost();
         if (repairCost == 0) {
-            info.add(ChatColor.GOLD + "Never repaired");
+            info.add(ChatColor.AQUA + "Never repaired");
         } else if (repairCost < 0) {
-            info.add(ChatColor.GOLD + "Repair level " + (repairCost * -1 + 2) + " or less");
+            info.add(ChatColor.GRAY + "Repair level " + ChatColor.AQUA + (repairCost * -1 + 2) + ChatColor.GRAY + " or less");
         } else {
-            info.add(ChatColor.GOLD + "Repair level " + (repairCost + 2));
+            info.add(ChatColor.GRAY + "Repair level " + ChatColor.AQUA + (repairCost + 2));
         }
         return info;
     }
@@ -112,13 +113,13 @@ public final class RepairModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("repair|repairlevel")
-    @Description("Sets or resets the exchange's repair level.")
+    @Description("Sets or resets the exchange's repair level")
     @Syntax("[repair level]")
     public void commandSetRepairLevel(Player player, @Optional @Single String value) {
         try (ModifierHandler<RepairModifier> handler = new ModifierHandler<>(player, this)) {
             if (Strings.isNullOrEmpty(value)) {
                 handler.setModifier(null);
-                handler.relay(ChatColor.GREEN + "Successfully removed repair level condition.");
+                handler.relay(Kind.SUCCESS, "Removed the repair level condition");
                 return;
             }
             RepairModifier modifier = handler.ensureModifier();
@@ -129,7 +130,7 @@ public final class RepairModifier extends ModifierData {
                 } catch (final NumberFormatException ignored) {
                 }
                 if (repairLevel < 2) {
-                    throw new InvalidCommandArgument("You must enter a valid value, e.g: @9");
+                    throw new InvalidCommandArgument("Enter a valid value, like @9");
                 }
                 modifier.setRepairCost(repairLevel - 2);
             } else if (StringUtils.equalsIgnoreCase(value, "NEW") || StringUtils.equalsIgnoreCase(value, "MINT")) {
@@ -141,11 +142,11 @@ public final class RepairModifier extends ModifierData {
                 } catch (final NumberFormatException ignored) {
                 }
                 if (repairLevel < 2) {
-                    throw new InvalidCommandArgument("You must enter a valid value, e.g: 9");
+                    throw new InvalidCommandArgument("Enter a valid value, like 9");
                 }
                 modifier.setRepairCost((repairLevel - 2) * -1);
             }
-            handler.relay(ChatColor.GREEN + "Successfully changed repair level condition.");
+            handler.relay(Kind.SUCCESS, "Changed the repair level condition");
         }
     }
 

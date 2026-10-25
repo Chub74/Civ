@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Random;
 import me.josvth.randomspawn.RandomSpawn;
 import me.josvth.randomspawn.events.NewPlayerSpawn;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -67,9 +66,7 @@ public class RespawnListener implements Listener {
                         player.setBedSpawnLocation(newSpawn);
                     }
 
-                    if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-                    }
+                    plugin.sendRandomSpawned(player);
                     return;
                 }
             }
@@ -95,9 +92,7 @@ public class RespawnListener implements Listener {
                 player.setBedSpawnLocation(spawnLocation);
             }
 
-            if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-            }
+            plugin.sendRandomSpawned(player);
         }
     }
 }

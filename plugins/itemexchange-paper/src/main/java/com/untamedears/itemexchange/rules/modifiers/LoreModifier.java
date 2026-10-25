@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemUtils;
 import vg.civcraft.mc.civmodcore.nbt.NbtCompound;
+import vg.civcraft.mc.civmodcore.ui.Kind;
 
 @CommandAlias(SetCommand.ALIAS)
 @Modifier(slug = "LORE", order = 300)
@@ -101,28 +102,28 @@ public final class LoreModifier extends ModifierData {
     // ------------------------------------------------------------
 
     @Subcommand("ignorelore")
-    @Description("Removes the lore modifier.")
+    @Description("Removes the lore modifier")
     public void commandIgnoreLore(Player player) {
         try (ModifierHandler<LoreModifier> handler = new ModifierHandler<>(player, this)) {
             handler.setModifier(null);
-            handler.relay(ChatColor.GREEN + "Now ignoring lore.");
+            handler.relay(Kind.SUCCESS, "The rule now ignores lore");
         }
     }
 
     @Subcommand("lore")
-    @Description("Sets or resets the item's lore.")
+    @Description("Sets or resets the item's lore")
     @Syntax("[...lore]")
     public void commandSetLore(Player player, @Optional String value) {
         try (ModifierHandler<LoreModifier> handler = new ModifierHandler<>(player, this)) {
             LoreModifier modifier = handler.ensureModifier();
             if (Strings.isNullOrEmpty(value)) {
                 modifier.setLore(null);
-                handler.relay(ChatColor.GREEN + "Successfully removed lore.");
+                handler.relay(Kind.SUCCESS, "Removed the lore");
             } else {
                 modifier.setLore(Arrays.stream(value.split(";"))
                     .map(ChatUtils::parseColor)
                     .collect(Collectors.toCollection(ArrayList::new)));
-                handler.relay(ChatColor.GREEN + "Successfully changed lore.");
+                handler.relay(Kind.SUCCESS, "Changed the lore");
             }
         }
     }

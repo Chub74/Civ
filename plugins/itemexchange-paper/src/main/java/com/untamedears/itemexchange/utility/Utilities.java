@@ -58,7 +58,7 @@ public final class Utilities {
      * @param rule   The exchange rule to give the player.
      */
     public static void givePlayerExchangeRule(final Player player, final ExchangeRule rule) {
-        RuntimeException error = new InvalidCommandArgument("Could not create that rule.");
+        RuntimeException error = new InvalidCommandArgument("Couldn't give you the rule, your inventory may be full");
         if (player == null || rule == null) {
             throw error;
         }

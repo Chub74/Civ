@@ -310,7 +310,7 @@ public final class ExchangeRule implements ExchangeData {
      */
     private String getRuleTitle() {
         StringBuilder builder = new StringBuilder();
-        builder.append(ChatColor.YELLOW);
+        builder.append(ChatColor.GOLD);
         if (isBroken()) {
             builder.append("Broken");
         } else if (this.type == Type.INPUT) {

@@ -22,7 +22,7 @@ public class CmdExilePearl extends PearlCommand {
         this.aliases.add("ep");
 
         this.setHelpShort("The ExilePearl command");
-        this.getLongHelp().add("<n>Use <c>/ep help <n>for command help.");
+        this.getLongHelp().add("<i>Use <c>/ep help <i>for command help");
 
         cmdLocate = new CmdPearlLocate(plugin);
         cmdFree = new CmdPearlFree(plugin);

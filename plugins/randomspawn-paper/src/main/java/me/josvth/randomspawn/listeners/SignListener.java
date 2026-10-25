@@ -2,7 +2,6 @@ package me.josvth.randomspawn.listeners;
 
 import me.josvth.randomspawn.RandomSpawn;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -15,6 +14,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.metadata.FixedMetadataValue;
+import vg.civcraft.mc.civmodcore.ui.CivUI;
 
 public class SignListener implements Listener {
 
@@ -63,12 +63,10 @@ public class SignListener implements Listener {
                             player.setBedSpawnLocation(spawnLocation);
                         }
 
-                        if (plugin.yamlHandler.config.getString("messages.randomspawned") != null) {
-                            player.sendMessage(ChatColor.translateAlternateColorCodes('&', plugin.yamlHandler.config.getString("messages.randomspawned")));
-                        }
+                        plugin.sendRandomSpawned(player);
 
                     } else {
-                        plugin.playerInfo(player, "You don't have the permission to use this Random Spawn Sign!");
+                        CivUI.error(player, "You don't have permission to use this spawn sign");
                     }
                 }
             }
@@ -80,10 +78,10 @@ public class SignListener implements Listener {
         if (event.getLine(0).equalsIgnoreCase(plugin.yamlHandler.config.getString("rs-sign-text", "[RandomSpawn]"))) {
             Player player = event.getPlayer();
             if (player.hasPermission("RandomSpawn.placesign")) {
-                this.plugin.playerInfo(player, "Random Spawn Sign created!");
+                CivUI.success(player, "Made a random spawn sign");
             } else {
                 event.setLine(0, "");
-                this.plugin.playerInfo(player, "You don't have the permission to place a Random Spawn Sign!");
+                CivUI.error(player, "You don't have permission to make a random spawn sign");
             }
         }
     }
