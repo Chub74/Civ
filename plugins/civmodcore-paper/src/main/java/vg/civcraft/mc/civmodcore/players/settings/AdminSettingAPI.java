@@ -77,7 +77,9 @@ public final class AdminSettingAPI {
 
     /**
      * Binds a setting to a path in a config file of the owning plugin. Settings must be registered on every startup
-     * to be available and identifiers must be unique globally. Any {@link PlayerSetting} implementation for a single
+     * to be available and identifiers must be unique globally. Registering an identifier the same plugin already
+     * registered replaces the old setting, so this can be called from a config parser which runs again on reload.
+     * Any {@link PlayerSetting} implementation for a single
      * value can be used to define the value type, for example:
      * <pre>{@code
      * AdminSetting<Integer> maxClaims = AdminSettingAPI.registerSetting(
@@ -99,22 +101,32 @@ public final class AdminSettingAPI {
         Preconditions.checkArgument(path != null && !path.isEmpty(), "Config path cannot be empty.");
         Preconditions.checkArgument(!(type instanceof AltConsistentSetting),
             "Admin settings are global, alt consistency does not apply.");
-        Preconditions.checkArgument(!SETTINGS_BY_IDENTIFIER.containsKey(type.getIdentifier()),
-            "An admin setting with identifier " + type.getIdentifier() + " is already registered.");
+        String pluginName = type.getOwningPlugin().getName();
+        AdminSetting<?> previous = SETTINGS_BY_IDENTIFIER.get(type.getIdentifier());
+        Preconditions.checkArgument(previous == null || previous.getOwningPlugin().getName().equals(pluginName),
+            "An admin setting with identifier " + type.getIdentifier() + " is already registered by "
+                + (previous == null ? null : previous.getOwningPlugin().getName()) + ".");
         AdminSetting<T> setting = new AdminSetting<>(type, fileName, path);
         try {
             setting.load();
         } catch (RuntimeException e) {
             CivModCorePlugin.getInstance().warning("Using default for admin setting " + type.getIdentifier(), e);
         }
-        String pluginName = type.getOwningPlugin().getName();
-        SETTINGS_BY_IDENTIFIER.put(type.getIdentifier(), setting);
-        SETTINGS_BY_PLUGIN.computeIfAbsent(pluginName, k -> new ArrayList<>()).add(setting);
         MenuSection menu = MENUS_BY_PLUGIN.computeIfAbsent(pluginName, k -> {
             MenuSection section = new AdminMenuSection(k, "Settings of " + k, MAIN_MENU, () -> getSettings(k));
             section.registerToParentMenu();
             return section;
         });
+        List<AdminSetting<?>> pluginSettings = SETTINGS_BY_PLUGIN.computeIfAbsent(pluginName, k -> new ArrayList<>());
+        if (previous == null) {
+            pluginSettings.add(setting);
+        } else {
+            // Re-registered, for example by a config parser after a reload. The old handle and its listeners are
+            // dropped and any unflushed change is lost, since the new setting was just read from the file
+            pluginSettings.set(pluginSettings.indexOf(previous), setting);
+            menu.removeItem(item -> item instanceof AdminMenuOption option && option.getSetting() == previous);
+        }
+        SETTINGS_BY_IDENTIFIER.put(type.getIdentifier(), setting);
         menu.addItem(new AdminMenuOption(menu, setting));
         return setting;
     }
