@@ -81,7 +81,17 @@ public class MenuSection extends MenuItem {
                 }
             }, 0);
         }
+        addMenuSlots(pageView, player);
         pageView.showScreen();
+    }
+
+    /**
+     * Allows subclasses to put extra buttons into the bottom row, slots 1 to 6. Slot 0 is the back button
+     *
+     * @param pageView View about to be shown
+     * @param player   Player it is shown to
+     */
+    protected void addMenuSlots(MultiPageView pageView, Player player) {
     }
 
     /**
