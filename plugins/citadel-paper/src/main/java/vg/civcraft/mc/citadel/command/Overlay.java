@@ -23,6 +23,10 @@ public class Overlay extends BaseCommand {
             CivUI.error(player, "The reinforcement overlay needs ProtocolLib");
             return;
         }
+        if(!Citadel.getInstance().getConfigManager().getCtvEnabled().getValue()){
+            CivUI.error(player, "Reinforcement overlay is disabled");
+            return;
+        }
         CitadelSettingManager settings = Citadel.getInstance().getSettingManager();
         BooleanSetting overlay = settings.getOverlay();
         if (radius != null) {

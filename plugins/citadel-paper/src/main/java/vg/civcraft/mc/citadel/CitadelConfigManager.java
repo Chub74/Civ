@@ -16,6 +16,7 @@ import org.bukkit.World;
 import org.bukkit.block.BlockFace;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 import vg.civcraft.mc.citadel.acidtypes.AcidType;
 import vg.civcraft.mc.citadel.model.WorldBorderBuffers;
@@ -26,6 +27,9 @@ import vg.civcraft.mc.civmodcore.config.ConfigHelper;
 import vg.civcraft.mc.civmodcore.config.ConfigParser;
 import vg.civcraft.mc.civmodcore.dao.DatabaseCredentials;
 import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 public class CitadelConfigManager extends ConfigParser {
@@ -41,6 +45,8 @@ public class CitadelConfigManager extends ConfigParser {
     private boolean logDamage;
     private boolean logCreation;
     private boolean logMessages;
+
+    private AdminSetting<Boolean> ctvEnabled;
 
     private long globalDecayTimer;
     private double globalDecayMultiplier;
@@ -168,6 +174,10 @@ public class CitadelConfigManager extends ConfigParser {
         return logMessages;
     }
 
+    public AdminSetting<Boolean> getCtvEnabled() {
+        return ctvEnabled;
+    }
+
     @Override
     protected boolean parseInternal(ConfigurationSection config) {
         database = ManagedDatasource.construct((ACivMod) plugin, (DatabaseCredentials) config.get("database"));
@@ -177,6 +187,9 @@ public class CitadelConfigManager extends ConfigParser {
         logDamage = config.getBoolean("logDamage", false);
         logCreation = config.getBoolean("logCreation", true);
         logMessages = config.getBoolean("logMessages", true);
+        //ctvEnabled = config.getBoolean("ctvEnabled", true);
+        ctvEnabled = AdminSettingAPI.registerSetting(new BooleanSetting((JavaPlugin) this.plugin, true, "CTV Enabled?", "citadel.ctvEnabled", "Should /ctv be enabled?"),
+            "ctvEnabled");
         redstoneRange = config.getDouble("redstoneDistance", 3);
         globalDecayMultiplier = config.getDouble("global_decay_multiplier", 2.0);
         globalDecayTimer = ConfigHelper.parseTime(config.getString("global_decay_timer", "0"));
