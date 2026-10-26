@@ -24,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.ui.Kind;
@@ -76,6 +77,7 @@ public final class CombatTagPlus extends JavaPlugin {
             settings.update();
             getLogger().info("Configuration file has been updated.");
         }
+        settings.registerAdminSettings();
 
         // Disable plugin if version compatibility check fails
         if (!checkVersionCompatibility()) {
@@ -251,6 +253,8 @@ public final class CombatTagPlus extends JavaPlugin {
         if (cmd.getName().equals("ctplusreload")) {
             reloadConfig();
             getSettings().load();
+            // Re-reads admin settings from the file, dropping unflushed changes
+            AdminSettingAPI.reload(this);
             if (sender instanceof Player) {
                 CivUI.success(sender, "Reloaded the CombatTagPlus config");
             }

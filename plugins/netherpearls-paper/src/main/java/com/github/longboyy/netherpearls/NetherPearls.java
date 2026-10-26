@@ -41,13 +41,17 @@ public class NetherPearls extends ACivMod implements Listener {
             return;
         }
 
-        if(!config.getEntityDropChances().containsKey(event.getEntityType())){
+        Double dropChance = config.getEntityDropChances().get(event.getEntityType());
+        if(dropChance == null){
             return;
         }
 
-        if(random.nextFloat() < config.getEntityDropChances().get(event.getEntityType())){
+        if(random.nextFloat() < dropChance){
             // figure out how many we should add to drops
-            int amount = random.nextInt(Math.min(1, config.getMinDrop()), config.getMaxDrop() + 1);
+            int minDrop = Math.max(1, config.getMinDrop());
+            // Admins can change both live, so don't let a min above max break the bounds
+            int maxDrop = Math.max(minDrop, config.getMaxDrop());
+            int amount = random.nextInt(minDrop, maxDrop + 1);
             event.getDrops().add(new ItemStack(Material.ENDER_PEARL, amount));
         }
     }

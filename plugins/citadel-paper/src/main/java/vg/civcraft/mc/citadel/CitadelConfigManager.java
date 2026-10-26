@@ -29,7 +29,10 @@ import vg.civcraft.mc.civmodcore.dao.DatabaseCredentials;
 import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
 import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
 import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.gui.AdminMenuSection;
 import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.DoubleSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.IntegerSetting;
 import vg.civcraft.mc.civmodcore.utilities.TextUtil;
 
 public class CitadelConfigManager extends ConfigParser {
@@ -40,20 +43,20 @@ public class CitadelConfigManager extends ConfigParser {
 
     private List<Material> globalBlackList;
 
-    private boolean logHostileBreaks;
-    private boolean logFriendlyBreaks;
-    private boolean logDamage;
-    private boolean logCreation;
-    private boolean logMessages;
+    private AdminSetting<Boolean> logHostileBreaks;
+    private AdminSetting<Boolean> logFriendlyBreaks;
+    private AdminSetting<Boolean> logDamage;
+    private AdminSetting<Boolean> logCreation;
+    private AdminSetting<Boolean> logMessages;
 
     private AdminSetting<Boolean> ctvEnabled;
 
     private long globalDecayTimer;
     private double globalDecayMultiplier;
 
-    private double redstoneRange;
+    private AdminSetting<Double> redstoneRange;
 
-    private boolean hangersInheritReinforcements;
+    private AdminSetting<Boolean> hangersInheritReinforcements;
 
     private int activityMapResolution;
     private int activityMapRadius;
@@ -63,7 +66,7 @@ public class CitadelConfigManager extends ConfigParser {
     private long activityDefault;
     private List<String> activityWorlds;
 
-    private int reinforcementBreaksPerToolDamage;
+    private AdminSetting<Integer> reinforcementBreaksPerToolDamage;
 
     private Map<UUID, WorldBorderBuffers> buffers;
 
@@ -106,11 +109,11 @@ public class CitadelConfigManager extends ConfigParser {
     }
 
     public double getMaxRedstoneDistance() {
-        return redstoneRange;
+        return redstoneRange.getValue();
     }
 
     public boolean doHangersInheritReinforcements() {
-        return hangersInheritReinforcements;
+        return hangersInheritReinforcements.getValue();
     }
 
     public Map<UUID, WorldBorderBuffers> getWorldBorderBuffers() {
@@ -122,7 +125,7 @@ public class CitadelConfigManager extends ConfigParser {
     }
 
     public int getReinforcementBreaksPerToolDamage() {
-        return reinforcementBreaksPerToolDamage;
+        return reinforcementBreaksPerToolDamage.getValue();
     }
 
     private ReinforcementEffect getReinforcementEffect(ConfigurationSection config) {
@@ -155,23 +158,23 @@ public class CitadelConfigManager extends ConfigParser {
     }
 
     public boolean logCreation() {
-        return logCreation;
+        return logCreation.getValue();
     }
 
     public boolean logDamage() {
-        return logDamage;
+        return logDamage.getValue();
     }
 
     public boolean logFriendlyBreaks() {
-        return logFriendlyBreaks;
+        return logFriendlyBreaks.getValue();
     }
 
     public boolean logHostileBreaks() {
-        return logHostileBreaks;
+        return logHostileBreaks.getValue();
     }
 
     public boolean logMessages() {
-        return logMessages;
+        return logMessages.getValue();
     }
 
     public AdminSetting<Boolean> getCtvEnabled() {
@@ -182,20 +185,11 @@ public class CitadelConfigManager extends ConfigParser {
     protected boolean parseInternal(ConfigurationSection config) {
         database = ManagedDatasource.construct((ACivMod) plugin, (DatabaseCredentials) config.get("database"));
         globalBlackList = ConfigHelper.parseMaterialList(config, "non_reinforceables");
-        logHostileBreaks = config.getBoolean("logHostileBreaks", true);
-        logFriendlyBreaks = config.getBoolean("logFriendlyBreaks", true);
-        logDamage = config.getBoolean("logDamage", false);
-        logCreation = config.getBoolean("logCreation", true);
-        logMessages = config.getBoolean("logMessages", true);
-        //ctvEnabled = config.getBoolean("ctvEnabled", true);
-        ctvEnabled = AdminSettingAPI.registerSetting(new BooleanSetting((JavaPlugin) this.plugin, true, "CTV Enabled?", "citadel.ctvEnabled", "Should /ctv be enabled?"),
-            "ctvEnabled");
-        redstoneRange = config.getDouble("redstoneDistance", 3);
+        registerAdminSettings();
         globalDecayMultiplier = config.getDouble("global_decay_multiplier", 2.0);
         globalDecayTimer = ConfigHelper.parseTime(config.getString("global_decay_timer", "0"));
         parseReinforcementTypes(config.getConfigurationSection("reinforcements"));
         parseAcidTypes(config.getConfigurationSection("acids"));
-        hangersInheritReinforcements = config.getBoolean("hangers_inherit_reinforcement", false);
 
         activityMapRadius = config.getInt("activity-map-radius", 1);
         activityMapResolution = config.getInt("activity-map-resolution", 512);
@@ -204,11 +198,46 @@ public class CitadelConfigManager extends ConfigParser {
         activityDefault = config.getLong("activity-default", System.currentTimeMillis());
         activityWorlds = config.getStringList("activity-map-worlds");
         multiplier = ReinforcementMultiplier.parse(config.getMapList("reinforcementBreakMultipliers"));
-        reinforcementBreaksPerToolDamage = config.getInt("reinforcementBreaksPerToolDamage");
 
         parseWorldBorderBuffers(config.getConfigurationSection("world-border-buffers"));
 
         return true;
+    }
+
+    /**
+     * Values admins can change live through /adminconfig. Registering again on reload replaces the previous settings
+     * with the values in the reloaded file
+     */
+    private void registerAdminSettings() {
+        JavaPlugin javaPlugin = (JavaPlugin) this.plugin;
+        AdminSettingAPI.setPluginIcon(plugin, new ItemStack(Material.OBSIDIAN));
+        AdminMenuSection menu = AdminSettingAPI.getPluginMenu(plugin);
+        ctvEnabled = toggle(menu, "ctvEnabled", "CTV Enabled?", true, "Should /ctv be enabled?");
+        hangersInheritReinforcements = toggle(menu, "hangers_inherit_reinforcement", "Hangers inherit reinforcement",
+            false, "Item frames and paintings are protected by the reinforcement they hang on");
+        redstoneRange = AdminSettingAPI.registerSetting(new DoubleSetting(javaPlugin, 3.0, "Redstone distance",
+            "citadel.redstoneDistance", new ItemStack(Material.REDSTONE),
+            "Blocks within which a group member must be to use reinforced redstone"), "redstoneDistance", menu);
+        reinforcementBreaksPerToolDamage = AdminSettingAPI.registerSetting(new IntegerSetting(javaPlugin, 0,
+            "Breaks per tool damage", "citadel.reinforcementBreaksPerToolDamage", new ItemStack(Material.IRON_PICKAXE),
+            "On average, how many reinforcement hits take 1 durability from the tool, 0 never does", false),
+            "reinforcementBreaksPerToolDamage", menu);
+
+        AdminMenuSection logging = menu.getSubsection("Logging", "What reinforcement activity is logged",
+            new ItemStack(Material.WRITABLE_BOOK));
+        logHostileBreaks = toggle(logging, "logHostileBreaks", "Log hostile breaks", true,
+            "Log reinforcements broken by players outside the group");
+        logFriendlyBreaks = toggle(logging, "logFriendlyBreaks", "Log friendly breaks", true,
+            "Log reinforcements broken by group members");
+        logDamage = toggle(logging, "logDamage", "Log damage", false, "Log damage dealt to reinforcements");
+        logCreation = toggle(logging, "logCreation", "Log creation", true, "Log reinforcements being created");
+        logMessages = toggle(logging, "logMessages", "Log messages", true, "Log Citadel messages sent to players");
+    }
+
+    private AdminSetting<Boolean> toggle(AdminMenuSection menu, String path, String name, boolean defaultValue,
+                                         String description) {
+        return AdminSettingAPI.registerSetting(new BooleanSetting((JavaPlugin) this.plugin, defaultValue, name,
+            "citadel." + path, description), path, menu);
     }
 
     private ReinforcementType parseReinforcementType(ConfigurationSection config) {

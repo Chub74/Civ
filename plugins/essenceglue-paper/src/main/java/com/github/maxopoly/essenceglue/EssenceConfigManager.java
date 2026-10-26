@@ -1,30 +1,41 @@
 package com.github.maxopoly.essenceglue;
 
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import vg.civcraft.mc.civmodcore.ACivMod;
 import vg.civcraft.mc.civmodcore.config.ConfigHelper;
 import vg.civcraft.mc.civmodcore.config.ConfigParser;
 import vg.civcraft.mc.civmodcore.dao.DatabaseCredentials;
 import vg.civcraft.mc.civmodcore.dao.ManagedDatasource;
 import vg.civcraft.mc.civmodcore.inventory.items.ItemMap;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.BoundedIntegerSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.DurationSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.IntegerSetting;
 
 public class EssenceConfigManager extends ConfigParser {
 
     private ManagedDatasource db;
-    private int maxStreak;
-    private long streakDelay;
-    private long streakGracePeriod;
-    private long timeForGain;
+    // Admins can change these live through /adminconfig
+    private AdminSetting<Integer> maxStreak;
+    private AdminSetting<Duration> streakDelay;
+    private AdminSetting<Duration> streakGracePeriod;
+    private AdminSetting<Duration> timeForGain;
     private ItemMap rewards;
-    private int loginReward;
-    private int votingReward;
+    private AdminSetting<Integer> loginReward;
+    private AdminSetting<Integer> votingReward;
     private Map<String, VotingSite> votingCooldowns;
-    private boolean giveRewardToPearled;
-    private boolean multiplyPearlCost;
+    private AdminSetting<Boolean> giveRewardToPearled;
+    private AdminSetting<Boolean> multiplyPearlCost;
     private boolean physical;
-    private int virtualCap;
+    private AdminSetting<Integer> virtualCap;
 
     public EssenceConfigManager(ACivMod plugin) {
         super(plugin);
@@ -35,15 +46,8 @@ public class EssenceConfigManager extends ConfigParser {
         if (config.contains("database")) {
             db = ManagedDatasource.construct((ACivMod) plugin, (DatabaseCredentials) config.get("database"));
         }
-        maxStreak = config.getInt("max_streak", 8);
-        streakDelay = ConfigHelper.parseTime(config.getString("streak_delay", "20 hours"));
-        streakGracePeriod = ConfigHelper.parseTime(config.getString("streak_grace_period", "1 day"));
-        timeForGain = ConfigHelper.parseTime(config.getString("online_for_reward", "30 minutes"));
         rewards = ConfigHelper.parseItemMap(config.getConfigurationSection("rewards"));
-        loginReward = config.getInt("login_reward", 1);
-        votingReward = config.getInt("voting_reward", 1);
         physical = config.getBoolean("physical", true);
-        virtualCap = config.getInt("virtual_cap", 64);
         votingCooldowns = new LinkedHashMap<>();
         if (config.isConfigurationSection("voting_sites")) {
             ConfigurationSection votingKeySection = config.getConfigurationSection("voting_sites");
@@ -60,9 +64,46 @@ public class EssenceConfigManager extends ConfigParser {
                 }
             }
         }
-        giveRewardToPearled = config.getBoolean("give_reward_to_pearled", false);
-        multiplyPearlCost = config.getBoolean("multiply_pearl_cost", true);
+        registerAdminSettings();
         return true;
+    }
+
+    private void registerAdminSettings() {
+        JavaPlugin javaPlugin = (JavaPlugin) plugin;
+        AdminSettingAPI.setPluginIcon(plugin, new ItemStack(Material.ENDER_EYE));
+        // Streaks are stored as the bits of an int, so at most 31 days fit
+        maxStreak = AdminSettingAPI.registerSetting(new BoundedIntegerSetting(javaPlugin, 8, "Max streak",
+            "essenceglue.max_streak", new ItemStack(Material.BLAZE_POWDER), "Most days a login streak counts", false,
+            1, 31), "max_streak");
+        streakDelay = duration("streak_delay", "Streak delay", Duration.ofHours(20), Material.CLOCK,
+            "Time between two login rewards");
+        streakGracePeriod = duration("streak_grace_period", "Streak grace period", Duration.ofDays(1),
+            Material.COMPASS, "Time after the streak delay a player can miss before their streak drops");
+        timeForGain = duration("online_for_reward", "Online for reward", Duration.ofMinutes(30), Material.SUNFLOWER,
+            "Time online needed each day for the login reward, counted in whole minutes");
+        loginReward = integer("login_reward", "Login reward", 1, Material.ENDER_EYE,
+            "Essence per streak day for logging in");
+        votingReward = integer("voting_reward", "Voting reward", 1, Material.PAPER, "Essence per vote");
+        virtualCap = integer("virtual_cap", "Virtual cap", 64, Material.CHEST,
+            "Most virtual essence a player can hold, only used if essence isn't physical");
+        giveRewardToPearled = AdminSettingAPI.registerSetting(new BooleanSetting(javaPlugin, false,
+            "Reward pearled players", "essenceglue.give_reward_to_pearled",
+            "Players with pearled alts still get login rewards"), "give_reward_to_pearled");
+        multiplyPearlCost = AdminSettingAPI.registerSetting(new BooleanSetting(javaPlugin, true,
+            "Multiply pearl cost", "essenceglue.multiply_pearl_cost",
+            "Pearls of players with a streak decay faster, by half per streak day"), "multiply_pearl_cost");
+    }
+
+    private AdminSetting<Duration> duration(String path, String name, Duration defaultValue, Material icon,
+                                            String description) {
+        return AdminSettingAPI.registerSetting(new DurationSetting((JavaPlugin) plugin, defaultValue, name,
+            "essenceglue." + path, new ItemStack(icon), description), path);
+    }
+
+    private AdminSetting<Integer> integer(String path, String name, int defaultValue, Material icon,
+                                          String description) {
+        return AdminSettingAPI.registerSetting(new IntegerSetting((JavaPlugin) plugin, defaultValue, name,
+            "essenceglue." + path, new ItemStack(icon), description, false), path);
     }
 
     public ManagedDatasource getDatabase() {
@@ -74,11 +115,11 @@ public class EssenceConfigManager extends ConfigParser {
     }
 
     public boolean giveRewardToPearled() {
-        return giveRewardToPearled;
+        return giveRewardToPearled.getValue();
     }
 
     public boolean multiplyPearlCost() {
-        return multiplyPearlCost;
+        return multiplyPearlCost.getValue();
     }
 
     public ItemMap getRewards() {
@@ -86,27 +127,27 @@ public class EssenceConfigManager extends ConfigParser {
     }
 
     public int getLoginReward() {
-        return loginReward;
+        return Math.max(0, loginReward.getValue());
     }
 
     public int getVotingReward() {
-        return votingReward;
+        return Math.max(0, votingReward.getValue());
     }
 
     public int getMaxStreak() {
-        return maxStreak;
+        return maxStreak.getValue();
     }
 
     public long getStreakDelay() {
-        return streakDelay;
+        return streakDelay.getValue().toMillis();
     }
 
     public long getStreakGracePeriod() {
-        return streakGracePeriod;
+        return streakGracePeriod.getValue().toMillis();
     }
 
     public long getOnlineTimeForReward() {
-        return timeForGain;
+        return timeForGain.getValue().toMillis();
     }
 
     public boolean isPhysical() {
@@ -114,6 +155,6 @@ public class EssenceConfigManager extends ConfigParser {
     }
 
     public int getVirtualCap() {
-        return virtualCap;
+        return Math.max(0, virtualCap.getValue());
     }
 }

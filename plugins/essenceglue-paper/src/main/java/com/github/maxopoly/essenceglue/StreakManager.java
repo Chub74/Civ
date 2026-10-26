@@ -24,16 +24,10 @@ public class StreakManager {
     private final IntegerSetting playerStreaks;
     private final LongSetting lastPlayerUpdate;
     private final BooleanSetting receiveRewards;
-    private final long streakDelay;
-    private final long streakGracePeriod;
     private final Map<UUID, Integer> currentOnlineTime;
-    private final int maximumStreak;
-    private final long countRequiredForGain;
-    private final boolean giveRewardToPearled;
     private final BooleanSetting showSitesOnLogin;
 
-    public StreakManager(EssenceGluePlugin plugin, long streakDelay, long streakGracePeriod, int maximumStreak,
-                         long onlineTimePerDay, boolean giveRewardToPearled) {
+    public StreakManager(EssenceGluePlugin plugin) {
         playerStreaks = new IntegerSetting(plugin, 0, "Player essence streak", "essenceGluePlayerStreak");
         PlayerSettingAPI.registerSetting(playerStreaks, null);
         lastPlayerUpdate = new LongSetting(plugin, 0L, "Player streak refresh", "essenceGlueLastUpdate");
@@ -47,12 +41,7 @@ public class StreakManager {
         PlayerSettingAPI.registerSetting(receiveRewards, menu);
         PlayerSettingAPI.registerSetting(showSitesOnLogin, menu);
         Bukkit.getScheduler().runTaskTimer(plugin, this::updateAll, 20 * 60L, 20 * 60L);
-        this.streakDelay = streakDelay;
-        this.streakGracePeriod = streakGracePeriod;
         this.currentOnlineTime = new TreeMap<>();
-        this.maximumStreak = maximumStreak;
-        this.giveRewardToPearled = giveRewardToPearled;
-        this.countRequiredForGain = TimeUnit.MILLISECONDS.toMinutes(onlineTimePerDay);
     }
 
     public static UUID getTrueUUID(UUID uuid) {
@@ -85,12 +74,12 @@ public class StreakManager {
                 continue;
             }
             long sinceLastClaim = currentMillis - lastPlayerUpdate.getValue(uuid);
-            if (sinceLastClaim >= streakDelay) {
+            if (sinceLastClaim >= streakDelay()) {
                 int currentCount = currentOnlineTime.computeIfAbsent(uuid, e -> 0);
-                if (currentCount >= countRequiredForGain && receiveRewards.getValue(p)) {
+                if (currentCount >= countRequiredForGain() && receiveRewards.getValue(p)) {
                     updatePlayerStreak(uuid);
                     currentOnlineTime.remove(uuid);
-                    if (giveRewardToPearled || ExilePearlPlugin.getApi().getExiledAlts(uuid, true) < 1) {
+                    if (EssenceGluePlugin.instance().getConfigManager().giveRewardToPearled() || ExilePearlPlugin.getApi().getExiledAlts(uuid, true) < 1) {
                         EssenceGluePlugin.instance().getRewardManager().giveLoginReward(p,
                             getCurrentStreak(uuid, true));
                     }
@@ -103,32 +92,32 @@ public class StreakManager {
 
     public long getRewardCooldown(UUID uuid) {
         long sinceLastClaim = System.currentTimeMillis() - lastPlayerUpdate.getValue(uuid);
-        return Math.max(0, streakDelay - sinceLastClaim);
+        return Math.max(0, streakDelay() - sinceLastClaim);
     }
 
     public long untilTodaysReward(UUID uuid) {
         Integer currentCount = currentOnlineTime.getOrDefault(uuid, 0);
-        return TimeUnit.MINUTES.toMillis(countRequiredForGain - currentCount);
+        return TimeUnit.MINUTES.toMillis(countRequiredForGain() - currentCount);
     }
 
     public void updatePlayerStreak(UUID player) {
         long now = System.currentTimeMillis();
         long lastIncrement = lastPlayerUpdate.getValue(player);
         long timePassed = now - lastIncrement;
-        timePassed -= streakDelay;
+        timePassed -= streakDelay();
         int daysPassed;
         if (timePassed > 0) {
             daysPassed = 1;
         } else {
             daysPassed = 0;
         }
-        timePassed -= streakGracePeriod;
+        timePassed -= streakGracePeriod();
 
         if (timePassed > 0) {
             daysPassed += (int) (timePassed / MILLIS_IN_DAY + 1);
         }
         int streak = playerStreaks.getValue(player);
-        daysPassed = Math.min(daysPassed, maximumStreak);
+        daysPassed = Math.min(daysPassed, maximumStreak());
         // shift to left by amount of days missed
         streak <<= daysPassed;
         // add new day
@@ -153,11 +142,11 @@ public class StreakManager {
     public int getRecalculatedCurrentStreak(UUID uuid) {
         uuid = getTrueUUID(uuid);
         int unshiftedValue = playerStreaks.getValue(uuid);
-        long timePassed = System.currentTimeMillis() - lastPlayerUpdate.getValue(uuid) - streakGracePeriod;
+        long timePassed = System.currentTimeMillis() - lastPlayerUpdate.getValue(uuid) - streakGracePeriod();
         int daysPassed = 0;
         if (timePassed > 0) {
             daysPassed = (int) (timePassed / MILLIS_IN_DAY + 1);
-            daysPassed = Math.min(daysPassed, maximumStreak);
+            daysPassed = Math.min(daysPassed, maximumStreak());
         }
         int adjustedStreak = unshiftedValue << daysPassed;
         adjustedStreak = capStreak(adjustedStreak);
@@ -165,7 +154,31 @@ public class StreakManager {
     }
 
     private int capStreak(int uncapped) {
-        return uncapped & ~((~0) << maximumStreak);
+        return uncapped & ~((~0) << maximumStreak());
+    }
+
+    /**
+     * Read live, since admins can change it
+     */
+    // Read live, since admins can change them
+
+    private long streakDelay() {
+        return EssenceGluePlugin.instance().getConfigManager().getStreakDelay();
+    }
+
+    private long streakGracePeriod() {
+        return EssenceGluePlugin.instance().getConfigManager().getStreakGracePeriod();
+    }
+
+    /**
+     * @return Minutes online needed for the daily reward, online time is counted once a minute
+     */
+    private long countRequiredForGain() {
+        return TimeUnit.MILLISECONDS.toMinutes(EssenceGluePlugin.instance().getConfigManager().getOnlineTimeForReward());
+    }
+
+    private int maximumStreak() {
+        return EssenceGluePlugin.instance().getConfigManager().getMaxStreak();
     }
 
     public void setStreakRaw(int streak, long timeStamp, UUID player) {
