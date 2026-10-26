@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.ui.Kind;
 
@@ -48,14 +49,14 @@ public class WelcomeListener implements Listener {
         if (!config.isWelcomeEnabled()) return;
         tracker.markWelcomed(player.getUniqueId());
 
-        Component titleComp = MM.deserialize(config.getWelcomeTitle());
-        Component subtitleComp = MM.deserialize(config.getWelcomeSubtitle());
+        Component titleComp = Bedrock.adapt(player, MM.deserialize(config.getWelcomeTitle()));
+        Component subtitleComp = Bedrock.adapt(player, MM.deserialize(config.getWelcomeSubtitle()));
         player.showTitle(Title.title(titleComp, subtitleComp));
 
         List<String> messages = config.getWelcomeMessages();
         for (String line : messages) {
             // Lines are bodies only - CivUI adds the brand.
-            player.sendMessage(CivUI.render(Kind.INFO, true, false, MM.deserialize(line)));
+            player.sendMessage(Bedrock.adapt(player, CivUI.render(Kind.INFO, true, false, MM.deserialize(line))));
         }
 
         adv.award(player, AdvancementManager.JOINED);

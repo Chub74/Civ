@@ -25,6 +25,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.ui.Kind;
@@ -153,23 +154,41 @@ public class NewfriendAssist extends SimpleHack<NewfriendAssistConfig> implement
      */
     private void announceNewfriend(Player newfriend) {
         Component body = MiniMessage.miniMessage().deserialize(config.getAnnounceMessage(),
-            Placeholder.component("player", CivText.subject(newfriend.getName())));
+            Placeholder.component("player", Component.text()
+                .append(CivText.head(newfriend))
+                .append(Component.space())
+                .append(CivText.subject(newfriend.getName()))
+                .build()));
         Component message = CivUI.render(Kind.INFO, true, false, body);
 
         // Overlap is possible. Some people might get double-notified
+        // Sent one player at a time, Bedrock players get the message without the head
         for (BroadcastLevel level : config.getAnnounceBroadcast()) {
             plugin().debug("  Broadcast to {0}", level);
             switch (level) {
                 case OP -> {
                     for (Player op : Bukkit.getOnlinePlayers()) {
                         if (op.isOp()) {
-                            op.sendMessage(message);
+                            op.sendMessage(Bedrock.adapt(op, message));
                         }
                     }
                 }
-                case PERM -> Bukkit.getServer().broadcast(message, plugin().config().getBroadcastPermission());
+                case PERM -> {
+                    String permission = plugin().config().getBroadcastPermission();
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        if (player.hasPermission(permission)) {
+                            player.sendMessage(Bedrock.adapt(player, message));
+                        }
+                    }
+                    Bukkit.getConsoleSender().sendMessage(message);
+                }
                 case CONSOLE -> Bukkit.getConsoleSender().sendMessage(message);
-                case ALL -> Bukkit.getServer().broadcast(message);
+                case ALL -> {
+                    for (Player player : Bukkit.getOnlinePlayers()) {
+                        player.sendMessage(Bedrock.adapt(player, message));
+                    }
+                    Bukkit.getConsoleSender().sendMessage(message);
+                }
             }
         }
     }

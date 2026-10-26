@@ -7,6 +7,7 @@ import com.github.igotyou.FactoryMod.recipes.CompactingRecipe;
 import com.github.igotyou.FactoryMod.recipes.IRecipe;
 import com.github.igotyou.FactoryMod.recipes.InputRecipe;
 import com.github.igotyou.FactoryMod.recipes.ProductionRecipe;
+import com.github.igotyou.FactoryMod.recipes.RandomOutputRecipe;
 import com.github.igotyou.FactoryMod.recipes.VariantRecipe;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import io.papermc.paper.datacomponent.DataComponentType;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -35,6 +38,10 @@ import net.kyori.adventure.text.format.TextDecoration;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 
 public class ItemUseGUI {
+
+    /** Components that vary between copies of the same produced item, so a lookup ignores them */
+    private static final List<DataComponentType> IGNORED_COMPONENTS = List.of(DataComponentTypes.ENCHANTMENTS,
+        DataComponentTypes.STORED_ENCHANTMENTS, DataComponentTypes.DAMAGE, DataComponentTypes.REPAIR_COST);
 
     private Player player;
     private ComponableInventory inventory;
@@ -174,7 +181,7 @@ public class ItemUseGUI {
     }
 
     private ItemStack getItemAsInput(FurnCraftChestEgg fccEgg, InputRecipe recipe, ItemStack item) {
-        if (recipe.getInput().getAmount(item) != 0) {
+        if (contains(recipe.getInput(), item)) {
             return getItemRecipeStack(fccEgg, recipe, item);
         }
         if (recipe instanceof VariantRecipe vr) {
@@ -188,8 +195,15 @@ public class ItemUseGUI {
     private ItemStack getItemAsOutput(FurnCraftChestEgg fccEgg, InputRecipe recipe, ItemStack item) {
         if (recipe instanceof ProductionRecipe) {
             ProductionRecipe output = (ProductionRecipe) recipe;
-            if (output.getOutput().getAmount(item) != 0) {
+            if (contains(output.getOutput(), item)) {
                 return getItemRecipeStack(fccEgg, recipe, item);
+            }
+        }
+        if (recipe instanceof RandomOutputRecipe random) {
+            for (Map.Entry<ItemMap, Double> entry : random.getOutputs().entrySet()) {
+                if (entry.getValue() != null && entry.getValue() > 0 && contains(entry.getKey(), item)) {
+                    return getItemRecipeStack(fccEgg, recipe, item);
+                }
             }
         }
         if (recipe instanceof CompactingRecipe) {
@@ -204,6 +218,28 @@ public class ItemUseGUI {
             }
         }
         return null;
+    }
+
+    /** Whether the map holds the item, regardless of its enchantments, durability or anvil cost */
+    private static boolean contains(ItemMap map, ItemStack item) {
+        if (map.getAmount(item) != 0) {
+            return true;
+        }
+        ItemStack stripped = stripVariance(item);
+        for (Map.Entry<ItemStack, Integer> entry : map.getAllItems().entrySet()) {
+            if (entry.getValue() > 0 && stripVariance(entry.getKey()).isSimilar(stripped)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static ItemStack stripVariance(ItemStack item) {
+        ItemStack stripped = item.asOne();
+        for (DataComponentType type : IGNORED_COMPONENTS) {
+            stripped.unsetData(type);
+        }
+        return stripped;
     }
 
     private ItemStack getItemRecipeStack(FurnCraftChestEgg fccEgg, InputRecipe recipe, ItemStack item) {

@@ -14,6 +14,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.sound.Sound;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -65,6 +67,8 @@ public class CivChat2Manager {
     private ScoreboardHUD scoreboardHUD;
 
     protected static final GroupManager GM = NameLayerAPI.getGroupManager();
+
+    private static final Sound MESSAGE_SOUND = Sound.sound(Key.key("block.note_block.chime"), Sound.Source.UI, 0.3F, 1.5F);
 
     private String defaultColor;
 
@@ -176,20 +180,7 @@ public class CivChat2Manager {
         Component senderName = identityTag(sender);
         Component receiverName = identityTag(receiver);
 
-        // A neutral, uncoloured root - senderName must not inherit "From "'s colour as an ancestor.
-        Component receiverMessage = Component.text()
-            .append(Component.text("From ", CivText.MUTED))
-            .append(senderName)
-            .append(Component.text(": ", CivText.MUTED))
-            .append(chatMessage)
-            .build();
-
-        if (isPlayerAfk(receiver)) {
-            receiver.sendMessage(Bedrock.adapt(receiver, receiverMessage));
-            sender.sendMessage(getPlayerAfkMessage(receiver));
-            return;
-            // Player is ignoring the sender
-        } else if (DBM.isIgnoringPlayer(receiver.getUniqueId(), sender.getUniqueId())) {
+        if (DBM.isIgnoringPlayer(receiver.getUniqueId(), sender.getUniqueId())) {
             CivUI.error(sender, "That player is ignoring you");
             return;
         } else if (DBM.isIgnoringPlayer(sender.getUniqueId(), receiver.getUniqueId())) {
@@ -199,14 +190,33 @@ public class CivChat2Manager {
         chatLog.logPrivateMessage(sender, PlainTextComponentSerializer.plainText().serialize(chatMessage), receiver.getName());
         replyList.put(receiver.getUniqueId(), sender.getUniqueId());
         replyList.put(sender.getUniqueId(), receiver.getUniqueId());
-        sender.sendMessage(Bedrock.adapt(sender, Component.text()
-            .append(Component.text("To ", CivText.MUTED))
-            .append(receiverName)
-            .append(Component.text(": ", CivText.MUTED))
-            .append(chatMessage)
-            .build()
-        ));
-        receiver.sendMessage(Bedrock.adapt(receiver, receiverMessage));
+
+        sender.sendMessage(Bedrock.adapt(sender, privateLine(CivText.info("You"), receiverName, chatMessage)));
+        receiver.sendMessage(Bedrock.adapt(receiver, privateLine(senderName, CivText.info("you"), chatMessage)));
+        if (instance.getCivChat2SettingsManager().getMessageSound(receiver.getUniqueId())) {
+            receiver.playSound(MESSAGE_SOUND);
+        }
+
+        if (isPlayerAfk(receiver)) {
+            Component afkMessage = getPlayerAfkMessage(receiver);
+            if (afkMessage.equals(ChatStrings.chatPlayerAfk)) {
+                CivUI.info(sender, CivText.subject(receiver.getName()), " is AFK");
+            } else {
+                CivUI.info(sender, CivText.subject(receiver.getName()), " is AFK: ", afkMessage);
+            }
+        }
+    }
+
+    private static Component privateLine(Component from, Component to, Component message) {
+        Component arrow = Component.text(" → ", CivText.MUTED);
+
+        return Component.text()
+            .append(from)
+            .append(arrow)
+            .append(to)
+            .append(Component.text(" » ", CivText.MUTED))
+            .append(Component.empty().color(NamedTextColor.WHITE).append(message))
+            .build();
     }
 
     /**

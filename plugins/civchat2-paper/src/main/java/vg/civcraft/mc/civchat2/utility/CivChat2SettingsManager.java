@@ -26,6 +26,7 @@ public class CivChat2SettingsManager {
     private BooleanSetting showPrefix;
     private DisplayLocationSetting afkStatusLocation;
     private BooleanSetting showGroupColors;
+    private BooleanSetting messageSound;
 
     public CivChat2SettingsManager() {
         initSettings();
@@ -80,6 +81,10 @@ public class CivChat2SettingsManager {
         showGroupColors = new BooleanSetting(CivChat2.getInstance(), true, "Show group colors in chat", "showGroupColors",
             "Disabling this setting will make all group colors in chat, gray");
         PlayerSettingAPI.registerSetting(showGroupColors, menu);
+
+        messageSound = new BooleanSetting(CivChat2.getInstance(), true, "Private message sound", "privateMessageSound",
+            "Should a sound play when you receive a private message?");
+        PlayerSettingAPI.registerSetting(messageSound, menu);
     }
 
     public LongSetting getGlobalChatMuteSetting() {
@@ -129,6 +134,10 @@ public class CivChat2SettingsManager {
     }
 
     public DisplayLocationSetting getAfkStatusLocation() { return afkStatusLocation; }
+
+    public boolean getMessageSound(UUID uuid) {
+        return messageSound.getValue(uuid);
+    }
 
     public enum KillMessageFormat {
         FOR(

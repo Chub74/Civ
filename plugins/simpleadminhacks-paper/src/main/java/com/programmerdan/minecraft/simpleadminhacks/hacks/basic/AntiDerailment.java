@@ -8,6 +8,7 @@ import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Rail;
 import org.bukkit.craftbukkit.entity.CraftMinecart;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Minecart;
@@ -18,14 +19,21 @@ import org.bukkit.event.vehicle.VehicleMoveEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
 
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
- * Prevents minecarts from derailing by forcibly slowing them down to 8m/s when they would otherwise derail
+ * Prevents minecarts from derailing or stalling at the foot of a slope by forcibly slowing them down to 8m/s when
+ * they would otherwise do so
  */
 public class AntiDerailment extends BasicHack {
+
+    private static final Set<Rail.Shape> ASCENDING = EnumSet.of(
+        Rail.Shape.ASCENDING_NORTH, Rail.Shape.ASCENDING_SOUTH, Rail.Shape.ASCENDING_EAST, Rail.Shape.ASCENDING_WEST
+    );
 
     private Map<Minecart, Vector> previousTickMinecartVelocity;
     private final NamespacedKey ticking = new NamespacedKey(SimpleAdminHacks.instance(), "ticking");
@@ -80,13 +88,17 @@ public class AntiDerailment extends BasicHack {
             return;
         }
 
+        AbstractMinecart handle = ((CraftMinecart) minecart).getHandle();
         Block block = e.getTo().getBlock();
-        if (Tag.RAILS.isTagged(block.getType())) {
+        // Vanilla only lifts a cart onto a slope at the start of a tick, so a fast cart can cross the whole slope
+        // block in one tick at the lower height, hit the block the next rail sits on and roll back down
+        boolean stalledOnSlope = handle.horizontalCollision && block.getBlockData() instanceof Rail rail
+            && ASCENDING.contains(rail.getShape());
+        if (Tag.RAILS.isTagged(block.getType()) && !stalledOnSlope) {
             previousTickMinecartVelocity.put(minecart, minecart.getVelocity());
             return;
         }
 
-        AbstractMinecart handle = ((CraftMinecart) minecart).getHandle();
         handle.setPos(e.getFrom().getX(), e.getFrom().getY(), e.getFrom().getZ());
         minecart.setVelocity(previousTickMinecartVelocity.get(minecart));
         double maxSpeed = minecart.getMaxSpeed();
