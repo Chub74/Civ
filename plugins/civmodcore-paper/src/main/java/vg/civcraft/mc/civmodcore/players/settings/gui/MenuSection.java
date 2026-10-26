@@ -23,7 +23,9 @@ public class MenuSection extends MenuItem {
 
     private final Map<String, MenuItem> content;
 
-    private final ItemStack itemRepresentation;
+    private final String description;
+
+    private ItemStack itemRepresentation;
 
     public MenuSection(String name, String description, MenuSection parent) {
         this(name, description, parent, new ItemStack(Material.BOOK));
@@ -32,9 +34,21 @@ public class MenuSection extends MenuItem {
     public MenuSection(String name, String description, MenuSection parent, ItemStack itemRepresentation) {
         super(name, parent);
         this.content = new TreeMap<>();
-        this.itemRepresentation = itemRepresentation;
-        CivMenu.name(itemRepresentation, name);
-        CivMenu.lore(itemRepresentation, CivText.info(description), Component.empty(), CivMenu.hint("Click to open"));
+        this.description = description;
+        setItemRepresentation(itemRepresentation);
+    }
+
+    /**
+     * Changes the item this section is shown as in its parent menu. Name and description are applied to it
+     *
+     * @param itemRepresentation New item, which is not modified
+     */
+    public void setItemRepresentation(ItemStack itemRepresentation) {
+        Preconditions.checkArgument(itemRepresentation != null, "Menu item cannot be null.");
+        ItemStack item = itemRepresentation.clone();
+        CivMenu.name(item, name);
+        CivMenu.lore(item, CivText.info(description), Component.empty(), CivMenu.hint("Click to open"));
+        this.itemRepresentation = item;
     }
 
     public void addItem(MenuItem item) {

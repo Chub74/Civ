@@ -24,16 +24,35 @@ public class AdminMenuOption extends MenuItem {
     @Override
     public IClickable getMenuRepresentation(Player player) {
         ItemStack item = setting.getGuiRepresentation();
+        if (setting.isRemoved()) {
+            CivMenu.lore(item, CivMenu.stat("Config", setting.getFileName() + ": " + setting.getPath()),
+                CivText.info("Removed, flush to delete it from the config"), Component.empty(),
+                CivMenu.hint("Click to restore"));
+            return new Clickable(item) {
+
+                @Override
+                public void clicked(@NotNull Player p) {
+                    setting.discard();
+                    CivUI.success(p, "Restored ", CivText.subject(setting.getNiceName()));
+                    getParent().showScreen(p);
+                }
+            };
+        }
         CivMenu.lore(item,
             CivMenu.stat("Default", setting.getDefaultValueText()),
             CivMenu.stat("Config", setting.getFileName() + ": " + setting.getPath()));
-        if (setting.hasUnflushedChange()) {
+        if (setting.isAdded()) {
+            CivMenu.lore(item, CivText.info("Added, not flushed to config yet"));
+        } else if (setting.hasUnflushedChange()) {
             CivMenu.lore(item, CivMenu.stat("In config", setting.getFlushedValueText()),
                 CivText.info("Not flushed to config yet"));
         }
         CivMenu.lore(item, Component.empty(), CivMenu.hint("Click to change"));
         if (setting.isChanged()) {
             CivMenu.lore(item, CivMenu.hint("Shift right click to reset to default"));
+        }
+        if (setting.getMap() != null) {
+            CivMenu.lore(item, CivMenu.hint("Press Q to remove"));
         }
         return new Clickable(item) {
 
@@ -47,6 +66,18 @@ public class AdminMenuOption extends MenuItem {
                 setting.reset();
                 CivUI.success(p, "Reset ", CivText.subject(setting.getNiceName()), " to ",
                     CivText.value(setting.getValueText()));
+                getParent().showScreen(p);
+            }
+
+            @Override
+            protected void onDrop(@NotNull Player p) {
+                if (setting.getMap() == null) {
+                    clicked(p);
+                    return;
+                }
+                setting.remove();
+                CivUI.success(p, "Removed ", CivText.subject(setting.getNiceName()),
+                    setting.isAdded() ? "" : ", flush to delete it from the config");
                 getParent().showScreen(p);
             }
         };

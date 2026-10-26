@@ -10,6 +10,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import vg.civcraft.mc.civmodcore.players.settings.gui.AdminMenuSection;
 
 /**
  * A value in one of a plugin's config files which admins can change at runtime. Obtained by registering a
@@ -37,6 +38,19 @@ public final class AdminSetting<T> {
      * Value as it is in the config file
      */
     private T flushedValue;
+    private AdminMenuSection menu;
+    /**
+     * Set if this is an entry of an {@link AdminSettingMap}, the only kind of setting which can be added or removed
+     */
+    private AdminSettingMap<?, T> map;
+    /**
+     * Whether this entry was removed live. Stays registered until flushed, so the removal can be discarded
+     */
+    private boolean removed;
+    /**
+     * Whether the config file contains this entry, false for entries added live and not flushed yet
+     */
+    private boolean inFile = true;
 
     AdminSetting(PlayerSetting<T> type, String fileName, String path) {
         this.type = type;
@@ -75,6 +89,17 @@ public final class AdminSetting<T> {
     }
 
     /**
+     * @return Admin config menu section this setting is shown in
+     */
+    public AdminMenuSection getMenu() {
+        return menu;
+    }
+
+    void setMenu(AdminMenuSection menu) {
+        this.menu = menu;
+    }
+
+    /**
      * @return Path within the config file this setting is stored at
      */
     public String getPath() {
@@ -103,48 +128,120 @@ public final class AdminSetting<T> {
     }
 
     public String getFlushedValueText() {
-        return type.toText(flushedValue);
+        return inFile ? type.toText(flushedValue) : "not set";
     }
 
     /**
-     * Changes the live value and notifies listeners. The config file is not touched until {@link #flush()}
+     * @return Map this setting is an entry of, or null if it is a standalone setting
+     */
+    public AdminSettingMap<?, T> getMap() {
+        return map;
+    }
+
+    void setMap(AdminSettingMap<?, T> map) {
+        this.map = map;
+    }
+
+    /**
+     * @return Whether this map entry was removed live, but the removal is not flushed yet
+     */
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    /**
+     * @return Whether this map entry was added live, but is not flushed to the config file yet
+     */
+    public boolean isAdded() {
+        return !inFile;
+    }
+
+    /**
+     * Changes the live value and notifies listeners. The config file is not touched until {@link #flush()}. Setting
+     * a removed map entry restores it
      *
      * @param value New value
      */
     public void setValue(T value) {
-        T oldValue = getValue();
+        T oldValue = removed ? null : getValue();
+        removed = false;
         type.setValueInternal(GLOBAL, value);
         notifyListeners(oldValue, value);
     }
 
     /**
-     * @return Whether the live value differs from the one in the config file
+     * @return Whether the live value differs from the one in the config file, including map entries which were
+     * added or removed
      */
     public boolean hasUnflushedChange() {
-        return !Objects.equals(getValue(), flushedValue);
+        return removed || !inFile || !Objects.equals(getValue(), flushedValue);
     }
 
     /**
-     * Writes the live value to the config file, if it differs from it
+     * Writes the live value to the config file, if it differs from it. A removed map entry is deleted from the file
+     * and unregistered
      */
     public void flush() {
         if (!hasUnflushedChange()) {
             return;
         }
+        FileConfiguration config = loadConfig(getOwningPlugin(), fileName);
+        if (removed) {
+            config.set(path, null);
+            saveConfig(getOwningPlugin(), fileName, config);
+            map.unregisterEntry(this);
+            return;
+        }
         T value = getValue();
-        FileConfiguration config = loadConfig();
         config.set(path, toYaml(value));
-        saveConfig(config);
+        saveConfig(getOwningPlugin(), fileName, config);
         flushedValue = value;
+        inFile = true;
     }
 
     /**
-     * Throws away the unflushed change, setting the live value back to the one in the config file
+     * Throws away the unflushed change, setting the live value back to the one in the config file. A map entry which
+     * was added live is removed again
      */
     public void discard() {
-        if (hasUnflushedChange()) {
-            setValue(flushedValue);
+        if (!hasUnflushedChange()) {
+            return;
         }
+        if (!inFile) {
+            map.removeEntry(this);
+            return;
+        }
+        setValue(flushedValue);
+    }
+
+    /**
+     * Removes this map entry live. Listeners are notified with null as the new value. The config file is not touched
+     * until {@link #flush()}
+     *
+     * @throws IllegalStateException If this is not a map entry
+     */
+    public void remove() {
+        if (map == null) {
+            throw new IllegalStateException("Admin setting " + getIdentifier() + " is not a map entry.");
+        }
+        map.removeEntry(this);
+    }
+
+    void markRemoved() {
+        if (removed) {
+            return;
+        }
+        T oldValue = getValue();
+        removed = true;
+        notifyListeners(oldValue, null);
+    }
+
+    void markAdded(T value) {
+        inFile = false;
+        removed = false;
+        flushedValue = null;
+        type.setValueInternal(GLOBAL, value);
+        notifyListeners(null, value);
     }
 
     /**
@@ -242,7 +339,7 @@ public final class AdminSetting<T> {
      * @throws IllegalArgumentException If the value in the config can not be parsed
      */
     void load() {
-        Object raw = loadConfig().get(path);
+        Object raw = loadConfig(getOwningPlugin(), fileName).get(path);
         if (raw == null) {
             flushedValue = getDefaultValue();
             type.setValueInternal(GLOBAL, flushedValue);
@@ -269,31 +366,23 @@ public final class AdminSetting<T> {
         return type.serialize(value);
     }
 
-    private boolean isMainConfig() {
-        return MAIN_CONFIG.equals(fileName);
-    }
-
-    private File getFile() {
-        return new File(getOwningPlugin().getDataFolder(), fileName);
-    }
-
-    private FileConfiguration loadConfig() {
+    static FileConfiguration loadConfig(JavaPlugin plugin, String fileName) {
         // Go through the plugin's own instance for config.yml, so what the plugin reads stays in sync
-        if (isMainConfig()) {
-            return getOwningPlugin().getConfig();
+        if (MAIN_CONFIG.equals(fileName)) {
+            return plugin.getConfig();
         }
-        return YamlConfiguration.loadConfiguration(getFile());
+        return YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), fileName));
     }
 
-    private void saveConfig(FileConfiguration config) {
-        if (isMainConfig()) {
-            getOwningPlugin().saveConfig();
+    static void saveConfig(JavaPlugin plugin, String fileName, FileConfiguration config) {
+        if (MAIN_CONFIG.equals(fileName)) {
+            plugin.saveConfig();
             return;
         }
         try {
-            config.save(getFile());
+            config.save(new File(plugin.getDataFolder(), fileName));
         } catch (IOException e) {
-            throw new IllegalStateException("Failed to save " + fileName + " of " + getOwningPlugin().getName(), e);
+            throw new IllegalStateException("Failed to save " + fileName + " of " + plugin.getName(), e);
         }
     }
 
