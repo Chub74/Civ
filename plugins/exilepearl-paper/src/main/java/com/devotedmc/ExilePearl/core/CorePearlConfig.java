@@ -77,6 +77,7 @@ final class CorePearlConfig implements DocumentConfig, PearlConfig {
 
     private final Plugin plugin;
     private final PearlLogger logger;
+    private JavaPlugin javaPlugin;
     private Document doc;
     private Set<Configurable> configurables = new HashSet<>();
 
@@ -164,8 +165,10 @@ final class CorePearlConfig implements DocumentConfig, PearlConfig {
     }
 
     private void registerAdminSettings() {
-        AdminSettingAPI.setPluginIcon(plugin, new ItemStack(Material.ENDER_EYE));
-        AdminMenuSection menu = AdminSettingAPI.getPluginMenu(plugin);
+        // plugin is the ExilePearlCore wrapper, admin settings need the actual plugin owning the config file
+        javaPlugin = JavaPlugin.getProvidingPlugin(CorePearlConfig.class);
+        AdminSettingAPI.setPluginIcon(javaPlugin, new ItemStack(Material.ENDER_EYE));
+        AdminMenuSection menu = AdminSettingAPI.getPluginMenu(javaPlugin);
 
         AdminMenuSection general = menu.getSubsection("General", "Suicide, alts and moving pearls around",
             new ItemStack(Material.ENDER_PEARL));
@@ -216,7 +219,7 @@ final class CorePearlConfig implements DocumentConfig, PearlConfig {
         AdminMenuSection damageLog = menu.getSubsection("Damage log", "Who gets awarded the pearl in a fight",
             new ItemStack(Material.IRON_SWORD));
         damageLogAlgorithm = registerTask(AdminSettingAPI.registerSetting(new BoundedIntegerSetting(
-            (JavaPlugin) plugin, 0, "Algorithm", "exilepearl.damage_log.algorithm", new ItemStack(Material.COMPARATOR),
+            javaPlugin, 0, "Algorithm", "exilepearl.damage_log.algorithm", new ItemStack(Material.COMPARATOR),
             "0 awards the most recent damager, 1 the one who dealt the most damage", false, 0, 1),
             "damage_log.algorithm", damageLog), true);
         damageLogTickInterval = integer(damageLog, "damage_log.tick_interval", "Tick interval", 20, Material.CLOCK,
@@ -242,19 +245,19 @@ final class CorePearlConfig implements DocumentConfig, PearlConfig {
 
     private AdminSetting<Integer> integer(AdminMenuSection menu, String path, String name, int defaultValue,
                                           Material icon, String description, boolean usedByTasks) {
-        return registerTask(AdminSettingAPI.registerSetting(new IntegerSetting((JavaPlugin) plugin, defaultValue,
+        return registerTask(AdminSettingAPI.registerSetting(new IntegerSetting(javaPlugin, defaultValue,
             name, "exilepearl." + path, new ItemStack(icon), description, false), path, menu), usedByTasks);
     }
 
     private AdminSetting<Double> decimal(AdminMenuSection menu, String path, String name, double defaultValue,
                                          Material icon, String description, boolean usedByTasks) {
-        return registerTask(AdminSettingAPI.registerSetting(new DoubleSetting((JavaPlugin) plugin, defaultValue,
+        return registerTask(AdminSettingAPI.registerSetting(new DoubleSetting(javaPlugin, defaultValue,
             name, "exilepearl." + path, new ItemStack(icon), description), path, menu), usedByTasks);
     }
 
     private AdminSetting<Boolean> toggle(AdminMenuSection menu, String path, String name, boolean defaultValue,
                                          String description) {
-        return AdminSettingAPI.registerSetting(new BooleanSetting((JavaPlugin) plugin, defaultValue, name,
+        return AdminSettingAPI.registerSetting(new BooleanSetting(javaPlugin, defaultValue, name,
             "exilepearl." + path, description), path, menu);
     }
 
