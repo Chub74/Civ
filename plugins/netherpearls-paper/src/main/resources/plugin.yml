@@ -4,3 +4,4 @@ main: com.github.longboyy.netherpearls.NetherPearls
 author: Longboyy
 description: Makes pearls drop in the nether instead of endermen
 api-version: 26.3
+depend: [CivModCore]

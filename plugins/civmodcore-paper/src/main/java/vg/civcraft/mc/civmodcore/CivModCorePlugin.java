@@ -18,6 +18,7 @@ import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardAPI;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
 import vg.civcraft.mc.civmodcore.players.scoreboard.side.ScoreBoardListener;
 import vg.civcraft.mc.civmodcore.players.settings.PlayerSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.commands.AdminConfigCommand;
 import vg.civcraft.mc.civmodcore.players.settings.commands.ConfigCommand;
 import vg.civcraft.mc.civmodcore.utilities.SkinCache;
 import vg.civcraft.mc.civmodcore.world.locations.chunkmeta.GlobalChunkMetaManager;
@@ -80,6 +81,7 @@ public class CivModCorePlugin extends ACivMod {
         this.commands = new CommandManager(this);
         this.commands.init();
         this.commands.registerCommand(new ConfigCommand());
+        this.commands.registerCommand(new AdminConfigCommand());
         this.commands.registerCommand(new StatCommand());
         this.commands.registerCommand(new ChunkMetaCommand());
         // Load APIs

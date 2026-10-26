@@ -13,6 +13,7 @@ import vg.civcraft.mc.civchat2.CivChat2;
 import vg.civcraft.mc.civchat2.CivChat2Manager;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.civmodcore.ui.CivUI;
+import vg.civcraft.mc.namelayer.NameLayerAPI;
 
 public class Reply extends BaseCommand {
 
@@ -23,14 +24,14 @@ public class Reply extends BaseCommand {
         CivChat2Manager chatMan = CivChat2.getInstance().getCivChat2Manager();
         UUID receiverUUID = chatMan.getPlayerReply(player);
 
-        Player receiver = Bukkit.getPlayer(receiverUUID);
-        if (receiver == null) {
+        if (receiverUUID == null) {
             CivUI.error(player, "You have no one to reply to");
             return;
         }
 
-        if (!(receiver.isOnline())) {
-            CivUI.error(player, "That player is offline");
+        Player receiver = Bukkit.getPlayer(receiverUUID);
+        if (receiver == null) {
+            CivUI.error(player, CivText.subject(NameLayerAPI.getCurrentName(receiverUUID)), " is offline");
             return;
         }
 

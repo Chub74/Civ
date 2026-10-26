@@ -17,14 +17,47 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.StringUtils;
+import org.bukkit.Material;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.gui.AdminMenuSection;
+import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.IntegerSetting;
 
 import static java.util.concurrent.TimeUnit.*;
 
 public final class Settings {
 
     private final CombatTagPlus plugin;
+
+    // Gameplay values admins can change live through /adminconfig, the rest is only read from the config file
+    private AdminSetting<Integer> tagDuration;
+    private AdminSetting<Integer> logoutWaitTime;
+    private AdminSetting<Integer> npcDespawnTime;
+    private AdminSetting<Boolean> resetDespawnTimeOnHit;
+    private AdminSetting<Boolean> mobTagging;
+    private AdminSetting<Boolean> onlyTagAttacker;
+    private AdminSetting<Boolean> disableSelfTagging;
+    private AdminSetting<Boolean> disableCreativeTags;
+    private AdminSetting<Boolean> resetTagOnPearl;
+    private AdminSetting<Boolean> untagOnKick;
+    private AdminSetting<Boolean> untagOnPluginTeleport;
+    private AdminSetting<Boolean> alwaysSpawn;
+    private AdminSetting<Boolean> instantlyKill;
+    private AdminSetting<Boolean> playEffect;
+    private AdminSetting<Boolean> disableBlockEdit;
+    private AdminSetting<Boolean> disableStorageAccess;
+    private AdminSetting<Boolean> disableEnderpearls;
+    private AdminSetting<Boolean> disableFlying;
+    private AdminSetting<Boolean> disableTeleportation;
+    private AdminSetting<Boolean> disableCrafting;
+    private AdminSetting<Boolean> denySafezone;
+    private AdminSetting<Boolean> denySafezoneEnderpearl;
+    private AdminSetting<Boolean> forceFields;
+    private AdminSetting<Integer> forceFieldRadius;
 
     Settings(CombatTagPlus plugin) {
         this.plugin = plugin;
@@ -36,6 +69,84 @@ public final class Settings {
         defaults.set("disabled-worlds", new ArrayList<>());
         defaults.set("command-blacklist", new ArrayList<>());
         defaults.set("command-whitelist", new ArrayList<>());
+    }
+
+    /**
+     * Binds the gameplay values to admin settings. Call once the config file is up to date, registering again
+     * replaces the previous settings
+     */
+    public void registerAdminSettings() {
+        AdminSettingAPI.setPluginIcon(plugin, new ItemStack(Material.IRON_SWORD));
+        AdminMenuSection menu = AdminSettingAPI.getPluginMenu(plugin);
+
+        AdminMenuSection timers = menu.getSubsection("Timers", "How long tags, safe logouts and NPCs last",
+            new ItemStack(Material.CLOCK));
+        tagDuration = integer(timers, "tag-duration", "Tag duration", 15, Material.CLOCK,
+            "Seconds both players stay tagged after a hit");
+        logoutWaitTime = integer(timers, "logout-wait-time", "Logout wait time", 10, Material.OAK_DOOR,
+            "Seconds a player must stand still to /logout safely");
+        npcDespawnTime = integer(timers, "npc-despawn-time", "NPC despawn time", 60, Material.ZOMBIE_HEAD,
+            "Seconds a combat logger's NPC stays if it isn't killed");
+        resetDespawnTimeOnHit = toggle(timers, "reset-despawn-time-on-hit", "Reset NPC despawn on hit", true,
+            "Restart the NPC despawn time whenever it gets hit");
+
+        AdminMenuSection tagging = menu.getSubsection("Tagging", "Who gets tagged and what happens on logging",
+            new ItemStack(Material.NAME_TAG));
+        mobTagging = toggle(tagging, "mob-tagging", "Mob tagging", false, "Mobs tag the players they hit");
+        onlyTagAttacker = toggle(tagging, "only-tag-attacker", "Only tag attacker", false,
+            "Only the attacker gets tagged, not the victim");
+        disableSelfTagging = toggle(tagging, "disable-self-tagging", "Disable self tagging", true,
+            "Players can't tag themselves");
+        disableCreativeTags = toggle(tagging, "disable-creative-tags", "Disable creative tags", true,
+            "Players in creative don't get tagged");
+        resetTagOnPearl = toggle(tagging, "reset-tag-on-pearl", "Reset tag on pearl", false,
+            "Throwing an ender pearl restarts the tag");
+        untagOnKick = toggle(tagging, "untag-on-kick", "Untag on kick", false,
+            "Untag players who get kicked instead of spawning an NPC");
+        untagOnPluginTeleport = toggle(tagging, "untag-on-plugin-teleport", "Untag on plugin teleport", false,
+            "Untag players teleported by plugins");
+        alwaysSpawn = toggle(tagging, "always-spawn", "Always spawn NPC", false,
+            "Spawn an NPC on every logout, tagged or not");
+        instantlyKill = toggle(tagging, "instantly-kill", "Instantly kill", false,
+            "Kill combat loggers instead of spawning an NPC");
+        playEffect = toggle(tagging, "play-effect", "Play effect", true, "Play an effect when someone combat logs");
+
+        AdminMenuSection restrictions = menu.getSubsection("Restrictions", "What tagged players can't do",
+            new ItemStack(Material.BARRIER));
+        disableBlockEdit = toggle(restrictions, "disable-block-edit", "Disable block editing", false,
+            "Tagged players can't place or break blocks");
+        disableStorageAccess = toggle(restrictions, "disable-storage-access", "Disable storage access", false,
+            "Tagged players can't open chests and other storage");
+        disableEnderpearls = toggle(restrictions, "disable-enderpearls", "Disable ender pearls", false,
+            "Tagged players can't throw ender pearls");
+        disableFlying = toggle(restrictions, "disable-flying", "Disable flying", false, "Tagged players can't fly");
+        disableTeleportation = toggle(restrictions, "disable-teleportation", "Disable teleportation", false,
+            "Tagged players can't teleport");
+        disableCrafting = toggle(restrictions, "disable-crafting", "Disable crafting", false,
+            "Tagged players can't craft");
+
+        AdminMenuSection safezones = menu.getSubsection("Safezones", "Keeping tagged players out of PvP-free areas",
+            new ItemStack(Material.SHIELD));
+        denySafezone = toggle(safezones, "deny-safezone", "Deny safezones", true,
+            "Push tagged players back out of PvP-free areas");
+        denySafezoneEnderpearl = toggle(safezones, "deny-safezone-enderpearl", "Deny safezone pearls", true,
+            "Tagged players can't pearl into PvP-free areas");
+        forceFields = toggle(safezones, "force-fields", "Force fields", true,
+            "Show fake walls around PvP-free areas to tagged players");
+        forceFieldRadius = integer(safezones, "force-field-radius", "Force field radius", 10, Material.GLASS,
+            "Blocks around tagged players checked for force fields, higher is laggier");
+    }
+
+    private AdminSetting<Integer> integer(AdminMenuSection menu, String path, String name, int defaultValue,
+                                          Material icon, String description) {
+        return AdminSettingAPI.registerSetting(new IntegerSetting(plugin, defaultValue, name, "ctplus." + path,
+            new ItemStack(icon), description, false), path, menu);
+    }
+
+    private AdminSetting<Boolean> toggle(AdminMenuSection menu, String path, String name, boolean defaultValue,
+                                         String description) {
+        return AdminSettingAPI.registerSetting(new BooleanSetting(plugin, defaultValue, name, "ctplus." + path,
+            description), path, menu);
     }
 
     public void update() {
@@ -185,7 +296,7 @@ public final class Settings {
     }
 
     public int getTagDuration() {
-        return plugin.getConfig().getInt("tag-duration", 15);
+        return Math.max(0, tagDuration.getValue());
     }
 
     public String getTagMessage() {
@@ -204,23 +315,23 @@ public final class Settings {
     }
 
     public boolean resetTagOnPearl() {
-        return plugin.getConfig().getBoolean("reset-tag-on-pearl");
+        return resetTagOnPearl.getValue();
     }
 
     public boolean playEffect() {
-        return plugin.getConfig().getBoolean("play-effect");
+        return playEffect.getValue();
     }
 
     public boolean alwaysSpawn() {
-        return plugin.getConfig().getBoolean("always-spawn");
+        return alwaysSpawn.getValue();
     }
 
     public boolean mobTagging() {
-        return plugin.getConfig().getBoolean("mob-tagging");
+        return mobTagging.getValue();
     }
 
     public int getLogoutWaitTime() {
-        return plugin.getConfig().getInt("logout-wait-time", 10);
+        return Math.max(0, logoutWaitTime.getValue());
     }
 
     public String getLogoutCancelledMessage() {
@@ -239,11 +350,11 @@ public final class Settings {
     }
 
     public boolean instantlyKill() {
-        return plugin.getConfig().getBoolean("instantly-kill");
+        return instantlyKill.getValue();
     }
 
     public boolean untagOnKick() {
-        return plugin.getConfig().getBoolean("untag-on-kick");
+        return untagOnKick.getValue();
     }
 
     public List<String> getUntagOnKickBlacklist() {
@@ -251,15 +362,15 @@ public final class Settings {
     }
 
     public boolean onlyTagAttacker() {
-        return plugin.getConfig().getBoolean("only-tag-attacker");
+        return onlyTagAttacker.getValue();
     }
 
     public boolean disableSelfTagging() {
-        return plugin.getConfig().getBoolean("disable-self-tagging");
+        return disableSelfTagging.getValue();
     }
 
     public boolean disableBlockEdit() {
-        return plugin.getConfig().getBoolean("disable-block-edit");
+        return disableBlockEdit.getValue();
     }
 
     public String getDisableBlockEditMessage() {
@@ -268,7 +379,7 @@ public final class Settings {
     }
 
     public boolean disableStorageAccess() {
-        return plugin.getConfig().getBoolean("disable-storage-access");
+        return disableStorageAccess.getValue();
     }
 
     public String getDisableStorageAccessMessage() {
@@ -277,11 +388,11 @@ public final class Settings {
     }
 
     public boolean disableCreativeTags() {
-        return plugin.getConfig().getBoolean("disable-creative-tags");
+        return disableCreativeTags.getValue();
     }
 
     public boolean disableEnderpearls() {
-        return plugin.getConfig().getBoolean("disable-enderpearls");
+        return disableEnderpearls.getValue();
     }
 
     public String getDisableEnderpearlsMessage() {
@@ -290,7 +401,7 @@ public final class Settings {
     }
 
     public boolean disableFlying() {
-        return plugin.getConfig().getBoolean("disable-flying");
+        return disableFlying.getValue();
     }
 
     public String getDisableFlyingMessage() {
@@ -299,7 +410,7 @@ public final class Settings {
     }
 
     public boolean disableTeleportation() {
-        return plugin.getConfig().getBoolean("disable-teleportation");
+        return disableTeleportation.getValue();
     }
 
     public String getDisableTeleportationMessage() {
@@ -308,7 +419,7 @@ public final class Settings {
     }
 
     public boolean disableCrafting() {
-        return plugin.getConfig().getBoolean("disable-crafting");
+        return disableCrafting.getValue();
     }
 
     public String getDisableCraftingMessage() {
@@ -317,7 +428,7 @@ public final class Settings {
     }
 
     public int getNpcDespawnTime() {
-        return plugin.getConfig().getInt("npc-despawn-time", 60);
+        return Math.max(0, npcDespawnTime.getValue());
     }
 
     public int getNpcDespawnMillis() {
@@ -325,7 +436,7 @@ public final class Settings {
     }
 
     public boolean resetDespawnTimeOnHit() {
-        return plugin.getConfig().getBoolean("reset-despawn-time-on-hit");
+        return resetDespawnTimeOnHit.getValue();
     }
 
     public boolean generateRandomName() {
@@ -359,19 +470,19 @@ public final class Settings {
     }
 
     public boolean denySafezone() {
-        return plugin.getConfig().getBoolean("deny-safezone");
+        return denySafezone.getValue();
     }
 
     public boolean denySafezoneEnderpearl() {
-        return plugin.getConfig().getBoolean("deny-safezone-enderpearl");
+        return denySafezoneEnderpearl.getValue();
     }
 
     public boolean useForceFields() {
-        return plugin.getConfig().getBoolean("force-fields");
+        return forceFields.getValue();
     }
 
     public int getForceFieldRadius() {
-        return plugin.getConfig().getInt("force-field-radius");
+        return Math.max(0, forceFieldRadius.getValue());
     }
 
     public String getForceFieldMaterial() {
@@ -422,7 +533,7 @@ public final class Settings {
     }
 
     public boolean untagOnPluginTeleport() {
-        return plugin.getConfig().getBoolean("untag-on-plugin-teleport");
+        return untagOnPluginTeleport.getValue();
     }
 
     public String getCommandUntagMessage() {

@@ -8,21 +8,19 @@ import vg.civcraft.mc.civmodcore.ui.CivText;
 public class RewardManager {
 
     private final Rewarder rewarder;
-    private final int dailyReward;
-    private final int voteReward;
+    private final EssenceConfigManager config;
 
-    public RewardManager(Rewarder rewarder, int dailyReward, int voteReward) {
+    public RewardManager(Rewarder rewarder, EssenceConfigManager config) {
         this.rewarder = rewarder;
-        this.dailyReward = dailyReward;
-        this.voteReward = voteReward;
+        this.config = config;
     }
 
     public void giveLoginReward(Player p, int streak) {
-        rewarder.reward(p, dailyReward * streak, Component.text("for logging in today"));
+        rewarder.reward(p, config.getLoginReward() * streak, Component.text("for logging in today"));
     }
 
     public void giveVoteReward(Player p, String page) {
-        rewarder.reward(p, voteReward, Component.text("for voting on ").append(CivText.value(page)));
+        rewarder.reward(p, config.getVotingReward(), Component.text("for voting on ").append(CivText.value(page)));
     }
 
 }

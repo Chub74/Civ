@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Predicate;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -22,7 +23,9 @@ public class MenuSection extends MenuItem {
 
     private final Map<String, MenuItem> content;
 
-    private final ItemStack itemRepresentation;
+    private final String description;
+
+    private ItemStack itemRepresentation;
 
     public MenuSection(String name, String description, MenuSection parent) {
         this(name, description, parent, new ItemStack(Material.BOOK));
@@ -31,13 +34,34 @@ public class MenuSection extends MenuItem {
     public MenuSection(String name, String description, MenuSection parent, ItemStack itemRepresentation) {
         super(name, parent);
         this.content = new TreeMap<>();
-        this.itemRepresentation = itemRepresentation;
-        CivMenu.name(itemRepresentation, name);
-        CivMenu.lore(itemRepresentation, CivText.info(description), Component.empty(), CivMenu.hint("Click to open"));
+        this.description = description;
+        setItemRepresentation(itemRepresentation);
+    }
+
+    /**
+     * Changes the item this section is shown as in its parent menu. Name and description are applied to it
+     *
+     * @param itemRepresentation New item, which is not modified
+     */
+    public void setItemRepresentation(ItemStack itemRepresentation) {
+        Preconditions.checkArgument(itemRepresentation != null, "Menu item cannot be null.");
+        ItemStack item = itemRepresentation.clone();
+        CivMenu.name(item, name);
+        CivMenu.lore(item, CivText.info(description), Component.empty(), CivMenu.hint("Click to open"));
+        this.itemRepresentation = item;
     }
 
     public void addItem(MenuItem item) {
         content.put(item.getName(), item);
+    }
+
+    /**
+     * Removes all items matching the filter
+     *
+     * @param filter Filter to match items to remove
+     */
+    public void removeItem(Predicate<MenuItem> filter) {
+        content.values().removeIf(filter);
     }
 
     public Collection<MenuItem> getItems() {
@@ -81,7 +105,17 @@ public class MenuSection extends MenuItem {
                 }
             }, 0);
         }
+        addMenuSlots(pageView, player);
         pageView.showScreen();
+    }
+
+    /**
+     * Allows subclasses to put extra buttons into the bottom row, slots 1 to 6. Slot 0 is the back button
+     *
+     * @param pageView View about to be shown
+     * @param player   Player it is shown to
+     */
+    protected void addMenuSlots(MultiPageView pageView, Player player) {
     }
 
     /**

@@ -41,10 +41,12 @@ import org.bukkit.util.BoundingBox;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
 import vg.civcraft.mc.citadel.Citadel;
+import vg.civcraft.mc.citadel.CitadelConfigManager;
 import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.ReinforcementManager;
 import vg.civcraft.mc.citadel.events.ReinforcementCreationEvent;
 import vg.civcraft.mc.citadel.listener.ModeListener;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.namelayer.group.Group;
 
@@ -87,6 +89,7 @@ public class ReinforcementOverlayManager implements Listener {
         new WrappedDataWatcher.Serializer(Vector3fc.class, EntityDataSerializers.VECTOR3, false);
 
     private final CitadelSettingManager settings;
+    private final CitadelConfigManager  configManager;
     private final Map<UUID, PlayerOverlay> overlays = new HashMap<>();
     // a player moving or blocks changing near them goes ahead of the periodic rescan of a player standing still
     private final Deque<UUID> urgentScans = new ArrayDeque<>();
@@ -96,15 +99,24 @@ public class ReinforcementOverlayManager implements Listener {
 
     public ReinforcementOverlayManager(CitadelSettingManager settings) {
         this.settings = settings;
+        this.configManager = Citadel.getInstance().getConfigManager();
         settings.getOverlay().registerListener((uuid, setting, oldValue, newValue) -> {
             if (!newValue) {
                 clear(Bukkit.getPlayer(uuid));
             }
         });
+        configManager.getCtvEnabled().registerListener(((setting, oldValue, newValue) -> {
+            if (!newValue) {
+                Bukkit.getOnlinePlayers().forEach(this::clear);
+            }
+        }));
         new BukkitRunnable() {
 
             @Override
             public void run() {
+                if (!configManager.getCtvEnabled().getValue()){
+                    return;
+                }
                 tick();
             }
 
@@ -124,7 +136,7 @@ public class ReinforcementOverlayManager implements Listener {
     private void tick() {
         int slot = tickCount++ % UPDATE_INTERVAL_TICKS;
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!settings.getOverlay().getValue(player.getUniqueId())) {
+            if (!settings.getOverlay().getValue(player.getUniqueId()) || Bedrock.isBedrock(player)) {
                 continue;
             }
             PlayerOverlay overlay = overlays.computeIfAbsent(player.getUniqueId(),

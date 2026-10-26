@@ -38,12 +38,7 @@ public class Tell extends BaseCommand {
 
         Player receiver = Bukkit.getPlayer(targetPlayer);
         if (receiver == null) {
-            CivUI.error(player, "No player exists with that name");
-            return;
-        }
-
-        if (!(receiver.isOnline())) {
-            CivUI.error(player, "That player is offline");
+            CivUI.error(player, "There's no player online called ", CivText.subject(targetPlayer));
             return;
         }
 

@@ -7,6 +7,7 @@ import com.github.igotyou.FactoryMod.utility.LoggingUtils;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +17,10 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import vg.civcraft.mc.civmodcore.chat.ChatUtils;
 import vg.civcraft.mc.civmodcore.inventory.CustomItem;
@@ -182,11 +185,13 @@ public abstract class InputRecipe implements IRecipe {
             } else {
                 lore.add(FMText.entry(formatLine(textualInputs.get(i))));
             }
+            lore.addAll(formatEnchants(getLineItem(textualInputs.get(i))));
         }
         lore.add(Component.empty());
         lore.add(FMText.section("Output"));
         for (String s : getTextualOutputRepresentation(null, null)) {
             lore.add(FMText.entry(formatLine(s)));
+            lore.addAll(formatEnchants(getLineItem(s)));
         }
         lore.add(Component.empty());
         lore.add(Component.text()
@@ -261,12 +266,36 @@ public abstract class InputRecipe implements IRecipe {
     /** A line of the textual input or output, led by the texture of the item it names */
     public Component formatLine(String line) {
         Component text = FMText.legacy(line).colorIfAbsent(CivText.VALUE);
+        ItemStack item = getLineItem(line);
+        return item == null ? text : Component.text().append(FMText.icon(item)).append(text).build();
+    }
+
+    /** The item a line of the textual input or output names, or null if it names none */
+    private ItemStack getLineItem(String line) {
         for (ItemStack item : getLineItems()) {
             if (line.matches("\\d+ " + Pattern.quote(formatIngredientName(item)))) {
-                return Component.text().append(FMText.icon(item)).append(text).build();
+                return item;
             }
         }
-        return text;
+        return null;
+    }
+
+    /** One indented line per enchantment on the item, including those stored in enchanted books */
+    private static List<Component> formatEnchants(ItemStack item) {
+        List<Component> result = new ArrayList<>();
+        if (item == null || !item.hasItemMeta()) {
+            return result;
+        }
+        ItemMeta meta = item.getItemMeta();
+        Map<Enchantment, Integer> enchants = new LinkedHashMap<>(meta.getEnchants());
+        if (meta instanceof EnchantmentStorageMeta storage) {
+            enchants.putAll(storage.getStoredEnchants());
+        }
+        for (Entry<Enchantment, Integer> entry : enchants.entrySet()) {
+            result.add(Component.text().append(Component.text("    "))
+                .append(entry.getKey().displayName(entry.getValue())).build());
+        }
+        return result;
     }
 
     /** The items the textual input and output lines can name */

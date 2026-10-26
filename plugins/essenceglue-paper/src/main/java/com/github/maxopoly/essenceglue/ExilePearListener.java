@@ -7,17 +7,17 @@ import org.bukkit.event.Listener;
 
 public class ExilePearListener implements Listener {
 
-    private final boolean multiplyCost;
+    private final EssenceConfigManager config;
     private final StreakManager streakMan;
 
-    public ExilePearListener(StreakManager streakMan, boolean multiplyCost) {
-        this.multiplyCost = multiplyCost;
+    public ExilePearListener(StreakManager streakMan, EssenceConfigManager config) {
+        this.config = config;
         this.streakMan = streakMan;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void pearlDecay(PearlDecayEvent event) {
-        if (!multiplyCost) {
+        if (!config.multiplyPearlCost()) {
             return;
         }
         int streak = streakMan.getRecalculatedCurrentStreak(event.getPearl().getPlayerId());
