@@ -10,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.Nameable;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
-import org.bukkit.block.Container;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -42,7 +41,7 @@ public class BlockHolder implements PearlHolder {
     public String getName() {
         String customNameString = "";
         if (block.getState() instanceof Nameable) {
-            String customName = ((Container) block.getState()).getCustomName();
+            String customName = ((Nameable) block.getState()).getCustomName();
             if (customName != null) {
                 customNameString = String.format(" %scalled %s", ChatColor.RESET, customName);
             }

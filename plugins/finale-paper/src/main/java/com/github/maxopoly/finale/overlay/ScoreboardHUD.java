@@ -194,16 +194,16 @@ public class ScoreboardHUD implements Listener {
         int remaining = max - damageable.getDamage();
         float ratio = (float) remaining / max;
         TextColor colour = ratio > 0.5F ? CivText.SUCCESS : ratio > 0.25F ? CivText.WARN : CivText.ERROR;
-        Component percent = Component.text(Math.round(ratio * 100) + "%", colour);
+        // the remaining points carry the colour the percentage used to
         Component points = Component.text()
-            .append(CivText.subject(String.valueOf(remaining)))
+            .append(Component.text(remaining, colour))
             .append(CivText.info("/" + max))
             .build();
 
         // Bedrock can't draw the icon, so it gets the slot name the icon stands in for
         Component icon = Bedrock.isBedrock(p) ? null : CivText.icon(item);
-        Component display = HudLine.component(icon == null ? slot : icon, percent, points);
-        board.set(p, sortingPrefix(order) + HudLine.of(slot, percent, points), display);
+        Component display = HudLine.component(icon == null ? slot : icon, points);
+        board.set(p, sortingPrefix(order) + HudLine.of(slot, points), display);
     }
 
     private void showEffect(Player p, CivScoreBoard board, int order, PotionEffect effect) {

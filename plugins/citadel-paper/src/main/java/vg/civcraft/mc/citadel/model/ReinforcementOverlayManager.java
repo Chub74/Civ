@@ -46,6 +46,7 @@ import vg.civcraft.mc.citadel.CitadelPermissionHandler;
 import vg.civcraft.mc.citadel.ReinforcementManager;
 import vg.civcraft.mc.citadel.events.ReinforcementCreationEvent;
 import vg.civcraft.mc.citadel.listener.ModeListener;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 import vg.civcraft.mc.namelayer.group.Group;
 
@@ -135,7 +136,7 @@ public class ReinforcementOverlayManager implements Listener {
     private void tick() {
         int slot = tickCount++ % UPDATE_INTERVAL_TICKS;
         for (Player player : Bukkit.getOnlinePlayers()) {
-            if (!settings.getOverlay().getValue(player.getUniqueId())) {
+            if (!settings.getOverlay().getValue(player.getUniqueId()) || Bedrock.isBedrock(player)) {
                 continue;
             }
             PlayerOverlay overlay = overlays.computeIfAbsent(player.getUniqueId(),

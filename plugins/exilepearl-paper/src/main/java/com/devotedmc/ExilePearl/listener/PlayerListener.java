@@ -13,6 +13,7 @@ import com.devotedmc.ExilePearl.config.PearlConfig;
 import com.devotedmc.ExilePearl.event.PearlMovedEvent;
 import com.devotedmc.ExilePearl.event.PlayerFreedEvent;
 import com.devotedmc.ExilePearl.event.PlayerPearledEvent;
+import com.devotedmc.ExilePearl.holder.PearlHolder;
 import com.devotedmc.ExilePearl.util.SpawnUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
@@ -36,11 +37,14 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.BrewingStand;
 import org.bukkit.block.Chest;
+import org.bukkit.block.ChiseledBookshelf;
+import org.bukkit.block.DecoratedPot;
 import org.bukkit.block.Dispenser;
 import org.bukkit.block.DoubleChest;
 import org.bukkit.block.Dropper;
 import org.bukkit.block.Furnace;
 import org.bukkit.block.Hopper;
+import org.bukkit.block.Shelf;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.EnderPearl;
 import org.bukkit.entity.Entity;
@@ -50,6 +54,7 @@ import org.bukkit.entity.ItemFrame;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.minecart.HopperMinecart;
 import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -891,6 +896,47 @@ public class PlayerListener implements Listener, Configurable {
         if (pearlApi.freePearl(pearl, PearlFreeReason.PEARL_THROWN)) {
             PearlText.send(player, Lang.pearlYouFreed, pearl.getPlayerName());
         }
+    }
+
+    /**
+     * @param e The event args
+     */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onDirectInventoryInteract(PlayerInteractEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK || e.useInteractedBlock() == Event.Result.DENY) {
+            return;
+        }
+        final Block block = e.getClickedBlock();
+        final BlockState state = block.getState(false);
+        if (!(state instanceof Shelf || state instanceof DecoratedPot || state instanceof ChiseledBookshelf)) {
+            return;
+        }
+        final Player player = e.getPlayer();
+        Bukkit.getScheduler().runTask(pearlApi, () -> {
+            if (!(block.getState(false) instanceof BlockInventoryHolder blockHolder)) {
+                return;
+            }
+            for (ItemStack item : blockHolder.getInventory().getContents()) {
+                ExilePearl pearl = pearlApi.getPearlFromItemStack(item);
+                if (pearl != null && !isHeldByBlock(pearl, block)) {
+                    pearl.setHolder(block);
+                }
+            }
+            if (!player.isOnline()) {
+                return;
+            }
+            for (ItemStack item : player.getInventory().getContents()) {
+                ExilePearl pearl = pearlApi.getPearlFromItemStack(item);
+                if (pearl != null && isHeldByBlock(pearl, block)) {
+                    pearl.setHolder(player);
+                }
+            }
+        });
+    }
+
+    private boolean isHeldByBlock(ExilePearl pearl, Block block) {
+        PearlHolder holder = pearl.getHolder();
+        return holder != null && holder.isBlock() && holder.getLocation().equals(block.getLocation());
     }
 
     /**

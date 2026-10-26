@@ -15,6 +15,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerAdvancementDoneEvent;
 import vg.civcraft.mc.civchat2.CivChat2;
+import vg.civcraft.mc.civmodcore.ui.Bedrock;
 import vg.civcraft.mc.civmodcore.ui.CivText;
 
 /** Replaces vanilla's "has made the advancement" line with the configured layout. */
@@ -44,11 +45,17 @@ public class AnnounceListener implements Listener {
             .append(Component.newline())
             .append(display.description().colorIfAbsent(CivText.INFO))
             .build();
-        event.message(Component.text().color(CivText.INFO)
+        Component message = Component.text().color(CivText.INFO)
             .append(MM.deserialize(template,
                 Placeholder.component("player", name(event.getPlayer())),
                 Placeholder.component("advancement", title.hoverEvent(HoverEvent.showText(hover)))))
-            .build());
+            .build();
+        // Sent per player instead of through the event, so Bedrock players get it without the head
+        event.message(null);
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.sendMessage(Bedrock.adapt(player, message));
+        }
+        Bukkit.getConsoleSender().sendMessage(message);
     }
 
     /** Same name block as chat and join lines - rank stars and name colour - when CivChat2 is there. */
