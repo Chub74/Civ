@@ -37,8 +37,7 @@ public final class EssenceGluePlugin extends ACivMod {
         commandManager = new CommandManager(this);
         commandManager.init();
         registerCommands();
-        streakMan = new StreakManager(this, configMan.getStreakDelay(), configMan.getStreakGracePeriod(),
-            configMan.getMaxStreak(), configMan.getOnlineTimeForReward(), configMan.giveRewardToPearled());
+        streakMan = new StreakManager(this);
         if (configMan.getDatabase() != null) {
             EssenceDAO dao = new EssenceDAO(this, configMan.getDatabase());
             if (!dao.update()) {
@@ -51,21 +50,21 @@ public final class EssenceGluePlugin extends ACivMod {
         if (configMan.isPhysical()) {
             rewarder = new PhysicalRewarder(configMan.getRewards());
         } else {
-            essenceManager = new VirtualEssenceManager(this, configMan.getVirtualCap());
+            essenceManager = new VirtualEssenceManager(this, configMan);
             EssenceWithdrawal withdrawal = new EssenceWithdrawal(this, essenceManager, configMan.getRewards());
             commandManager.registerCommand(new EssenceCommand(essenceManager, withdrawal));
             Bukkit.getPluginManager().registerEvents(new FullEssenceReminder(this, essenceManager), this);
             rewarder = new VirtualRewarder(essenceManager);
         }
 
-        rewardMan = new RewardManager(rewarder, configMan.getLoginReward(), configMan.getVotingReward());
+        rewardMan = new RewardManager(rewarder, configMan);
         if (Bukkit.getPluginManager().isPluginEnabled("Votifier")) {
             votifyMan = new VotifyManager(rewardMan, configMan.getVotingCooldowns());
             Bukkit.getPluginManager().registerEvents(votifyMan, this);
         } else {
             getLogger().info("Votifier is not enabled, no voting support is possible");
         }
-        Bukkit.getPluginManager().registerEvents(new ExilePearListener(streakMan, configMan.multiplyPearlCost()), this);
+        Bukkit.getPluginManager().registerEvents(new ExilePearListener(streakMan, configMan), this);
     }
 
     private void registerCommands() {

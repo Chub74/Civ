@@ -71,6 +71,15 @@ public class VoiceManager implements VoicechatPlugin {
         this.frequencyKey = new NamespacedKey(plugin, "frequency");
     }
 
+    /**
+     * Updates how far existing speakers can be heard, new speakers read it from the config
+     */
+    public void setSpeakerDistance(int distance) {
+        for (LocationalAudioChannel channel : speakerChannels.values()) {
+            channel.setDistance(distance);
+        }
+    }
+
     // ─── VoicechatPlugin ─────────────────────────────────────────────────────
 
     @Override

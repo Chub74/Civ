@@ -4,8 +4,14 @@ import net.civeden.auramagnet.commands.AuraMagnetCommand;
 import net.civeden.auramagnet.listeners.HoeTagListener;
 import net.civeden.auramagnet.settings.MagnetHoeSettings;
 import net.civeden.auramagnet.tasks.MagnetScanTask;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.inventory.ItemStack;
 import vg.civcraft.mc.civmodcore.ACivMod;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.impl.DoubleSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.IntegerSetting;
 
 public class AuraMagnet extends ACivMod {
 
@@ -14,9 +20,10 @@ public class AuraMagnet extends ACivMod {
     public static NamespacedKey MAGNET_HOE_KEY;
 
     private MagnetHoeSettings magnetHoeSettings;
-    private double magnetRadius;
-    private int durabilityCostPerItem;
-    private double durabilityChancePerItem;
+    // Admins can change these live through /adminconfig
+    private AdminSetting<Double> magnetRadius;
+    private AdminSetting<Integer> durabilityCostPerItem;
+    private AdminSetting<Double> durabilityChancePerItem;
     private String magnetLoreTrigger;
 
     @Override
@@ -41,9 +48,17 @@ public class AuraMagnet extends ACivMod {
 
     private void loadConfigValues() {
         reloadConfig();
-        magnetRadius = getConfig().getDouble("magnet-radius", 8.0);
-        durabilityCostPerItem = getConfig().getInt("durability-cost-per-item", 1);
-        durabilityChancePerItem = getConfig().getDouble("durability-chance-per-item", 1.0);
+        AdminSettingAPI.setPluginIcon(this, new ItemStack(Material.GOLDEN_HOE));
+        magnetRadius = AdminSettingAPI.registerSetting(new DoubleSetting(this, 8.0, "Magnet radius",
+            "auramagnet.magnet-radius", new ItemStack(Material.LODESTONE),
+            "Blocks around the player the hoe pulls items from"), "magnet-radius");
+        durabilityCostPerItem = AdminSettingAPI.registerSetting(new IntegerSetting(this, 1, "Durability cost",
+            "auramagnet.durability-cost-per-item", new ItemStack(Material.ANVIL),
+            "Durability taken from the hoe when an item costs durability, 0 never wears it", false),
+            "durability-cost-per-item");
+        durabilityChancePerItem = AdminSettingAPI.registerSetting(new DoubleSetting(this, 1.0, "Durability chance",
+            "auramagnet.durability-chance-per-item", new ItemStack(Material.RABBIT_FOOT),
+            "Chance from 0 to 1 that a pulled item costs durability"), "durability-chance-per-item");
         magnetLoreTrigger = getConfig().getString("magnet-lore-trigger", "&6Aura Magnet Hoe");
     }
 
@@ -56,15 +71,16 @@ public class AuraMagnet extends ACivMod {
     }
 
     public double getMagnetRadius() {
-        return magnetRadius;
+        return Math.max(0, magnetRadius.getValue());
     }
 
     public int getDurabilityCostPerItem() {
-        return durabilityCostPerItem;
+        // A negative cost would repair the hoe
+        return Math.max(0, durabilityCostPerItem.getValue());
     }
 
     public double getDurabilityChancePerItem() {
-        return durabilityChancePerItem;
+        return durabilityChancePerItem.getValue();
     }
 
     public String getMagnetLoreTrigger() {

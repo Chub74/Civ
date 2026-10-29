@@ -223,7 +223,7 @@ public class Citadel extends ACivMod {
         getServer().getPluginManager().registerEvents(new CopperGolemListener(this), this);
         getServer().getPluginManager().registerEvents(new InventoryListener(), this);
         getServer().getPluginManager().registerEvents(new ModeListener(this), this);
-        getServer().getPluginManager().registerEvents(new RedstoneListener(config.getMaxRedstoneDistance()), this);
+        getServer().getPluginManager().registerEvents(new RedstoneListener(), this);
         getServer().getPluginManager().registerEvents(new ActivityListener(activityMap), this);
         getServer().getPluginManager().registerEvents(new WorldBorderListener(), this);
         if (overlayManager != null) {

@@ -8,11 +8,11 @@ import java.util.UUID;
 public class VirtualEssenceManager {
 
     private final IntegerSetting playerEssence;
-    private final int virtualCap;
+    private final EssenceConfigManager config;
 
-    public VirtualEssenceManager(JavaPlugin plugin, int virtualCap) {
+    public VirtualEssenceManager(JavaPlugin plugin, EssenceConfigManager config) {
         playerEssence = new IntegerSetting(plugin, 0, "Player Essence", "playerEssence");
-        this.virtualCap = virtualCap;
+        this.config = config;
         PlayerSettingAPI.registerSetting(playerEssence, null);
     }
 
@@ -22,13 +22,13 @@ public class VirtualEssenceManager {
     }
 
     public void setEssence(UUID playerId, int essence) {
-        playerEssence.setValue(playerId, Math.min(essence, this.virtualCap));
+        playerEssence.setValue(playerId, Math.min(essence, getCap()));
     }
 
     /** Adds as much as fits under the cap and returns how much that was. */
     public int addEssence(UUID playerId, int amount) {
         int current = getEssence(playerId);
-        int added = Math.max(0, Math.min(amount, this.virtualCap - current));
+        int added = Math.max(0, Math.min(amount, getCap() - current));
         if (added > 0) {
             playerEssence.setValue(playerId, current + added);
         }
@@ -40,11 +40,14 @@ public class VirtualEssenceManager {
         playerEssence.setValue(playerId, Math.max(0, getEssence(playerId) - amount));
     }
 
+    /**
+     * @return Live cap, admins can change it
+     */
     public int getCap() {
-        return virtualCap;
+        return config.getVirtualCap();
     }
 
     public boolean isAtEssenceCapacity(UUID playerId) {
-        return getEssence(playerId) >= this.virtualCap;
+        return getEssence(playerId) >= getCap();
     }
 }

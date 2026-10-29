@@ -55,12 +55,9 @@ public class RedstoneListener implements Listener {
         return !entities.isEmpty();
     }
 
-    private double maxRedstoneDistance;
-
     private Map<Location, List<UUID>> authorizations;
 
-    public RedstoneListener(double maxRedstoneDistance) {
-        this.maxRedstoneDistance = maxRedstoneDistance;
+    public RedstoneListener() {
         this.authorizations = new HashMap<>();
         Bukkit.getScheduler().scheduleSyncRepeatingTask(Citadel.getInstance(), () -> authorizations.clear(), 1, 1);
     }
@@ -150,7 +147,7 @@ public class RedstoneListener implements Listener {
             return;
         }
         if (rein.isInsecure()) {
-            boolean playerNearby = isAuthorizedPlayerNear(rein, maxRedstoneDistance);
+            boolean playerNearby = isAuthorizedPlayerNear(rein, Citadel.getInstance().getConfigManager().getMaxRedstoneDistance());
             if (!playerNearby) {
                 bre.setNewCurrent(bre.getOldCurrent());
             }

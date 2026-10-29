@@ -7,6 +7,8 @@ softdepend: [ floodgate ]
 permissions:
   cmc.config.save:
     default: op
+  cmc.adminconfig:
+    default: op
   cmc.configany:
     default: op
   cmc.debug:

@@ -85,6 +85,13 @@ public class RepelShitters extends ACivMod {
         float gameTimeProgress = Math.min(1.0f, (float) playerGameTime / gameTimeThreshold);
         float joinTimeProgress = Math.min(1.0f, (float) playerJoinTime / joinTimeThreshold);
 
+        // Negative weights make no sense, and with no weight at all both count equally instead of dividing by zero
+        gameTimeWeighting = Math.max(0, gameTimeWeighting);
+        joinTimeWeighting = Math.max(0, joinTimeWeighting);
+        if (gameTimeWeighting + joinTimeWeighting <= 0) {
+            gameTimeWeighting = 1;
+            joinTimeWeighting = 1;
+        }
         double totalWeight = gameTimeWeighting + joinTimeWeighting;
         double weightedProgress = ((gameTimeProgress * gameTimeWeighting) + (joinTimeProgress * joinTimeWeighting)) / totalWeight;
 

@@ -4,6 +4,13 @@ import world.edenmc.shortwave.ShortwavePlugin;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.inventory.ItemStack;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSetting;
+import vg.civcraft.mc.civmodcore.players.settings.AdminSettingAPI;
+import vg.civcraft.mc.civmodcore.players.settings.gui.AdminMenuSection;
+import vg.civcraft.mc.civmodcore.players.settings.impl.BooleanSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.DoubleSetting;
+import vg.civcraft.mc.civmodcore.players.settings.impl.IntegerSetting;
 
 import java.util.*;
 
@@ -16,8 +23,71 @@ public class ConfigManager {
     private List<BroadcastIntervalUpgrade> cachedBroadcastIntervalUpgrades;
     private Map<Material, FuelConfig> cachedAlternateFuels;
 
+    // Values admins can change live through /adminconfig
+    private AdminSetting<Integer> defaultTowerRange;
+    private AdminSetting<Integer> interferenceGarblePerTower;
+    private AdminSetting<Double> oxidationCancelChance;
+    private AdminSetting<Integer> fuelDurationSeconds;
+    private AdminSetting<Integer> startupCostAmount;
+    private AdminSetting<Integer> speakerStartupCostAmount;
+    private AdminSetting<Double> voiceTransmitterRange;
+    private AdminSetting<Integer> speakerAudioRange;
+    private AdminSetting<Boolean> debug;
+
     public ConfigManager(ShortwavePlugin plugin) {
         this.plugin = plugin;
+        registerAdminSettings();
+    }
+
+    private void registerAdminSettings() {
+        AdminSettingAPI.setPluginIcon(plugin, new ItemStack(Material.LIGHTNING_ROD));
+        AdminMenuSection menu = AdminSettingAPI.getPluginMenu(plugin);
+
+        AdminMenuSection towers = menu.getSubsection("Towers", "Tower range, interference and upkeep",
+            new ItemStack(Material.LIGHTNING_ROD));
+        defaultTowerRange = integer(towers, "default-tower-range", "Default range", 500, Material.COMPASS,
+            "Range in blocks of newly built towers");
+        interferenceGarblePerTower = integer(towers, "interference-garble-per-tower", "Interference per tower", 25,
+            Material.NOTE_BLOCK, "Garble from 0 to 100 each competing tower on the same frequency adds");
+        oxidationCancelChance = decimal(towers, "tower-oxidation-cancel-chance", "Oxidation cancel chance", 0.98,
+            Material.OXIDIZED_COPPER, "Chance from 0 to 1 that tower copper doesn't oxidize, 1 never oxidizes");
+        fuelDurationSeconds = integer(towers, "fuel.duration-seconds", "Fuel duration", 600, Material.COAL,
+            "Seconds one primary fuel item powers a tower");
+
+        AdminMenuSection costs = menu.getSubsection("Activation costs", "Items needed to activate towers and speakers",
+            new ItemStack(Material.IRON_BLOCK));
+        startupCostAmount = integer(costs, "startup-cost.amount", "Tower activation cost", 5, Material.IRON_BLOCK,
+            "Items needed to activate a tower");
+        speakerStartupCostAmount = integer(costs, "speaker-startup-cost.amount", "Speaker activation cost", 8,
+            Material.IRON_INGOT, "Items needed to activate a speaker");
+
+        AdminMenuSection voice = menu.getSubsection("Voice", "Simple Voice Chat ranges",
+            new ItemStack(Material.JUKEBOX));
+        voiceTransmitterRange = decimal(voice, "voice.transmitter-range", "Transmitter range", 5.0,
+            Material.LECTERN, "Blocks from a transmitter players are picked up from");
+        speakerAudioRange = integer(voice, "voice.speaker-audio-range", "Speaker audio range", 32, Material.JUKEBOX,
+            "Blocks speakers can be heard from");
+        speakerAudioRange.registerListener((setting, oldValue, newValue) -> {
+            // Only set when voice chat is installed
+            if (plugin.getVoiceManager() != null) {
+                plugin.getVoiceManager().setSpeakerDistance(newValue);
+            }
+        });
+
+        debug = AdminSettingAPI.registerSetting(new BooleanSetting(plugin, false, "Debug", "shortwave.debug",
+            "Log debug messages to console"), "debug", menu);
+    }
+
+    private AdminSetting<Integer> integer(AdminMenuSection menu, String path, String name, int defaultValue,
+                                          Material icon, String description) {
+        return AdminSettingAPI.registerSetting(new IntegerSetting(plugin, defaultValue, name, "shortwave." + path,
+            new ItemStack(icon), description, false), path, menu);
+    }
+
+    private AdminSetting<Double> decimal(AdminMenuSection menu, String path, String name, double defaultValue,
+                                         Material icon, String description) {
+        return AdminSettingAPI.registerSetting(new DoubleSetting(plugin, defaultValue, name, "shortwave." + path,
+            new ItemStack(icon), description), path, menu);
     }
 
     public void clearCache() {
@@ -29,7 +99,7 @@ public class ConfigManager {
 
     // Broadcast settings
     public int getDefaultRange() {
-        return plugin.getConfig().getInt("default-tower-range", 500);
+        return defaultTowerRange.getValue();
     }
     
     // Frequency settings
@@ -106,7 +176,7 @@ public class ConfigManager {
     }
     
     public int getFuelDuration() {
-        return plugin.getConfig().getInt("fuel.duration-seconds", 600);
+        return Math.max(0, fuelDurationSeconds.getValue());
     }
     
     public String getFuelDisplayName() {
@@ -438,7 +508,7 @@ public class ConfigManager {
     }
 
     public int getStartupCostAmount() {
-        return plugin.getConfig().getInt("startup-cost.amount", 5);
+        return Math.max(0, startupCostAmount.getValue());
     }
 
     public String getStartupCostDisplayName() {
@@ -461,7 +531,7 @@ public class ConfigManager {
     }
 
     public int getSpeakerStartupCostAmount() {
-        return plugin.getConfig().getInt("speaker-startup-cost.amount", 8);
+        return Math.max(0, speakerStartupCostAmount.getValue());
     }
 
     public String getSpeakerStartupCostDisplayName() {
@@ -479,25 +549,25 @@ public class ConfigManager {
      * 0.98 → oxidizes at ~2% of vanilla speed.
      */
     public int getInterferenceGarblePerTower() {
-        return plugin.getConfig().getInt("interference-garble-per-tower", 25);
+        return interferenceGarblePerTower.getValue();
     }
 
     /** Blocks from the tower base copper within which a player can transmit voice. */
     public double getVoiceTransmitterRange() {
-        return plugin.getConfig().getDouble("voice.transmitter-range", 5.0);
+        return voiceTransmitterRange.getValue();
     }
 
     /** Block radius from a speaker block within which players can hear relayed voice audio. */
     public int getSpeakerAudioRange() {
-        return plugin.getConfig().getInt("voice.speaker-audio-range", 32);
+        return speakerAudioRange.getValue();
     }
 
     public double getOxidationCancelChance() {
-        return plugin.getConfig().getDouble("tower-oxidation-cancel-chance", 0.98);
+        return oxidationCancelChance.getValue();
     }
     
     public boolean isDebug() {
-        return plugin.getConfig().getBoolean("debug", false);
+        return debug.getValue();
     }
     
     public int getAutoSaveInterval() {
